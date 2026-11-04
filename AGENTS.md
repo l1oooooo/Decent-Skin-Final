@@ -51,7 +51,7 @@ technical decisions, and the design history for previous iterations.
 | `src/gateway/` | Decaid adapter, wire types, normalization and unit tests |
 | `src/components/ui/` | Generated/customized shadcn components |
 | `src/index.css`, `components.json` | Theme tokens, fonts, component configuration |
-| `src/skin/` | Sole locked Focus UI and bundled artwork |
+| `src/skin/` | Locked Focus Home, shared pages/navigation, editor drafts and bundled artwork |
 | `docs/design/` | Locked design and historical iteration decisions |
 | `public/` | Static skin metadata and assets |
 | `tests/` | Main-app Playwright checks |
@@ -61,6 +61,13 @@ technical decisions, and the design history for previous iterations.
 
 ## Design and code conventions
 
+- Shared pages use query routes and the single App-owned gateway/session. Keep
+  favorite drafts and staged imports above page navigation. Only a newly
+  observed shot start interrupts navigation; never infer one from replay data.
+- Favorites are five nullable IDs. Only missing-key 404 permits suggestions;
+  malformed, empty and unavailable assignments must not silently fall back.
+  Update the rail only after an acknowledged explicit Save. Workflow loading
+  is independent; never identify a profile by title alone.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   layout and typography. Retired variants and appearance controls are removed;

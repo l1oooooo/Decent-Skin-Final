@@ -48,8 +48,10 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   await page
     .getByRole("button", { name: "Browse profiles", exact: true })
     .click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await page.getByRole("textbox", { name: "Search profiles" }).fill("80's")
+  await expect(
+    page.getByRole("heading", { name: "Profile library", exact: true })
+  ).toBeVisible()
+  await page.getByRole("searchbox", { name: "Search profiles" }).fill("80's")
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
     .click()
@@ -200,10 +202,11 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
     .click()
-  await expect(page.getByRole("dialog")).toContainText("Profile write rejected")
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "D-Flow / default"
-  )
+  await expect(page.getByRole("main")).toContainText("Profile write rejected")
+  const workflow = await (
+    await request.get(`${fixture}/api/v1/workflow`)
+  ).json()
+  expect(workflow.profile.title).toBe("D-Flow / default")
 })
 
 test("empty workflows can choose their first profile and named grind settings remain editable", async ({

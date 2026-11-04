@@ -30,9 +30,12 @@ The adapter requires the managed sequencing modes `tracking` or `disabled`. Full
 | Dose / yield | PUT workflow with `context.targetDoseWeight` / `context.targetYield` |
 | Grind | PUT workflow with string `context.grinderSetting`; it records the setting, not a motor command |
 | Temperature | PUT complete preserved profile with equal offset applied to each step's `temperature`; preserve relative step temperatures |
-| Profile list | GET `/api/v1/profiles?visibility=visible&includeHidden=false` |
+| Profile list | GET `/api/v1/profiles?includeHidden=true`; visible/hidden views use returned record metadata |
 | Profile selection | PUT workflow with returned complete `profile`, including executable fields; positive profile target weight becomes workflow target yield |
-| Favorite order | GET `/api/v1/store/decent-skin-codex/favorites`; only 404 means no stored preference |
+| Favorite order | GET/POST `/api/v1/store/decent-skin-codex/favorites`; POST a five-element nullable ID array, acknowledge on 204; only GET 404 means no stored preference |
+| Hide / restore profile | PUT `/api/v1/profiles/{id}/visibility` with `{ "visibility": "hidden" }` or `"visible"`; use returned record, preserve favorites and workflow |
+| Profile import | POST `/api/v1/profiles/import` with exported record array; imported/skipped/failed/errors are separate, existing IDs are skipped |
+| Profile export | GET `/api/v1/profiles/export?includeHidden=true&includeDeleted=false`; preserve complete records |
 | Steam enable/time | `steamSettings.targetTemperature` (0 disables, 140 enables), `duration` |
 | Water temperature/time | `hotWaterData.targetTemperature`, `duration` |
 | Flush time | `rinseData.duration` |
@@ -65,3 +68,15 @@ Workflow writes are partial patches, preserving unrelated context and operation 
 Build using `npm run package:skin`; install the generated archive through Decaid's skin manager. Verify that API mode and installed version match the contract before machine testing. Check actual `innerWidth`, `innerHeight`, `devicePixelRatio`, `visualViewport`, Android System WebView version, font loading, relative assets, native dialogs, touch, reduced motion and background reload.
 
 Physical operations require a supervised device session: idle → heat → group-head start, profile-frame transitions, stop command, target-weight stop, disconnect/reconnect, steam/water/flush, and shot persistence. Automated tests use only an isolated fixture; they do not operate hardware.
+
+## Shared pages and favorites (phases 2–3)
+
+Rechecked against the local upstream checkout at exact installed-target commit `14361a94b32888f6a81182e9e239f513d39d060c`: REST schema, `profile_handler.dart`, `kv_store_handler.dart` and `ProfileController.importProfiles`. No live device version or operation was queried during this implementation.
+
+`App` owns one gateway and the favorite editor above query navigation. Pages never create sockets. The gateway exposes a monotonically increasing observed-shot counter only after a locally observed machine-stream transition from a non-espresso state to espresso; attachment to a replayed active shot does not trigger a false start. Both a new start and the Home stop path bypass discard prompts. The page footer also exposes Stop when joining a running shot directly on another page.
+
+Favorites are normalized to five nullable positions in memory. Duplicate IDs keep their first occurrence and report a correction; invalid types report an error. Missing, hidden and deleted records do not collapse positions or load replacements. No normalization writes occur until explicit Save. Acknowledgement updates the rail; overlapping saves are rejected, older reads are fenced, and a response cannot erase newer editor changes. This is not cross-client conflict control: the KV API has no revision/ETag write precondition.
+
+Active profile identity uses an unambiguous comparison of the entire workflow profile with record contents, independent of object-key order. A title match alone is never enough. An adjusted or otherwise unmatched active recipe remains displayed without claiming a library ID. Content editing and ID remapping remain phase 5 work.
+
+Import uses Decaid's profile-record format, not arbitrary legacy `.shot` files. The UI limits a selected JSON export to 10 MB, requests explicit confirmation, preserves unknown fields and displays partial results. Default profiles can be hidden/restored; their executable content cannot be edited here. File pickers and downloads still need Samsung WebView acceptance.

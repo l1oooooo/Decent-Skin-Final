@@ -1,6 +1,18 @@
 # Focus skin completion roadmap
 
-Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Decent-Skin-Final/commit/34b4ef6), Focus skin 0.2.0. This document specifies future work; it does not mean those screens have been implemented or hardware-verified.
+Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Decent-Skin-Final/commit/34b4ef6), Focus skin 0.2.0. This document defines the phased scope. The implementation status below distinguishes completed software work from remaining device acceptance.
+
+## Current implementation status — November 4, 2026
+
+| Phase | Software status | Acceptance |
+| --- | --- | --- |
+| 1 — Baseline and roadmap | Completed baseline/planning checkpoint | Existing baseline evidence retained |
+| 2 — Shared page system | Implemented: one persistent session, query routes, Settings entry/categories/search, shared page shell, draft protection and shot interruption | Fixture-verified; device acceptance pending |
+| 3 — Favorites and library | Implemented: five nullable positions, assignment/swaps/reorder/clear, acknowledged Save/Cancel, ID-safe selection, details/preview/sorting, hide/restore and import/export | Fixture-verified; device acceptance pending |
+| 4–8 | Planned; Settings category descriptions identify future scope | Not implemented or accepted |
+| 9 — Tablet acceptance | Pending | No hardware operations performed in phases 2–3 |
+
+The library now uses the shared full-page layout. Settings categories beyond profile/favorite management are informational, with no placeholder operational controls. Profile content editing remains disabled until phase 5. Favorite drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
 
 ## 1. Deliverables, decisions, and evidence
 
@@ -32,7 +44,7 @@ Recheck the installed version before each integration phase. Streamline's newer 
 
 Reuse the existing typed gateway, single subscribed session, workflow patching, reconnect/disposal handling, command gates, profile preview/trace, UI primitives, dialogs, and isolated test fixture.
 
-Home already has real recipe adjustments, profile loading, brewing/stopping, utility controls, status telemetry, completion handling, and basic shot history. Favorites are read-only: the current loader filters to string IDs and falls back to visible profiles when empty. It does **not** yet preserve intentional empty slots or unavailable assignments. The current active-profile lookup also uses title matching; future library/editor work must remove ambiguity when duplicate titles exist.
+At baseline `34b4ef6`, Home already had real recipe adjustments, profile loading, brewing/stopping, utility controls, status telemetry, completion handling, and basic shot history. Favorites were read-only: the loader filtered to string IDs and fell back to visible profiles when empty. It did **not** preserve intentional empty slots or unavailable assignments, and the active-profile lookup used title matching. Phase 3 replaces these behaviors as recorded in the current status table.
 
 No Settings route, favorite editor, profile editor, inventory manager, service workflow, update manager, or extension manager exists in this baseline.
 
@@ -150,7 +162,7 @@ For each phase: specify screens and states, implement one Focus-consistent desig
 3. Add this roadmap and feature matrix; commit/push documentation separately.
 4. Record baseline evidence without presenting desktop checks as device acceptance.
 
-**Completion:** baseline `34b4ef6` is pushed; this document is the separate planning deliverable. No future screen is marked implemented.
+**Completion:** baseline `34b4ef6` is pushed; this document is the separate planning deliverable. At that checkpoint, no future screen was marked implemented.
 
 ### Phase 2 — Shared page system
 

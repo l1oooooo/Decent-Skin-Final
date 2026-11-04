@@ -6,7 +6,17 @@ import { RevisionHeader, RevisionProfiles, RevisionBottomBar } from "./chrome"
 
 import Focus from "./focus"
 
-export default function FocusScreen({ s }: { s: SkinSession }) {
+export default function FocusScreen({
+  s,
+  onSettings,
+  onBrowse,
+  onAssign,
+}: {
+  s: SkinSession
+  onSettings: () => void
+  onBrowse: () => void
+  onAssign: (slot: number) => void
+}) {
   const recipePanel = useRef<HTMLDivElement>(null)
   const surface = useRef<HTMLDivElement>(null)
   const showingShot = s.active || s.complete
@@ -21,9 +31,9 @@ export default function FocusScreen({ s }: { s: SkinSession }) {
       ref={surface}
       className="focus-skin flex h-full flex-col bg-background"
     >
-      <RevisionHeader s={s} />
+      <RevisionHeader s={s} onSettings={onSettings} />
       <div className="flex min-h-0 flex-1">
-        <RevisionProfiles s={s} />
+        <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="flex min-w-0 flex-1 flex-col px-7 py-6">
           <div className="min-h-[88px]">
             <h1 className="line-clamp-2 text-[30px] leading-tight font-medium tracking-[-.045em]">

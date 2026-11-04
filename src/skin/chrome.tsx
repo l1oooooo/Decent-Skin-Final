@@ -6,6 +6,7 @@ import {
   Droplets,
   Flame,
   History,
+  Settings,
   Library,
   RotateCw,
   Thermometer,
@@ -29,7 +30,13 @@ const artworkNames = [
   "gentle",
 ]
 
-export function RevisionHeader({ s }: { s: SkinSession }) {
+export function RevisionHeader({
+  s,
+  onSettings,
+}: {
+  s: SkinSession
+  onSettings: () => void
+}) {
   return (
     <header className="flex h-[72px] shrink-0 items-center border-b border-border pr-7">
       <div className="w-[220px] shrink-0 px-7">
@@ -88,11 +95,28 @@ export function RevisionHeader({ s }: { s: SkinSession }) {
       >
         <History size={16} aria-hidden="true" />
       </Action>
+      <Action
+        variant="ghost"
+        aria-label="Settings"
+        title="Settings"
+        className="!size-12 !px-0 text-muted-foreground"
+        onClick={onSettings}
+      >
+        <Settings size={16} aria-hidden="true" />
+      </Action>
     </header>
   )
 }
 
-export function RevisionProfiles({ s }: { s: SkinSession }) {
+export function RevisionProfiles({
+  s,
+  onBrowse,
+  onAssign,
+}: {
+  s: SkinSession
+  onBrowse: () => void
+  onAssign: (slot: number) => void
+}) {
   const image =
     artwork[
       artworkNames.findIndex((name) =>
@@ -110,22 +134,31 @@ export function RevisionProfiles({ s }: { s: SkinSession }) {
           aria-label="Favorite profiles"
           className="flex shrink-0 flex-col gap-1"
         >
-          {s.profiles.map((profile) => (
+          {s.profiles.map((profile, index) => (
             <button
-              key={profile.name}
+              key={index}
               type="button"
-              aria-label={`Select ${profile.name}`}
-              aria-pressed={s.selectedId === profile.id}
-              disabled={s.profileLocked}
-              onClick={() => s.selectProfile(profile.id)}
-              className={`flex h-12 min-h-12 shrink-0 items-center justify-between gap-2 rounded-[var(--control-radius)] px-3 text-left text-[14px] font-medium focus-visible:outline-offset-2 ${s.selectedId === profile.id ? "bg-foreground/15 text-foreground" : "text-muted-foreground hover:bg-muted"}`}
+              aria-label={
+                profile
+                  ? `Select ${profile.name}`
+                  : `${s.snapshot.favorites[index] ? "Unavailable" : "Empty"} favorite ${index + 1}`
+              }
+              aria-pressed={s.selectedId === profile?.id}
+              disabled={profile ? s.profileLocked : !s.snapshot.favoritesLoaded}
+              onClick={() =>
+                profile ? s.selectProfile(profile.id) : onAssign(index)
+              }
+              className={`flex h-12 min-h-12 shrink-0 items-center justify-between gap-2 rounded-[var(--control-radius)] px-3 text-left text-[14px] font-medium focus-visible:outline-offset-2 ${s.selectedId === profile?.id ? "bg-foreground/15 text-foreground" : "text-muted-foreground hover:bg-muted"}`}
             >
               <span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">
-                {profile.short}
+                {profile?.short ??
+                  (s.snapshot.favorites[index]
+                    ? "Unavailable profile"
+                    : `Add favorite ${index + 1}`)}
               </span>
               <span
                 aria-hidden="true"
-                className={`size-1.5 shrink-0 rounded-full ${s.selectedId === profile.id ? "bg-foreground" : "bg-border"}`}
+                className={`size-1.5 shrink-0 rounded-full ${s.selectedId === profile?.id ? "bg-foreground" : "bg-border"}`}
               />
             </button>
           ))}
@@ -152,11 +185,11 @@ export function RevisionProfiles({ s }: { s: SkinSession }) {
       <div className="shrink-0 border-t border-border pt-3">
         <Action
           variant="ghost"
-          aria-haspopup="dialog"
+          aria-label="Browse profiles"
           className="w-full justify-start !px-3 text-muted-foreground"
           onClick={() => {
             s.setSettings(null)
-            s.setLibraryOpen(true)
+            onBrowse()
           }}
         >
           <Library size={16} aria-hidden="true" />

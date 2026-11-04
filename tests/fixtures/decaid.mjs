@@ -56,6 +56,9 @@ const names = [
 export const profiles = names.map((title, i) => ({
   id: `profile:${i}`,
   profile: { ...profile, title },
+  visibility: "visible",
+  isDefault: i === 0,
+  updatedAt: "2026-11-04T00:00:00.000Z",
 }))
 export const baseWorkflow = {
   name: "Morning espresso",
@@ -80,7 +83,9 @@ let workflow,
   error,
   shotId,
   started,
-  commandLog
+  commandLog,
+  library,
+  favorites
 function reset() {
   workflow = structuredClone(baseWorkflow)
   state = "idle"
@@ -93,6 +98,8 @@ function reset() {
   shotId = null
   started = false
   commandLog = []
+  library = structuredClone(profiles)
+  favorites = undefined
 }
 reset()
 const sockets = new Map()
@@ -206,6 +213,8 @@ const server = createServer(async (req, res) => {
     scale = data.scale ?? scale
     mode = data.mode ?? mode
     error = data.error ?? null
+    if ("favorites" in data) favorites = data.favorites
+    if (data.profiles) library = data.profiles
     if (state === "espresso") {
       started = true
       shotId ||= "fixture-shot"
@@ -231,9 +240,29 @@ const server = createServer(async (req, res) => {
     if (req.method === "PUT") workflow = merge(workflow, data)
     return reply(workflow)
   }
-  if (url.pathname === "/api/v1/profiles") return reply(profiles)
-  if (url.pathname.startsWith("/api/v1/store/"))
-    return reply({ error: "Not found" }, 404)
+  if (url.pathname === "/api/v1/profiles") return reply(library)
+  if (url.pathname === "/api/v1/profiles/export") return reply(library)
+  if (url.pathname === "/api/v1/profiles/import") {
+    let imported = 0, skipped = 0, failed = 0
+    const errors = []
+    for (const record of data) {
+      if (library.some(p => p.id === record.id)) skipped++
+      else if (!record.profile?.steps?.length || record.id === "invalid-import") { failed++; errors.push("Profile record was rejected") }
+      else { library.push(record); imported++ }
+    }
+    return reply({ imported, skipped, failed, errors })
+  }
+  if (url.pathname.endsWith("/visibility")) {
+    const id = decodeURIComponent(url.pathname.split("/").at(-2))
+    const record = library.find(p => p.id === id)
+    if (!record) return reply({ error: "Not found" }, 404)
+    record.visibility = data.visibility
+    return reply(record)
+  }
+  if (url.pathname.startsWith("/api/v1/store/")) {
+    if (req.method === "POST") { favorites = data; res.writeHead(204).end(); return }
+    return favorites === undefined ? reply({ error: "Not found" }, 404) : reply(favorites)
+  }
   if (url.pathname === "/api/v1/machine/state") return reply(machine())
   if (url.pathname.startsWith("/api/v1/machine/state/")) {
     const target = url.pathname.split("/").at(-1)

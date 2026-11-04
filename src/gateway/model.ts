@@ -1,4 +1,6 @@
 import type {
+  FavoriteSlots,
+  ProfileRecord,
   GatewaySnapshot,
   MachineSnapshot,
   Profile,
@@ -117,4 +119,86 @@ export function previewSamples(profile: Profile | null): ShotSample[] {
       return [start, { ...point, elapsed }]
     }) ?? []
   )
+}
+
+export function parseProfileRecord(value: unknown): ProfileRecord {
+  const record = object(value)
+  if (typeof record.id !== "string" || !record.id)
+    throw new Error("Invalid profile identifier")
+  if (
+    record.visibility !== undefined &&
+    !["visible", "hidden", "deleted"].includes(String(record.visibility))
+  )
+    throw new Error("Invalid profile visibility")
+  return {
+    ...record,
+    id: record.id,
+    profile: parseProfile(record.profile),
+  } as ProfileRecord
+}
+
+export function normalizeFavorites(value: unknown): {
+  slots: FavoriteSlots
+  issue: string
+} {
+  if (
+    !Array.isArray(value) ||
+    value.some((id) => id !== null && (typeof id !== "string" || !id))
+  )
+    throw new Error(
+      "Stored favorites are malformed. Retry reading them or explicitly replace them in Manage favorites."
+    )
+  const seen = new Set<string>()
+  let issue =
+    value.length > 5
+      ? "Only the first five positions can be used. Review and Save to correct the stored list."
+      : ""
+  const slots = Array.from({ length: 5 }, (_, index) => {
+    const id = value[index] ?? null
+    if (id === null) return null
+    if (seen.has(id)) {
+      issue =
+        "Duplicate assignments were cleared after their first occurrence. Review and Save to correct them."
+      return null
+    }
+    seen.add(id)
+    return id as string
+  })
+  return { slots, issue }
+}
+
+export function assignFavorite(
+  slots: FavoriteSlots,
+  index: number,
+  id: string
+): FavoriteSlots {
+  const next = [...slots]
+  const previous = next.indexOf(id)
+  if (previous !== -1) next[previous] = next[index]
+  next[index] = id
+  return next
+}
+
+// Compare all fields, independent of object key order. Titles alone never establish identity.
+export function profileFingerprint(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map(profileFingerprint).join(",")}]`
+  if (value && typeof value === "object")
+    return `{${Object.entries(value)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${JSON.stringify(k)}:${profileFingerprint(v)}`)
+      .join(",")}}`
+  return JSON.stringify(value) ?? "null"
+}
+
+export function activeProfileId(
+  profile: Profile | null,
+  records: ProfileRecord[]
+): string | null {
+  if (!profile) return null
+  const fingerprint = profileFingerprint(profile)
+  const matches = records.filter(
+    (record) => profileFingerprint(record.profile) === fingerprint
+  )
+  return matches.length === 1 ? matches[0].id : null
 }

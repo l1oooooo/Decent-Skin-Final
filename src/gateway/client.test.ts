@@ -145,7 +145,13 @@ describe("Decaid integration", () => {
     await connect()
     await gateway.loadProfiles()
     expect(writes).toEqual([])
-    expect(gateway.getSnapshot().favorites).toEqual(["p"])
+    expect(gateway.getSnapshot().favorites).toEqual([
+      "p",
+      null,
+      null,
+      null,
+      null,
+    ])
   })
   it("does not confuse telemetry with machine connection", async () => {
     await connect()
@@ -314,6 +320,30 @@ describe("Decaid integration", () => {
     expect(gateway.getSnapshot().scale?.weight).toBe(12)
     expect(listener).not.toHaveBeenCalled()
     await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1))
+  })
+  it("does not navigate on an active replay after a machine socket reconnect", async () => {
+    await connect()
+    sockets[1].close()
+    gateway.receive("machine/shotState", {
+      state: "preheating",
+      timestamp: machine(1).timestamp,
+      event: "state",
+    })
+    gateway.receive(
+      "machine/snapshot",
+      machine(2, "espresso", "preparingForShot")
+    )
+    expect(gateway.getSnapshot().observedShot).toBe(0)
+    gateway.receive("machine/snapshot", machine(3))
+    gateway.receive("machine/snapshot", machine(4, "espresso", "preinfusion"))
+    expect(gateway.getSnapshot().observedShot).toBe(1)
+    gateway.receive("machine/shotState", {
+      state: "pouring",
+      timestamp: machine(4).timestamp,
+      event: "state",
+      shotId: "new-after-machine-frame",
+    })
+    expect(gateway.getSnapshot().elapsedKnown).toBe(true)
   })
   it("keeps temperature offsets and non-temperature profile fields intact", () => {
     const patch = temperaturePatch(workflow, 90)

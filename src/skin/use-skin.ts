@@ -1,6 +1,13 @@
-import { useEffect, useState, useSyncExternalStore } from "react"
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 import { DecaidGateway } from "@/gateway/client"
 import {
+  activeProfileId,
   commandBlock,
   connected,
   finite,
@@ -20,27 +27,31 @@ export function useSkin(gateway: DecaidGateway) {
   const snapshot = useSyncExternalStore(gateway.subscribe, gateway.getSnapshot)
   const [settings, setSettings] = useState<string | null>(null)
   const [modal, setModal] = useState<string | null>(null)
-  const [libraryOpen, setLibraryOpen] = useState(false)
   const [notice, setNotice] = useState("")
   const [libraryLoading, setLibraryLoading] = useState(true)
   const [libraryError, setLibraryError] = useState("")
+  const libraryAttempt = useRef(0)
   useEffect(() => {
     gateway.start()
     return gateway.stop
   }, [gateway])
   useEffect(() => {
     if (snapshot.connection !== "online") return
+    const attempt = ++libraryAttempt.current
     let cancelled = false
     gateway
       .loadProfiles()
       .then(() => {
-        if (!cancelled) setLibraryError("")
+        if (!cancelled && attempt === libraryAttempt.current)
+          setLibraryError("")
       })
       .catch((error) => {
-        if (!cancelled) setLibraryError(String(error.message))
+        if (!cancelled && attempt === libraryAttempt.current)
+          setLibraryError(String(error.message))
       })
       .finally(() => {
-        if (!cancelled) setLibraryLoading(false)
+        if (!cancelled && attempt === libraryAttempt.current)
+          setLibraryLoading(false)
       })
     return () => {
       cancelled = true
@@ -62,6 +73,10 @@ export function useSkin(gateway: DecaidGateway) {
   }
   const workflow = snapshot.workflow
   const rawProfile = workflow?.profile ?? null
+  const matchedProfileId = useMemo(
+    () => activeProfileId(rawProfile, snapshot.profiles),
+    [rawProfile, snapshot.profiles]
+  )
   const machine = snapshot.machine
   const active = machine?.state.state === "espresso" && !snapshot.complete
   const complete = snapshot.complete
@@ -93,18 +108,20 @@ export function useSkin(gateway: DecaidGateway) {
       raw: profile,
     }
   }
-  const allProfiles = snapshot.profiles.map((p) =>
-    displayProfile(p.profile, p.id)
+  const allProfiles = snapshot.profiles.map((p) => ({
+    ...displayProfile(p.profile, p.id),
+    record: p,
+  }))
+  const profiles = snapshot.favorites.map(
+    (id) =>
+      allProfiles.find(
+        (p) =>
+          p.id === id &&
+          (!p.record.visibility || p.record.visibility === "visible")
+      ) ?? null
   )
-  const profiles = snapshot.favorites
-    .map((id) => allProfiles.find((p) => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => !!p)
   const profile = rawProfile
-    ? displayProfile(
-        rawProfile,
-        snapshot.profiles.find((p) => p.profile.title === rawProfile.title)
-          ?.id ?? "active"
-      )
+    ? displayProfile(rawProfile, matchedProfileId ?? "active")
     : {
         id: "",
         name: "Choose a profile",
@@ -187,19 +204,21 @@ export function useSkin(gateway: DecaidGateway) {
           : {}),
       })
     )
-    if (ok) setLibraryOpen(false)
+    return ok
   }
   async function reloadLibrary() {
+    const attempt = ++libraryAttempt.current
     setLibraryLoading(true)
     setLibraryError("")
     try {
       await gateway.loadProfiles()
     } catch (error) {
-      setLibraryError(
-        error instanceof Error ? error.message : "Could not load profiles"
-      )
+      if (attempt === libraryAttempt.current)
+        setLibraryError(
+          error instanceof Error ? error.message : "Could not load profiles"
+        )
     } finally {
-      setLibraryLoading(false)
+      if (attempt === libraryAttempt.current) setLibraryLoading(false)
     }
   }
   const utilityChange = (
@@ -251,10 +270,12 @@ export function useSkin(gateway: DecaidGateway) {
     setSettings,
     modal,
     setModal,
-    libraryOpen,
-    setLibraryOpen,
-    libraryLoading,
-    libraryError,
+    libraryLoading: libraryLoading && snapshot.connection !== "offline",
+    libraryError:
+      libraryError ||
+      (snapshot.connection === "offline"
+        ? "Cannot reach Decaid. Check the connection, then retry."
+        : ""),
     reloadLibrary,
     notice:
       notice ||

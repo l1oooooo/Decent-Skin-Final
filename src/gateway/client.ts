@@ -3,15 +3,17 @@ import {
   finite,
   object,
   parseMachine,
-  parseProfile,
+  parseProfileRecord,
+  normalizeFavorites,
   parseWorkflow,
   pouring,
 } from "./model"
 import type {
+  FavoriteSlots,
+  ImportResult,
   Device,
   GatewaySnapshot,
   MachineCommand,
-  ProfileRecord,
   ShotEvent,
   ShotRecord,
   Workflow,
@@ -23,7 +25,10 @@ export const initialSnapshot = (): GatewaySnapshot => ({
   pending: false,
   workflow: null,
   profiles: [],
-  favorites: [],
+  favorites: [null, null, null, null, null],
+  favoritesLoaded: false,
+  favoritesIssue: "",
+  observedShot: 0,
   devices: [],
   deviceError: "",
   machine: null,
@@ -79,8 +84,12 @@ export class DecaidGateway {
   private telemetryRevision = 0
   private deviceRevision = 0
   private workflowRevision = 0
+  private libraryRevision = 0
+  private favoritesRevision = 0
+  private favoritesSaving = false
   private channels = new Set<string>()
   private observedIdle = false
+  private navigationState: string | null = null
   private shotDismissed = false
   private restoredShot: string | null = null
   private restoringShot: string | null = null
@@ -252,6 +261,7 @@ export class DecaidGateway {
         ["devices", "machine/snapshot", "machine/shotState"].includes(channel)
       ) {
         this.observedIdle = false
+        this.navigationState = null
         this.emit({ connection: "offline", machineReceived: 0 })
       }
       if (channel === "scale/snapshot")
@@ -368,7 +378,10 @@ export class DecaidGateway {
       const isConnected = devices.some(
         (d) => d.type === "machine" && d.state === "connected"
       )
-      if (!isConnected) this.observedIdle = false
+      if (!isConnected) {
+        this.observedIdle = false
+        this.navigationState = null
+      }
       const scaleConnected = devices.some(
         (d) => d.type === "scale" && d.state === "connected"
       )
@@ -399,8 +412,13 @@ export class DecaidGateway {
       this.lastTimestamp = timestamp
       const s = this.snapshot
       const running = pouring(m)
+      const observedStart =
+        m.state.state === "espresso" &&
+        this.navigationState !== null &&
+        this.navigationState !== "espresso"
       if (m.state.state === "idle" || m.state.substate === "preparingForShot")
         this.observedIdle = true
+      this.navigationState = m.state.state
       const wasRunning = pouring(s.machine)
       const newShot =
         running && !wasRunning && (s.shotStart === null || s.complete)
@@ -422,6 +440,7 @@ export class DecaidGateway {
           : s.samples
       this.emit({
         machine: m,
+        observedShot: s.observedShot + (observedStart ? 1 : 0),
         machineReceived: Date.now(),
         shotStart: start,
         samples,
@@ -556,33 +575,112 @@ export class DecaidGateway {
     }
   }
   async loadProfiles() {
-    const data = await this.request(
-      "/api/v1/profiles?visibility=visible&includeHidden=false"
-    )
+    const revision = ++this.libraryRevision
+    const favoritesRevision = this.favoritesRevision
+    const data = await this.request("/api/v1/profiles?includeHidden=true")
     if (!Array.isArray(data)) throw new Error("Invalid profile library")
-    const profiles: ProfileRecord[] = data.map((value) => {
-      const p = object(value)
-      if (typeof p.id !== "string")
-        throw new Error("Invalid profile identifier")
-      return { id: p.id, profile: parseProfile(p.profile) }
-    })
-    let favorites: string[] = []
+    const profiles = data.map(parseProfileRecord)
+    if (revision !== this.libraryRevision) return
+    this.emit({ profiles })
     try {
-      const stored = await this.request(
-        "/api/v1/store/decent-skin-codex/favorites"
+      let normalized
+      try {
+        normalized = normalizeFavorites(
+          await this.request("/api/v1/store/decent-skin-codex/favorites")
+        )
+      } catch (error) {
+        if (!(error instanceof Error && error.message.startsWith("404:")))
+          throw error
+        normalized = normalizeFavorites(
+          profiles
+            .filter((p) => !p.visibility || p.visibility === "visible")
+            .slice(0, 5)
+            .map((p) => p.id)
+        )
+      }
+      if (
+        revision === this.libraryRevision &&
+        favoritesRevision === this.favoritesRevision &&
+        !this.favoritesSaving
       )
-      if (Array.isArray(stored))
-        favorites = stored.filter((id): id is string => typeof id === "string")
+        this.emit({
+          favorites: normalized.slots,
+          favoritesIssue: normalized.issue,
+          favoritesLoaded: true,
+        })
     } catch (error) {
-      if (!(error instanceof Error && error.message.startsWith("404:")))
-        throw error
+      if (
+        revision === this.libraryRevision &&
+        favoritesRevision === this.favoritesRevision
+      )
+        this.emit({
+          favoritesIssue:
+            error instanceof Error ? error.message : "Could not read favorites",
+        })
     }
+  }
+  async saveFavorites(slots: FavoriteSlots) {
+    const normalized = normalizeFavorites(slots)
+    if (slots.length !== 5 || normalized.issue)
+      throw new Error("Choose five unique or empty favorite positions.")
+    if (this.favoritesSaving) throw new Error("Favorites are already saving.")
+    this.favoritesSaving = true
+    this.favoritesRevision++
+    const saved = [...slots]
+    try {
+      await this.request(
+        "/api/v1/store/decent-skin-codex/favorites",
+        "POST",
+        saved
+      )
+      this.favoritesRevision++
+      this.emit({ favorites: saved, favoritesLoaded: true, favoritesIssue: "" })
+      return saved
+    } finally {
+      this.favoritesSaving = false
+    }
+  }
+  async setProfileVisibility(id: string, visibility: "visible" | "hidden") {
+    this.libraryRevision++
+    const result = parseProfileRecord(
+      await this.request(
+        `/api/v1/profiles/${encodeURIComponent(id)}/visibility`,
+        "PUT",
+        { visibility }
+      )
+    )
+    this.libraryRevision++
     this.emit({
-      profiles,
-      favorites: favorites.length
-        ? favorites.slice(0, 5)
-        : profiles.slice(0, 5).map((p) => p.id),
+      profiles: this.snapshot.profiles.map((p) => (p.id === id ? result : p)),
     })
+    return result
+  }
+  async importProfiles(value: unknown): Promise<ImportResult> {
+    if (!Array.isArray(value) || !value.length)
+      throw new Error("Choose a JSON array of exported profile records.")
+    value.forEach(parseProfileRecord)
+    const result = object(
+      await this.request("/api/v1/profiles/import", "POST", value)
+    )
+    if (
+      ![result.imported, result.skipped, result.failed].every(
+        (v) => Number.isInteger(v) && Number(v) >= 0
+      ) ||
+      !Array.isArray(result.errors) ||
+      result.errors.some((v) => typeof v !== "string")
+    )
+      throw new Error(
+        "Import response is invalid. Refresh the library before trying again."
+      )
+    return result as unknown as ImportResult
+  }
+  async exportProfiles() {
+    const result = await this.request(
+      "/api/v1/profiles/export?includeHidden=true&includeDeleted=false"
+    )
+    if (!Array.isArray(result)) throw new Error("Invalid profile export")
+    result.forEach(parseProfileRecord)
+    return result
   }
   async updateWorkflow(patch: Partial<Workflow>) {
     const block = commandBlock(this.snapshot)

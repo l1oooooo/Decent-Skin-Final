@@ -1,171 +1,365 @@
-import { format, type SkinSession } from "./use-skin"
-import { useEffect, useRef, useState } from "react"
-import { Search, X, ArrowUpRight } from "lucide-react"
+import { useRef, useState } from "react"
+import { previewSamples } from "@/gateway/model"
+import type { ProfileTransfer } from "./use-profile-transfer"
 import { Action } from "./primitives"
+import { format, type SkinSession } from "./use-skin"
+import { PageMessage, SearchField } from "./pages"
+import { Extraction } from "./trace"
+import type { Route } from "./navigation"
 
-export function ProfileLibrary({ s }: { s: SkinSession }) {
-  const ref = useRef<HTMLDialogElement>(null)
+export function ProfileLibrary({
+  s,
+  navigate,
+  assignment,
+  onAssign,
+  transfer,
+}: {
+  s: SkinSession
+  navigate: (route: Route) => void
+  assignment: number | null
+  onAssign: (id: string) => void
+  transfer: ProfileTransfer
+}) {
   const [query, setQuery] = useState("")
+  const [view, setView] = useState("visible")
+  const [sort, setSort] = useState("name")
   const [favoritesOnly, setFavoritesOnly] = useState(false)
-  useEffect(() => {
-    if (!s.libraryOpen) return
-    const trigger = document.activeElement as HTMLElement | null
-    ref.current?.showModal()
-    return () => {
-      if (trigger?.isConnected) trigger.focus()
-    }
-  }, [s.libraryOpen])
-  if (!s.libraryOpen) return null
+  const { selection, operation, error, result } = transfer
+  const busy = operation !== null
+  const file = useRef<HTMLInputElement>(null)
   const items = s.allProfiles
-    .map((p, index) => ({ ...p, index }))
     .filter(
       (p) =>
-        (!favoritesOnly || s.profiles.some((f) => f.id === p.id)) &&
-        `${p.name} ${p.by} ${p.kind}`
-          .toLocaleLowerCase()
-          .includes(query.toLocaleLowerCase().trim())
+        (p.record.visibility ?? "visible") ===
+          (assignment === null ? view : "visible") &&
+        (!favoritesOnly || s.snapshot.favorites.includes(p.id)) &&
+        `${p.name} ${p.by} ${p.id}`
+          .toLowerCase()
+          .includes(query.trim().toLowerCase())
+    )
+    .sort((a, b) =>
+      sort === "author"
+        ? a.by.localeCompare(b.by) || a.name.localeCompare(b.name)
+        : sort === "updated"
+          ? (b.record.updatedAt ?? "").localeCompare(
+              a.record.updatedAt ?? ""
+            ) || a.name.localeCompare(b.name)
+          : a.name.localeCompare(b.name)
     )
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby="library-title"
-      onCancel={() => s.setLibraryOpen(false)}
-      className="m-auto h-[650px] max-h-[calc(100dvh-48px)] w-[880px] max-w-[calc(100vw-48px)] rounded-2xl border border-border bg-background p-0 text-foreground shadow-2xl backdrop:bg-black/70"
-    >
-      <div className="flex h-full flex-col">
-        <header className="flex shrink-0 items-center justify-between px-7 pt-6 pb-5">
-          <div>
-            <h2
-              id="library-title"
-              className="text-[24px] font-medium tracking-[-.035em]"
-            >
-              Profile library
-            </h2>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              {s.allProfiles.length} profiles · Decaid library
-            </p>
-          </div>
-          <Action
-            variant="ghost"
-            aria-label="Close profile library"
-            className="!px-0"
-            onClick={() => s.setLibraryOpen(false)}
-          >
-            <X size={20} />
+    <>
+      {assignment === null && (
+        <div className="mb-5 flex flex-wrap gap-3">
+          <Action onClick={() => navigate({ page: "favorites" })}>
+            Manage favorites
           </Action>
-        </header>
-        <div className="flex shrink-0 gap-4 border-b border-border px-7 pb-5">
-          <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-lg border border-input bg-card px-4 focus-within:outline-2 focus-within:outline-foreground">
-            <Search
-              size={18}
-              className="shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <input
-              aria-label="Search profiles"
-              placeholder="Search by name, author, or style…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none"
-            />
-            {query && (
-              <button
-                aria-label="Clear profile search"
-                className="-mr-3 flex size-11 shrink-0 items-center justify-center rounded-lg"
-                onClick={() => setQuery("")}
-              >
-                <X size={16} />
-              </button>
-            )}
-          </label>
           <Action
             variant="outline"
-            aria-pressed={favoritesOnly}
-            onClick={() => setFavoritesOnly(!favoritesOnly)}
-            className={favoritesOnly ? "bg-foreground/15" : ""}
+            disabled={busy}
+            onClick={() => file.current?.click()}
           >
-            Favorites
+            Import profiles
           </Action>
+          <Action
+            variant="outline"
+            disabled={busy}
+            onClick={transfer.exportProfiles}
+          >
+            Export profiles
+          </Action>
+          <input
+            ref={file}
+            type="file"
+            accept=".json,application/json"
+            aria-label="Profile import file"
+            className="hidden"
+            onChange={(e) => {
+              const selected = e.target.files?.[0]
+              e.target.value = ""
+              if (selected) void transfer.choose(selected)
+            }}
+          />
         </div>
-        <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3"
-          role="group"
-          aria-label="Library profiles"
+      )}
+      {assignment === null && selection && (
+        <section
+          aria-label="Review import"
+          className="mb-5 border-y border-border py-4"
         >
-          {s.notice && (
-            <p role="alert" className="px-4 py-3 text-sm">
-              {s.notice}
-            </p>
+          <h2 className="text-lg [overflow-wrap:anywhere]">
+            Import {selection.records.length} profiles from {selection.name}?
+          </h2>
+          <p className="my-3 text-sm text-muted-foreground">
+            Existing IDs, including default profiles, are skipped. Each record
+            imports independently; failed records are reported.
+          </p>
+          <div className="flex gap-3">
+            <Action disabled={busy} onClick={transfer.importProfiles}>
+              {busy ? "Importing…" : "Confirm import"}
+            </Action>
+            <Action variant="outline" disabled={busy} onClick={transfer.cancel}>
+              Cancel import
+            </Action>
+          </div>
+        </section>
+      )}
+      {result && (
+        <PageMessage>
+          {result.imported} imported · {result.skipped} skipped ·{" "}
+          {result.failed} failed
+          {result.errors.length > 0 && (
+            <span className="block whitespace-pre-wrap">
+              {result.errors.join("\n")}
+            </span>
           )}
-          {s.libraryError || s.libraryLoading ? (
-            <div role="status" className="p-7 text-sm">
-              <p>{s.libraryLoading ? "Loading profiles…" : s.libraryError}</p>
-              <Action
-                variant="outline"
-                onClick={s.reloadLibrary}
-                disabled={s.libraryLoading}
-                className="mt-4"
-              >
-                Retry
-              </Action>
+        </PageMessage>
+      )}
+      {error && <PageMessage error>{error}</PageMessage>}
+      <div className="mb-5 flex items-end gap-4">
+        <SearchField
+          label="Search profiles"
+          value={query}
+          onChange={setQuery}
+        />
+        {assignment === null && (
+          <label className="flex flex-col gap-2 text-[13px] text-muted-foreground">
+            Visibility
+            <select
+              aria-label="Profile visibility"
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              className="h-12 rounded-lg border border-input bg-card px-3 text-[16px] text-foreground"
+            >
+              <option value="visible">Visible</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+        )}
+        <label className="flex flex-col gap-2 text-[13px] text-muted-foreground">
+          Sort
+          <select
+            aria-label="Sort profiles"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="h-12 rounded-lg border border-input bg-card px-3 text-[16px] text-foreground"
+          >
+            <option value="name">Name</option>
+            <option value="author">Author</option>
+            <option value="updated">Recently updated</option>
+          </select>
+        </label>
+        <Action
+          variant="outline"
+          aria-pressed={favoritesOnly}
+          onClick={() => setFavoritesOnly(!favoritesOnly)}
+        >
+          Favorites
+        </Action>
+      </div>
+      {s.notice && <PageMessage error>{s.notice}</PageMessage>}
+      {s.libraryLoading || s.libraryError ? (
+        <>
+          <PageMessage error={!!s.libraryError}>
+            {s.libraryLoading ? "Loading profiles…" : s.libraryError}
+          </PageMessage>
+          <Action
+            variant="outline"
+            disabled={s.libraryLoading}
+            onClick={s.reloadLibrary}
+          >
+            Retry
+          </Action>
+        </>
+      ) : (
+        <div
+          aria-label="Library profiles"
+          className="divide-y divide-border border-y border-border"
+        >
+          {items.map((p) => (
+            <div
+              key={p.id}
+              role="group"
+              aria-label={`Profile ${p.name} (${p.id})`}
+              className="flex min-h-[90px] items-center gap-4 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-[16px] font-medium [overflow-wrap:anywhere]">
+                  {p.name}
+                </p>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  {p.by || "Unknown author"} · {p.kind} ·{" "}
+                  {format(p.raw.target_weight)} g
+                  {p.record.isDefault ? " · Default" : ""}
+                </p>
+                <p className="mt-1 truncate text-[12px] text-muted-foreground">
+                  {p.id}
+                </p>
+              </div>
+              {assignment === null ? (
+                <>
+                  <Action
+                    variant="outline"
+                    aria-label={`Details ${p.name}`}
+                    onClick={() => navigate({ page: "profile", id: p.id })}
+                  >
+                    Details
+                  </Action>
+                  <Action
+                    aria-label={`Load ${p.name}`}
+                    aria-pressed={s.selectedId === p.id}
+                    disabled={s.profileLocked || view === "hidden"}
+                    onClick={async () => {
+                      if (await s.selectProfile(p.id))
+                        navigate({ page: "home" })
+                    }}
+                  >
+                    Load
+                  </Action>
+                </>
+              ) : (
+                <Action
+                  aria-label={`Assign ${p.name}`}
+                  onClick={() => onAssign(p.id)}
+                >
+                  Assign
+                </Action>
+              )}
             </div>
-          ) : items.length ? (
-            items.map((p) => (
-              <button
-                key={p.index}
-                aria-label={`Load ${p.name}`}
-                aria-pressed={s.selectedId === p.id}
-                disabled={s.profileLocked}
-                onClick={() => s.selectProfile(p.id)}
-                className={`flex min-h-[82px] w-full items-center gap-6 rounded-lg px-4 py-4 text-left transition-colors duration-150 active:scale-[.96] disabled:opacity-50 ${s.selectedId === p.id ? "bg-foreground/15" : "hover:bg-muted"}`}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-[16px] font-medium">{p.name}</p>
-                  <p className="mt-1 text-[13px] text-muted-foreground">
-                    {p.by} · {p.kind}
-                  </p>
-                </div>
-                <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
-                  {`${format(p.raw.target_weight)} g · ${format(p.raw.steps[0]?.temperature)}°C`}
-                </span>
-                <ArrowUpRight
-                  size={18}
-                  className="shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </button>
-            ))
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-3">
-              <h3 className="text-lg font-medium">
-                {s.allProfiles.length
-                  ? "No matching profiles"
-                  : "No profiles saved"}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {s.allProfiles.length
-                  ? "Try a different name or browse the full collection."
-                  : "Add a profile in Decaid, then refresh the library."}
-              </p>
-              <Action
-                variant="outline"
-                onClick={() => {
-                  if (!s.allProfiles.length) void s.reloadLibrary()
-                  setQuery("")
-                  setFavoritesOnly(false)
-                }}
-              >
-                {s.allProfiles.length ? "Show all profiles" : "Refresh library"}
-              </Action>
-            </div>
+          ))}
+          {!items.length && (
+            <PageMessage>
+              {s.allProfiles.length
+                ? "No matching profiles. Try another search or visibility filter."
+                : "No profiles saved. Import a Decaid profile export to get started."}
+            </PageMessage>
           )}
         </div>
-        <footer className="shrink-0 border-t border-border px-7 py-4 text-[12px] text-muted-foreground">
-          {s.profileLocked
-            ? s.block
-            : "Choose a profile to load its recipe. Your five favorites stay in place."}
-        </footer>
+      )}
+    </>
+  )
+}
+
+export function ProfileDetail({
+  s,
+  id,
+  navigate,
+}: {
+  s: SkinSession
+  id?: string
+  navigate: (route: Route) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState("")
+  const p = s.allProfiles.find((p) => p.id === id)
+  if (s.libraryLoading) return <PageMessage>Loading profile…</PageMessage>
+  if (!p || s.libraryError)
+    return (
+      <>
+        <PageMessage error>
+          {s.libraryError ||
+            "This profile is unavailable. Its favorite assignment has been preserved."}
+        </PageMessage>
+        <Action variant="outline" onClick={s.reloadLibrary}>
+          Retry
+        </Action>
+      </>
+    )
+  const hidden = p.record.visibility === "hidden"
+  return (
+    <>
+      <div className="flex gap-3">
+        <Action variant="outline" onClick={() => navigate({ page: "library" })}>
+          Back to library
+        </Action>
+        <Action
+          disabled={s.profileLocked || hidden}
+          onClick={async () => {
+            if (await s.selectProfile(p.id)) navigate({ page: "home" })
+          }}
+        >
+          Load profile
+        </Action>
+        <Action
+          variant="outline"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true)
+            setError("")
+            try {
+              await s.gateway.setProfileVisibility(
+                p.id,
+                hidden ? "visible" : "hidden"
+              )
+            } catch (error) {
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Could not change visibility"
+              )
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          {busy ? "Saving…" : hidden ? "Restore profile" : "Hide profile"}
+        </Action>
+        <Action
+          variant="outline"
+          disabled
+          title="Profile editing is not available yet"
+        >
+          Edit profile
+        </Action>
       </div>
-    </dialog>
+      {(error || s.notice) && (
+        <PageMessage error>{error || s.notice}</PageMessage>
+      )}
+      <dl className="my-6 grid grid-cols-[120px_1fr] gap-x-5 gap-y-3 border-y border-border py-5 text-sm">
+        <dt className="text-muted-foreground">Author</dt>
+        <dd>{p.by || "Not provided"}</dd>
+        <dt className="text-muted-foreground">Record</dt>
+        <dd className="break-all">{p.id}</dd>
+        <dt className="text-muted-foreground">Source</dt>
+        <dd>
+          {p.record.isDefault
+            ? "Bundled default · content is read-only"
+            : "User profile"}
+        </dd>
+        <dt className="text-muted-foreground">Visibility</dt>
+        <dd>{hidden ? "Hidden · restore to load or assign" : "Visible"}</dd>
+        <dt className="text-muted-foreground">Notes</dt>
+        <dd className="[overflow-wrap:anywhere] whitespace-pre-wrap">
+          {p.notes || "No notes"}
+        </dd>
+      </dl>
+      <Extraction
+        s={{
+          ...s,
+          active: false,
+          complete: false,
+          preview: previewSamples(p.raw),
+        }}
+        height={180}
+      />
+      <h2 className="mt-6 text-lg font-medium">Profile stages</h2>
+      <ol className="mt-3 divide-y divide-border">
+        {p.raw.steps.map((step, i) => (
+          <li key={i} className="flex min-h-12 gap-4 py-3 text-sm">
+            <span className="w-6 text-muted-foreground">{i + 1}</span>
+            <span className="min-w-0 flex-1 break-words">{step.name}</span>
+            <span className="text-muted-foreground tabular-nums">
+              {format(step.seconds)}s max · {format(step.temperature)}°C ·{" "}
+              {step.pump === "flow"
+                ? `${format(step.flow)} ml/s`
+                : `${format(step.pressure)} bar`}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <PageMessage>
+        Preview uses profile targets. Hiding a profile preserves its favorite
+        position as unavailable and does not change the loaded recipe.
+      </PageMessage>
+    </>
   )
 }

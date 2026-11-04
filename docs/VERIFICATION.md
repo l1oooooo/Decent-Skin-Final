@@ -4,6 +4,20 @@
 
 Validated on November 4, 2026 with Node 25.8.0, npm 11.21.0 and installed desktop Google Chrome. The installed Decaid target is 0.9.1+3027 (`14361a94`). All automated and manual commands in this validation used isolated local fixtures; no hardware command was sent.
 
+## Phases 2 and 3 — shared pages and favorites
+
+Implemented and fixture-verified on November 4, 2026. Device acceptance is still pending. The production audit below describes the earlier Focus baseline; its historical source line references may have moved.
+
+- `npm run check`: TypeScript, ESLint, **27 gateway tests**, and production build passed.
+- Browser coverage: the six existing Focus scenarios passed. Final shared-page/library runs cover direct entry/reload/Back, one five-socket session, focus restoration, 44px minimum controls, document overflow, swaps/reordering/clear/Cancel, all-empty persistence, failed Save, edits during Save, physical-start draft recovery, malformed/unavailable IDs, hidden/default records, import/export and partial import results. The staged import also survives a physical-start interruption. Duplicate-title loading and empty/error library recovery also passed. In total, all **15 browser scenarios** passed across the regression and final focused runs (six Focus scenarios plus nine page/library scenarios).
+- Home visual comparison at **1340 × 800**: **zero differing pixels** in the Cover rail, center, right panel and footer. The approved 48px Settings entry is the only header addition. Shared pages retain the 72px header, 220px rail and 96px footer.
+- Local captures: `artifacts/phase-2/home-before.png`, `artifacts/fidelity/test-ready.png`, `artifacts/phase-2/settings.png`, `favorites.png`, `library.png`; region comparison data is in `artifacts/phase-2/home-comparison.json`. The Settings, favorites and library captures were visually reviewed.
+- `artifacts/decent-skin-codex-0.2.0.zip` was rebuilt and inspected: root index/manifest, bundled fonts/artwork and relative assets; no source, dependencies, fixture origin/routes or environment files in its 12 entries. The version is unchanged because this work is not a new device-accepted release.
+
+The initial expanded browser run passed 12 of 14 scenarios; two loading/history cases failed before the final navigation/read-fencing work and both passed focused reruns (`npm run test:e2e -- tests/pages.spec.ts --grep 'unavailable, duplicate|Back cancellation'`: 2 passed). The remaining final page suite (`--grep-invert 'unavailable, duplicate|Back cancellation'`) passed all 7 scenarios. Verification is reported across regression and focused runs rather than claiming that initial full run was green. A separate gateway regression checks that a replayed preparation event after reconnect cannot be mistaken for a newly observed start, while machine-first shot events retain elapsed-time knowledge.
+
+Favorites and staged imports are retained in memory across navigation and shot interruption. A completed reload discards unsaved drafts; browser unload protection is requested but still requires WebView acceptance. File picker/download behavior, installation, live installed-version confirmation, actual Samsung viewport, background lifecycle and physical machine/scale behavior remain unverified. No hardware commands were sent.
+
 ## Visual evidence
 
 The approved Focus source was built and preserved before removing the prototype. Its final surface tone was set to 0.16. Reference and production were compared at a **1340 × 800 CSS viewport** in the same browser.

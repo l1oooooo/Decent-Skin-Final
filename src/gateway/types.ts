@@ -19,6 +19,19 @@ export interface Profile {
 export interface ProfileRecord {
   id: string
   profile: Profile
+  visibility?: "visible" | "hidden" | "deleted"
+  isDefault?: boolean
+  parentId?: string | null
+  updatedAt?: string
+  metadata?: Record<string, unknown> | null
+  [key: string]: unknown
+}
+export type FavoriteSlots = (string | null)[]
+export interface ImportResult {
+  imported: number
+  skipped: number
+  failed: number
+  errors: string[]
 }
 export interface Workflow {
   name?: string
@@ -90,7 +103,10 @@ export interface GatewaySnapshot {
   pending: boolean
   workflow: Workflow | null
   profiles: ProfileRecord[]
-  favorites: string[]
+  favorites: FavoriteSlots
+  favoritesLoaded: boolean
+  favoritesIssue: string
+  observedShot: number
   devices: Device[]
   deviceError: string
   machine: MachineSnapshot | null

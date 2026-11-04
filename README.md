@@ -1,6 +1,6 @@
 # Decent Focus
 
-Focus is the single application screen for the Decaid skin. The locked Monochrome Studio design uses surface tone **0.16**, the Cover profile rail and the rolling Focus brewing status. It is rendered directly at the requested **1340 × 800** landscape viewport; no exploration picker, appearance controls or simulated data ships in the application.
+Focus is the locked Home and brewing screen for the Decaid skin. Settings, profile library/details and favorite management share its visual system. The locked Monochrome Studio design uses surface tone **0.16**, the Cover profile rail and the rolling Focus brewing status. It is rendered directly at the requested **1340 × 800** landscape viewport; no exploration picker, appearance controls or simulated data ships in the application.
 
 ## Run and build
 
@@ -22,11 +22,15 @@ The adapter is verified against the published contract at installed Decaid **0.9
 
 Decaid must own shot sequencing, stop-at-weight and history. Use **tracking** mode (or the native managed `disabled` gateway mode). The skin blocks new operations in full gateway mode, where gateway-owned sequencing is not assured. It never changes gateway mode automatically. Stop remains an explicit, unreplayed request.
 
-The five favorite slots use profile IDs from Decaid's `decent-skin-codex/favorites` KV value when present, or the first five visible real profiles. The profile library exposes the full visible collection. Artwork is decorative, bundled and independent of recipe data.
+The five favorite positions use a nullable ID array in Decaid's `decent-skin-codex/favorites` KV value. Only a missing-key 404 suggests the first five visible profiles. Saved empty positions and unavailable IDs remain in place. Use **Browse profiles → Manage favorites** to replace, swap, reorder or clear positions, then Save. Loading a library profile changes the workflow independently. Failed saves retain both the last acknowledged rail and the editor draft.
+
+**Settings** sits beside History. Static query routes support direct entry, reload and browser Back: `?page=settings`, `?page=library`, `?page=favorites`, and `?page=profile&profile=<encoded ID>`. All pages share one session. A newly observed machine shot start returns to Focus, closes overlays and retains favorite drafts and staged imports; return to Manage favorites or Profile library to recover them. Ordinary navigation away from that editor prompts before discarding changes. Reload/unload prompts for unsaved changes where the browser supports it; drafts do not persist across a completed reload.
+
+The library supports search, sorting, visible/hidden views, read-only details/target preview, hide/restore and JSON profile-record import/export. Imports show imported, skipped and failed counts; existing IDs are skipped by Decaid. Profile content editing stays disabled until phase 5. Future Settings categories are identified by phase and expose no placeholder hardware controls. Artwork is decorative, bundled and independent of recipe data.
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Future screens are planned, not implemented in the current release.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2 and 3 are implemented in this working tree; later controls remain planned. See the verification record for fixture and device status.
 
 ## Tests and limits
 
