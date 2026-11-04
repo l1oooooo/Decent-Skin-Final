@@ -87,48 +87,60 @@ export function RevisionHeader({ s }) {
 }
 
 export function RevisionProfiles({ s }) {
+  const image = artwork[s.profileIndex]
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col gap-4 border-r border-border bg-[var(--recess)] p-4">
-      <div
-        role="group"
-        aria-label="Favorite profiles"
-        className="flex min-h-0 flex-1 flex-col gap-1"
-      >
-        {s.profiles.map((p, index) => {
-          const selected = s.profileIndex === index
-          return (
+    <aside
+      aria-label="Profile selection"
+      className="flex w-[220px] shrink-0 flex-col gap-4 border-r border-border bg-[var(--recess)] p-4"
+    >
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div
+          role="group"
+          aria-label="Favorite profiles"
+          className="flex shrink-0 flex-col gap-1"
+        >
+          {s.profiles.map((profile, index) => (
             <button
-              key={p.name}
+              key={profile.name}
               type="button"
-              aria-label={`Select ${p.name}`}
-              aria-pressed={selected}
+              aria-label={`Select ${profile.name}`}
+              aria-pressed={s.profileIndex === index}
               disabled={s.locked}
               onClick={() => s.selectProfile(index)}
-              className={`flex min-h-16 flex-col overflow-hidden rounded-[var(--control-radius)] text-left text-[14px] font-medium transition-colors duration-150 focus-visible:outline-offset-2 ${selected ? "min-h-0 flex-1 bg-foreground/15 text-foreground" : "h-16 shrink-0 text-muted-foreground hover:bg-muted"}`}
+              className={`flex h-12 min-h-12 shrink-0 items-center justify-between gap-2 rounded-[var(--control-radius)] px-3 text-left text-[14px] font-medium focus-visible:outline-offset-2 ${s.profileIndex === index ? "bg-foreground/15 text-foreground" : "text-muted-foreground hover:bg-muted"}`}
             >
-              <span className="flex h-16 shrink-0 items-center px-4">
-                {p.short}
-              </span>
-              {selected && (
-                <span className="relative min-h-0 w-full flex-1">
-                  <img
-                    src={artwork[index]}
-                    width={768}
-                    height={768}
-                    alt=""
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover select-none"
-                  />
-                </span>
-              )}
+              <span>{profile.short}</span>
+              <span
+                aria-hidden="true"
+                className={`size-1.5 shrink-0 rounded-full ${s.profileIndex === index ? "bg-foreground" : "bg-border"}`}
+              />
             </button>
-          )
-        })}
+          ))}
+        </div>
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[var(--control-radius)] bg-muted">
+          {image ? (
+            <img
+              src={image}
+              width={768}
+              height={768}
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover outline-1 -outline-offset-1 outline-white/10 select-none"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-full items-center justify-center text-muted-foreground"
+            >
+              <Library size={40} strokeWidth={1} />
+            </div>
+          )}
+        </div>
       </div>
       <div className="shrink-0 border-t border-border pt-3">
         <Action
           variant="ghost"
           aria-haspopup="dialog"
-          className="w-full justify-start !px-4 text-muted-foreground"
+          className="w-full justify-start !px-3 text-muted-foreground"
           onClick={() => {
             s.setSettings(null)
             s.setLibraryOpen(true)

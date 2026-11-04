@@ -3,21 +3,13 @@ import { SlidersHorizontal, RotateCcw, Copy, Download } from "lucide-react"
 import { SessionDialogs, SimulationBar } from "./common"
 import { ProfileLibrary } from "./profile-library"
 import selectedDirection from "./selected-direction.json"
-import MonochromeStudio from "./variants/MonochromeStudio"
 import MonochromeRevision from "./variants/MonochromeRevision"
 import { useTabletSession } from "./use-tablet-session"
 
 const directions = [
   {
-    name: "Original",
-    axis: "Monochrome Studio · preserved reference.",
-    accent: "oklch(1 0 0)",
-    component: MonochromeStudio,
-    theme: "r2-grid r3-monochrome",
-  },
-  {
     name: "Revision",
-    axis: "Monochrome Studio · profile settings and brewing stages.",
+    axis: "Monochrome Studio · Cover profiles and Focus brewing.",
     accent: "oklch(1 0 0)",
     component: MonochromeRevision,
     theme: "r2-grid r3-monochrome",
@@ -25,7 +17,6 @@ const directions = [
 ]
 
 const params = new URLSearchParams(location.search)
-const initialVariant = Number(params.get("v"))
 const deviceView = params.get("device") === "1"
 const scenarios = [
   "ready",
@@ -72,13 +63,7 @@ function ExperienceFrame({ direction, scale, s }) {
   )
 }
 export default function App() {
-  const [current, setCurrent] = useState(
-    Number.isInteger(initialVariant) &&
-      initialVariant >= 1 &&
-      initialVariant <= directions.length
-      ? initialVariant - 1
-      : selectedDirection.variant - 1
-  )
+  const current = 0
   const [scenario, setScenario] = useState(
     scenarios.includes(params.get("state"))
       ? params.get("state")
@@ -89,7 +74,6 @@ export default function App() {
   const [scale, setScale] = useState(1)
   const [panel, setPanel] = useState(false)
   const [copied, setCopied] = useState(false)
-  const picker = useRef(null)
   const viewport = useRef(null)
   const [appearances, setAppearances] = useState(() =>
     directions.map(() => ({
@@ -116,28 +100,9 @@ export default function App() {
     observer.observe(viewport.current)
     return () => observer.disconnect()
   }, [])
-  useLayoutEffect(() => {
-    const move = () => {
-      const el = picker.current.querySelectorAll("button")[current]
-      const highlight = picker.current.firstElementChild
-      highlight.style.width = `${el.offsetWidth}px`
-      highlight.style.transform = `translateX(${el.offsetLeft}px)`
-    }
-    move()
-    window.addEventListener("resize", move)
-    return () => window.removeEventListener("resize", move)
-  }, [current])
-  useEffect(() => {
-    const id = requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        picker.current?.setAttribute("data-ready", "")
-      )
-    )
-    return () => cancelAnimationFrame(id)
-  }, [])
   useEffect(() => {
     const url = new URL(location.href)
-    url.searchParams.set("v", current + 1)
+    url.searchParams.set("v", "2")
     url.searchParams.set("state", scenario)
     longName
       ? url.searchParams.set("long", "1")
@@ -157,15 +122,7 @@ export default function App() {
         e.target.closest('[role="dialog"]')
       )
         return
-      const n = Number(e.key)
-      if (n >= 1 && n <= directions.length) setCurrent(n - 1)
-      else if (e.key === "ArrowRight") {
-        e.preventDefault()
-        setCurrent((v) => (v + 1) % directions.length)
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault()
-        setCurrent((v) => (v + directions.length - 1) % directions.length)
-      } else if (e.key.toLowerCase() === "r") setReplay((v) => v + 1)
+      if (e.key.toLowerCase() === "r") setReplay((v) => v + 1)
     }
     window.addEventListener("keydown", key)
     return () => window.removeEventListener("keydown", key)
@@ -181,7 +138,7 @@ export default function App() {
     return JSON.stringify(
       {
         direction: directions[current].name,
-        variant: current + 1,
+        variant: 2,
         scenario,
         longName,
         ...config,
@@ -210,6 +167,12 @@ export default function App() {
   }
   return (
     <div
+      onKeyDownCapture={(event) => {
+        event.currentTarget.dataset.input = "keyboard"
+      }}
+      onPointerDownCapture={(event) => {
+        event.currentTarget.dataset.input = "pointer"
+      }}
       className={`study-shell ${deviceView ? "device-view" : ""} ${directions[current].theme}`}
       style={{
         "--surface-tone": config.surfaceTone,
@@ -220,12 +183,7 @@ export default function App() {
       <header className="study-header">
         <div>
           <p className="study-label">
-            DECAID / HOME & BREWING{" "}
-            <span>
-              {current === selectedDirection.variant - 1
-                ? "Selected direction"
-                : "Reference"}
-            </span>
+            DECAID / HOME & BREWING <span>Selected direction</span>
           </p>
           <p className="study-caption">
             <strong>{directions[current].name}</strong>{" "}
@@ -291,8 +249,11 @@ export default function App() {
         />
       </div>
       <div className="study-size">
+        <a className="motion-study-link" href="./motion/?v=3&state=brewing">
+          Motion studies ↗
+        </a>
         1340 × 800 <span>· {Math.round(scale * 100)}%</span>
-        <a href={`?v=${current + 1}&state=ready&device=1`}>Tablet view ↗</a>
+        <a href={`?v=2&state=${scenario}&device=1`}>Tablet view ↗</a>
       </div>
       {panel && (
         <aside className="study-panel" aria-label="Appearance controls">
@@ -333,24 +294,6 @@ export default function App() {
           <p>Local demo · no machine commands</p>
         </aside>
       )}
-      <nav
-        ref={picker}
-        className="proto-picker"
-        aria-label="Prototype variants"
-      >
-        <span className="proto-picker-highlight" aria-hidden="true" />
-        {directions.map((direction, i) => (
-          <button
-            key={direction.name}
-            className="proto-picker-item"
-            data-active={i === current ? "" : undefined}
-            aria-current={i === current ? "true" : undefined}
-            onClick={() => setCurrent(i)}
-          >
-            {direction.name}
-          </button>
-        ))}
-      </nav>
     </div>
   )
 }

@@ -59,12 +59,21 @@ technical decisions, and the prototype decision log for design iterations.
 
 ## Design and code conventions
 
-- Monochrome Studio is the selected direction. The current picker contains
-  Original (v=1), preserved unchanged, and Revision (v=2). Studio, Grid, and
-  Grid Focus are retired from the picker; historical source remains available. The accepted default appearance
+- Revision (v=2) is the selected Monochrome Studio starting point. Original
+  has been removed at the user's request. Studio, Grid, and Grid Focus are
+  retired; their historical source remains available. The accepted appearance
   is in `proto/home-brewing/selected-direction.json`: surface tone 0.17,
-  radius 8px, feedback 150ms. This selection does not promote the prototype to
-  the main application or authorize live machine integration.
+  radius 8px, feedback 150ms.
+- Revision uses the Cover rail: five favorites above fixed artwork, without a
+  profile-kind/index row. Focus is its final selected brewing status: rolling
+  status names with a circular 3×3 dot wave and a terminal Shot complete row.
+  Use 104px stage rows with stationary dividers around the current stage and
+  a 10px dot-to-label gap. Only the current row shows dots. Omit the timer,
+  progress bar, descriptions, and top strip. The old
+  section comparison redirects to Revision; `motion/` retains Focus and Ribbon
+  as study references.
+  These prototype choices do not promote code into the main application or
+  authorize live machine integration.
 
 - Prioritize readable dark surfaces, clear hierarchy, accessible contrast, and
   restrained decoration. Use chart/status color with accompanying labels.

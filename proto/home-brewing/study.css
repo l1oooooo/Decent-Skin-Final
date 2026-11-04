@@ -66,3 +66,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .device-view .study-header,.device-view .study-size,.device-view .study-simulation,.device-view .proto-picker { display:none; }
 .device-view .study-frame { outline:none; }
 .r3-monochrome { --recess:oklch(.10 0 0); }
+
+
+/* Selected Timeline brewing status. */
+.status-panel {
+  --status-duration: 180ms;
+  --status-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+.status-panel[data-running="true"] .status-track {
+  transition: transform var(--status-duration) var(--status-ease);
+}
+[data-input="keyboard"] .status-track {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-track { transition: none !important; }
+}
+
+.study-size a.motion-study-link { display:inline-flex;align-items:center;min-height:44px; }
