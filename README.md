@@ -12,10 +12,10 @@ The existing project already contains a React + TypeScript + Vite environment an
 
 - Demo-only main application with six deterministic machine scenarios, simulated shot telemetry, and a tablet preview.
 - Local theme/font assets, reusable controls, static build configuration, and demo skin ZIP packaging.
-- Six rounds of Home/Brewing exploration. The current comparison includes Studio, Monochrome Studio, Grid, and Grid Focus, with recipe adjustments, profile browsing, and simulated utility controls.
+- Six rounds of Home/Brewing exploration. The current comparison contains Monochrome Studio Original and Revision, with recipe adjustments, profile browsing, and simulated utility controls.
 - Unit tests and browser checks for the main demo. The concept exploration is a separate entry point and requires its own build/visual checks.
 
-**Not implemented or verified:** live Decaid transport, production profile/history persistence, a final selected design, installation acceptance inside Decaid, Samsung Android WebView validation, and physical machine behavior. Prototype actions do not send machine commands.
+**Not implemented or verified:** live Decaid transport, production profile/history persistence, a production-ready design, installation acceptance inside Decaid, Samsung Android WebView validation, and physical machine behavior. Prototype actions do not send machine commands.
 
 ## Local development
 
@@ -79,7 +79,7 @@ The main app is prepared to package `dist/` contents with `index.html` at the ZI
 ## Development workflow and roadmap
 
 1. Read `AGENTS.md`, inspect relevant files, and preserve unrelated work.
-2. Select/refine the Home and Brewing direction before promoting prototype code into `src/`.
+2. Refine the selected Monochrome Studio Home and Brewing direction, preserving Original as the reference, before promoting prototype code into `src/`.
 3. Confirm the design-system preset and the tablet's actual CSS viewport, pixel density, WebView version, and fullscreen behavior.
 4. Validate static installation in Decaid, including offline asset loading and background/resume.
 5. Implement a separately scoped REST/WebSocket adapter with verified workflow semantics, connection states, persistence, and command gating.

@@ -52,6 +52,7 @@ export function useSession(
   const [notice, setNotice] = useState("")
   const [rated, setRated] = useState(null)
   const [history, setHistory] = useState([])
+  const [scaleReconnected, setScaleReconnected] = useState(false)
   const phase = snapshot.scenario
   useEffect(() => {
     if (phase !== "brewing" || paused) return
@@ -74,6 +75,7 @@ export function useSession(
     return () => clearTimeout(id)
   }, [notice])
   const connected = phase !== "disconnected" && phase !== "error"
+  const scaleConnected = snapshot.scaleConnected || scaleReconnected
   const ready = phase === "ready" || phase === "completed"
   const active = phase === "brewing"
   const complete = phase === "completed"
@@ -85,6 +87,7 @@ export function useSession(
   const samples = snapshot.samples.map((point) => ({
     ...point,
     weight: (point.weight / 36) * yieldTarget,
+    temperature,
   }))
   function setModal(next) {
     if (complete && (next === "profiles" || next === "recipe")) reset()
@@ -184,6 +187,13 @@ export function useSession(
     shot,
     samples,
     connected,
+    waterLevel: snapshot.machineConnected ? (phase === "error" ? 8 : 75) : null,
+    scaleConnected,
+    scaleWeight: scaleConnected ? shot.weight : null,
+    retryScale: () => {
+      setScaleReconnected(true)
+      setNotice("Demo scale reconnected")
+    },
     ready,
     active,
     complete,

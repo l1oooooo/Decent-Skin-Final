@@ -47,7 +47,7 @@ export function TabletStatus({ s }) {
     </div>
   )
 }
-export function TabletHeader({ s }) {
+export function TabletHeader({ s, children, showDemo = true }) {
   return (
     <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-border px-7">
       <Wordmark />
@@ -60,9 +60,12 @@ export function TabletHeader({ s }) {
         <span className="text-[12px] text-muted-foreground">
           {s.connected ? "Scale connected" : "Scale unavailable"}
         </span>
-        <span className="rounded border border-border px-2 py-1 text-[10px] tracking-wider text-muted-foreground">
-          DEMO
-        </span>
+        {showDemo && (
+          <span className="rounded border border-border px-2 py-1 text-[10px] tracking-wider text-muted-foreground">
+            DEMO
+          </span>
+        )}
+        {children}
       </div>
     </header>
   )
@@ -264,9 +267,6 @@ export function UtilityCard({ s }) {
     }
   }, [s.settings])
   if (!s.settings) return null
-  const steam = s.settings === "Steam",
-    water = s.settings === "Hot water",
-    running = s.operation === s.settings
   return (
     <section
       ref={ref}
@@ -280,6 +280,16 @@ export function UtilityCard({ s }) {
       }}
       className="absolute bottom-[108px] left-6 z-[var(--z-dropdown)] w-[380px] rounded-xl border border-border bg-card p-6 shadow-2xl focus-visible:outline-2 focus-visible:outline-foreground"
     >
+      <UtilitySettings s={s} />
+    </section>
+  )
+}
+export function UtilitySettings({ s }) {
+  const steam = s.settings === "Steam",
+    water = s.settings === "Hot water",
+    running = s.operation === s.settings
+  return (
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-[20px] font-medium">{s.settings}</h2>
         <Action
@@ -373,9 +383,10 @@ export function UtilityCard({ s }) {
             ? "Enable steam to use this function."
             : "Saved for this demo session."}
       </p>
-    </section>
+    </>
   )
 }
+
 export function SessionHistory({ s }) {
   return (
     <Action
@@ -388,16 +399,29 @@ export function SessionHistory({ s }) {
     </Action>
   )
 }
-export function Extraction({ s, height = 210 }) {
+export function Extraction({
+  s,
+  height = 210,
+  temperature = false,
+  compactLegend = false,
+}) {
   return (
     <div
       className="graph-color"
       style={{
         "--signal": "oklch(.76 .14 250)",
         "--signal-warm": "oklch(.78 .13 65)",
+        ...(temperature
+          ? { "--signal-temperature": "oklch(.78 .12 330)" }
+          : {}),
       }}
     >
-      <Trace s={s} height={height} />
+      <Trace
+        s={s}
+        height={height}
+        temperature={temperature}
+        compactLegend={compactLegend}
+      />
     </div>
   )
 }
@@ -454,32 +478,31 @@ export function Notice({ s }) {
   ) : null
 }
 
-export function BottomBar({ s, history = true, centeredUtilities = false }) {
-  if (centeredUtilities)
-    return (
-      <footer className="grid h-[96px] shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-6 border-t border-border bg-background px-7 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center gap-6">
-          <SessionHistory s={s} />
-          <span aria-hidden="true" className="h-8 border-l border-border" />
-        </div>
-        <UtilityButtons s={s} />
-        <div className="flex items-center justify-end gap-6">
-          <span aria-hidden="true" className="h-8 border-l border-border" />
-          <Brew s={s} className="w-[240px] shrink-0" />
-        </div>
-      </footer>
-    )
+export function BottomBar({
+  s,
+  history = true,
+  dividers = true,
+  stopDestructive = false,
+}) {
   return (
     <footer className="flex h-[96px] shrink-0 items-center gap-6 border-t border-border bg-background px-7 pb-[env(safe-area-inset-bottom)]">
       {history && (
         <>
           <SessionHistory s={s} />
-          <span aria-hidden="true" className="h-8 border-l border-border" />
+          {dividers && (
+            <span aria-hidden="true" className="h-8 border-l border-border" />
+          )}
         </>
       )}
       <UtilityButtons s={s} />
-      <span aria-hidden="true" className="ml-auto h-8 border-l border-border" />
-      <Brew s={s} className="w-[240px] shrink-0" />
+      <span
+        aria-hidden="true"
+        className={`ml-auto h-8 ${dividers ? "border-l border-border" : ""}`}
+      />
+      <Brew
+        s={s}
+        className={`w-[240px] shrink-0 ${stopDestructive && s.active ? "!bg-red-700 !text-white hover:!bg-red-600" : ""}`}
+      />
     </footer>
   )
 }

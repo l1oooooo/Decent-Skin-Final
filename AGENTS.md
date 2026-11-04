@@ -59,6 +59,13 @@ technical decisions, and the prototype decision log for design iterations.
 
 ## Design and code conventions
 
+- Monochrome Studio is the selected direction. The current picker contains
+  Original (v=1), preserved unchanged, and Revision (v=2). Studio, Grid, and
+  Grid Focus are retired from the picker; historical source remains available. The accepted default appearance
+  is in `proto/home-brewing/selected-direction.json`: surface tone 0.17,
+  radius 8px, feedback 150ms. This selection does not promote the prototype to
+  the main application or authorize live machine integration.
+
 - Prioritize readable dark surfaces, clear hierarchy, accessible contrast, and
   restrained decoration. Use chart/status color with accompanying labels.
 - Keep frequent recipe adjustments directly accessible; avoid unnecessary

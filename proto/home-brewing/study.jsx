@@ -2,40 +2,25 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { SlidersHorizontal, RotateCcw, Copy, Download } from "lucide-react"
 import { SessionDialogs, SimulationBar } from "./common"
 import { ProfileLibrary } from "./profile-library"
-import Studio from "./variants/Studio"
-import Grid from "./variants/Grid"
+import selectedDirection from "./selected-direction.json"
 import MonochromeStudio from "./variants/MonochromeStudio"
-import GridFocus from "./variants/GridFocus"
+import MonochromeRevision from "./variants/MonochromeRevision"
 import { useTabletSession } from "./use-tablet-session"
 
 const directions = [
   {
-    name: "Studio",
-    axis: "Warm split panes, profile rail, and a bottom action bar.",
-    accent: "oklch(.93 .015 85)",
-    component: Studio,
-    theme: "r2-studio",
-  },
-  {
-    name: "Monochrome Studio",
-    axis: "Studio layout, Grid palette. Preparation and extraction each get a clear focus.",
+    name: "Original",
+    axis: "Monochrome Studio · preserved reference.",
     accent: "oklch(1 0 0)",
     component: MonochromeStudio,
     theme: "r2-grid r3-monochrome",
   },
   {
-    name: "Grid",
-    axis: "Joined grid, direct recipe controls, and a focused Brewing view.",
+    name: "Revision",
+    axis: "Monochrome Studio · profile settings and brewing stages.",
     accent: "oklch(1 0 0)",
-    component: Grid,
-    theme: "r2-grid",
-  },
-  {
-    name: "Grid Focus",
-    axis: "Recipe controls above the graph, with a dedicated shot column.",
-    accent: "oklch(1 0 0)",
-    component: GridFocus,
-    theme: "r2-grid",
+    component: MonochromeRevision,
+    theme: "r2-grid r3-monochrome",
   },
 ]
 
@@ -92,10 +77,12 @@ export default function App() {
       initialVariant >= 1 &&
       initialVariant <= directions.length
       ? initialVariant - 1
-      : 0
+      : selectedDirection.variant - 1
   )
   const [scenario, setScenario] = useState(
-    scenarios.includes(params.get("state")) ? params.get("state") : "ready"
+    scenarios.includes(params.get("state"))
+      ? params.get("state")
+      : selectedDirection.scenario
   )
   const [longName, setLongName] = useState(params.get("long") === "1")
   const [replay, setReplay] = useState(0)
@@ -104,7 +91,15 @@ export default function App() {
   const [copied, setCopied] = useState(false)
   const picker = useRef(null)
   const viewport = useRef(null)
-  const config = useRef({ surfaceTone: 0.16, controlRadius: 8, duration: 150 })
+  const [appearances, setAppearances] = useState(() =>
+    directions.map(() => ({
+      surfaceTone: selectedDirection.surfaceTone,
+      controlRadius: selectedDirection.controlRadius,
+      duration: selectedDirection.duration,
+    }))
+  )
+
+  const config = appearances[current]
   useLayoutEffect(() => {
     const observer = new ResizeObserver(([entry]) =>
       setScale(
@@ -158,7 +153,8 @@ export default function App() {
         e.ctrlKey ||
         e.altKey ||
         e.shiftKey ||
-        document.querySelector("dialog[open]")
+        document.querySelector("dialog[open]") ||
+        e.target.closest('[role="dialog"]')
       )
         return
       const n = Number(e.key)
@@ -174,9 +170,12 @@ export default function App() {
     window.addEventListener("keydown", key)
     return () => window.removeEventListener("keydown", key)
   }, [])
-  function tune(key, variable, value, suffix = "") {
-    config.current[key] = Number(value)
-    document.documentElement.style.setProperty(variable, value + suffix)
+  function tune(key, value) {
+    setAppearances((previous) =>
+      previous.map((appearance, index) =>
+        index === current ? { ...appearance, [key]: Number(value) } : appearance
+      )
+    )
   }
   function savedConfig() {
     return JSON.stringify(
@@ -185,7 +184,7 @@ export default function App() {
         variant: current + 1,
         scenario,
         longName,
-        ...config.current,
+        ...config,
       },
       null,
       2
@@ -212,11 +211,21 @@ export default function App() {
   return (
     <div
       className={`study-shell ${deviceView ? "device-view" : ""} ${directions[current].theme}`}
+      style={{
+        "--surface-tone": config.surfaceTone,
+        "--control-radius": `${config.controlRadius}px`,
+        "--feedback-duration": `${config.duration}ms`,
+      }}
     >
       <header className="study-header">
         <div>
           <p className="study-label">
-            DECAID / ROUND 06 <span>0{current + 1} — 04</span>
+            DECAID / HOME & BREWING{" "}
+            <span>
+              {current === selectedDirection.variant - 1
+                ? "Selected direction"
+                : "Reference"}
+            </span>
           </p>
           <p className="study-caption">
             <strong>{directions[current].name}</strong>{" "}
@@ -289,38 +298,14 @@ export default function App() {
         <aside className="study-panel" aria-label="Appearance controls">
           <h2>Appearance</h2>
           {[
-            [
-              "surfaceTone",
-              "Surface tone",
-              "--surface-tone",
-              0.12,
-              0.24,
-              0.01,
-              "",
-            ],
-            [
-              "controlRadius",
-              "Control radius",
-              "--control-radius",
-              0,
-              18,
-              1,
-              "px",
-            ],
-            [
-              "duration",
-              "Press feedback",
-              "--feedback-duration",
-              0,
-              300,
-              10,
-              "ms",
-            ],
-          ].map(([key, label, variable, min, max, step, suffix]) => (
+            ["surfaceTone", "Surface tone", 0.12, 0.24, 0.01, ""],
+            ["controlRadius", "Control radius", 0, 18, 1, "px"],
+            ["duration", "Press feedback", 0, 300, 10, "ms"],
+          ].map(([key, label, min, max, step, suffix]) => (
             <label key={key}>
               {label}
               <output>
-                {config.current[key]}
+                {config[key]}
                 {suffix}
               </output>
               <input
@@ -329,11 +314,9 @@ export default function App() {
                 min={min}
                 max={max}
                 step={step}
-                defaultValue={config.current[key]}
+                value={config[key]}
                 onInput={(e) => {
-                  tune(key, variable, e.target.value, suffix)
-                  e.target.previousElementSibling.textContent =
-                    e.target.value + suffix
+                  tune(key, e.target.value)
                 }}
               />
             </label>

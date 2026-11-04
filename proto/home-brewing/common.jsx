@@ -204,7 +204,14 @@ export function PhaseLine({ s }) {
     </div>
   )
 }
-export function Trace({ s, height = 210, grid = true, simple = false }) {
+export function Trace({
+  s,
+  height = 210,
+  grid = true,
+  simple = false,
+  temperature = false,
+  compactLegend = false,
+}) {
   const root = useRef(null)
   const [w, setWidth] = useState(820)
   useEffect(() => {
@@ -216,10 +223,11 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
   }, [])
   const h = 220,
     left = 35,
-    right = w - 15,
+    right = w - (temperature ? 44 : 15),
     top = 18,
     bottom = 185
   const [showFlow, setFlow] = useState(true)
+  const [showTemperature, setTemperature] = useState(true)
   const curve =
     s.active || s.complete
       ? s.samples
@@ -227,6 +235,7 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
           const t = i / 4
           return {
             elapsed: t,
+            temperature: s.temperature,
             pressure:
               t === 0 || t === 30
                 ? 0
@@ -248,6 +257,15 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
         `${left + (p.elapsed / 30) * (right - left)},${bottom - (p.flow / 4) * (bottom - top)}`
     )
     .join(" ")
+  const thermal = temperature
+    ? curve
+        .filter((p) => Number.isFinite(p.temperature))
+        .map(
+          (p) =>
+            `${left + (p.elapsed / 30) * (right - left)},${bottom - ((p.temperature - 60) / 40) * (bottom - top)}`
+        )
+        .join(" ")
+    : ""
   return (
     <div ref={root} className="min-w-0">
       <div className="mb-2 flex items-center gap-5 text-[12px]">
@@ -267,12 +285,33 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
             <span className={showFlow ? "" : "text-muted-foreground"}>
               Flow
             </span>
-            <span className="text-muted-foreground">ml/s · 0–4</span>
+            <span className="text-muted-foreground">
+              {compactLegend ? "ml/s" : "ml/s · 0–4"}
+            </span>
           </button>
         )}
-        <span className="ml-auto text-muted-foreground">
-          {s.active || s.complete ? "Simulated shot" : "Illustrative preview"}
-        </span>
+        {temperature && (
+          <button
+            className="flex min-h-11 items-center gap-2"
+            aria-label="Temperature trace"
+            aria-pressed={showTemperature}
+            onClick={() => setTemperature(!showTemperature)}
+          >
+            <i
+              aria-hidden="true"
+              className={`h-0 w-3 border-t-2 border-dashed ${showTemperature ? "border-[var(--signal-temperature)]" : "border-muted-foreground"}`}
+            />
+            <span className={showTemperature ? "" : "text-muted-foreground"}>
+              Temperature
+            </span>
+            <span className="text-muted-foreground">°C</span>
+          </button>
+        )}
+        {(!compactLegend || s.active || s.complete) && (
+          <span className="ml-auto text-muted-foreground">
+            {s.active || s.complete ? "Simulated shot" : "Illustrative preview"}
+          </span>
+        )}
       </div>
       <svg
         className="w-full overflow-visible"
@@ -280,7 +319,11 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
         role="img"
-        aria-label="Illustrative pressure and flow curves"
+        aria-label={
+          temperature
+            ? "Illustrative pressure, flow and temperature curves. Temperature uses the right axis, 60 to 100 degrees Celsius."
+            : "Illustrative pressure and flow curves"
+        }
       >
         {grid &&
           [0, 3, 6, 9, 12].map((n) => (
@@ -302,6 +345,19 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
                 {n}
               </text>
             </g>
+          ))}
+        {temperature &&
+          [60, 70, 80, 90, 100].map((n) => (
+            <text
+              key={`temperature-${n}`}
+              x={w}
+              y={bottom - ((n - 60) / 40) * (bottom - top) + 4}
+              textAnchor="end"
+              fill="var(--signal-temperature)"
+              fontSize="12"
+            >
+              {n}°
+            </text>
           ))}
         {[0, 10, 20, 30].map((n) => (
           <text
@@ -331,6 +387,16 @@ export function Trace({ s, height = 210, grid = true, simple = false }) {
             stroke="var(--signal-warm)"
             strokeWidth="1.5"
             strokeDasharray="3 5"
+          />
+        )}
+        {temperature && showTemperature && (
+          <polyline
+            aria-label="Temperature"
+            points={thermal}
+            fill="none"
+            stroke="var(--signal-temperature)"
+            strokeWidth="2"
+            strokeDasharray="8 4"
           />
         )}
       </svg>
