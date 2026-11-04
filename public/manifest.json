@@ -1,6 +1,6 @@
 {
   "id": "decent-skin-codex",
-  "name": "Decent Skin Demo",
-  "description": "Demo-only development skin for Home and Brewing exploration. No live machine control.",
-  "version": "0.1.0"
+  "name": "Decent Focus",
+  "description": "Focus skin for Decaid with live workflow controls and brewing telemetry.",
+  "version": "0.2.0"
 }

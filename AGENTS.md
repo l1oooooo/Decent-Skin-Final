@@ -2,7 +2,7 @@
 
 Read this file and the relevant source before changing the project. Keep these
 instructions focused on durable decisions; use README for setup, docs for
-technical decisions, and the prototype decision log for design iterations.
+technical decisions, and the design history for previous iterations.
 
 ## Purpose and ownership
 
@@ -13,10 +13,11 @@ technical decisions, and the prototype decision log for design iterations.
 - This repository is an independent frontend. Decaid owns machine/scale
   connections, Bluetooth/USB, workflows, profiles, execution, and shot storage.
   Streamline JS is a behavior/API reference, not this app's runtime dependency.
-- The current code is demo-only. Preserve that boundary until live integration
-  is explicitly requested. Never send hardware commands during setup, UI
-  exploration, or demo tests; do not add automatic machine discovery or fallback
-  from failed live data to simulated readings.
+- Live integration was explicitly requested on November 4, 2026. Decaid owns
+  execution, stop-at-weight, device pairing and shot storage; the skin is a
+  REST/WebSocket client. Never send hardware commands during development or
+  automated tests. Use the isolated API fixture. Never auto-discover machines,
+  replay commands after reconnect, or substitute simulated readings on failure.
 
 ## Confirmed stack and integration boundary
 
@@ -37,20 +38,21 @@ technical decisions, and the prototype decision log for design iterations.
   Skin origins may use separate ports. Do not infer the API port from the page
   port or assume laptop localhost is the tablet. Recheck the installed Decaid
   API contract before integrating. See [integration notes](docs/DECAID.md).
-- Modern CSS support, lifecycle/resume, routing, live connection configuration,
-  persistence, command gating, and distribution remain integration decisions.
-  Do not describe a static build or desktop preview as hardware verification.
+- The adapter implements reconnect/resume, explicit origin configuration,
+  workflow persistence and command gating. Static packaging is checked locally;
+  modern CSS, installation and behavior on the target WebView still require
+  device acceptance. Do not describe a desktop preview as hardware verification.
 
 ## Directory responsibilities
 
 | Path | Responsibility |
 | --- | --- |
-| `src/` | Main typed demo application and reusable components |
-| `src/gateway/` | UI-facing contract, deterministic simulation, unit tests; future adapter boundary |
+| `src/` | Production Focus application and reusable components |
+| `src/gateway/` | Decaid adapter, wire types, normalization and unit tests |
 | `src/components/ui/` | Generated/customized shadcn components |
 | `src/index.css`, `components.json` | Theme tokens, fonts, component configuration |
-| `proto/home-brewing/` | Isolated JSX concept exploration; not imported into the main app |
-| `proto/home-brewing/DECISIONS.md` | Design choices and iteration history |
+| `src/skin/` | Sole locked Focus UI and bundled artwork |
+| `docs/design/` | Locked design and historical iteration decisions |
 | `public/` | Static skin metadata and assets |
 | `tests/` | Main-app Playwright checks |
 | `scripts/` | Skin packaging and optional historical export tooling |
@@ -59,21 +61,18 @@ technical decisions, and the prototype decision log for design iterations.
 
 ## Design and code conventions
 
-- Revision (v=2) is the selected Monochrome Studio starting point. Original
-  has been removed at the user's request. Studio, Grid, and Grid Focus are
-  retired; their historical source remains available. The accepted appearance
-  is in `proto/home-brewing/selected-direction.json`: surface tone 0.17,
-  radius 8px, feedback 150ms.
-- Revision uses the Cover rail: five favorites above fixed artwork, without a
-  profile-kind/index row. Focus is its final selected brewing status: rolling
-  status names with a circular 3×3 dot wave and a terminal Shot complete row.
-  Use 104px stage rows with stationary dividers around the current stage and
-  a 10px dot-to-label gap. Only the current row shows dots. Omit the timer,
-  progress bar, descriptions, and top strip. The old
-  section comparison redirects to Revision; `motion/` retains Focus and Ribbon
-  as study references.
-  These prototype choices do not promote code into the main application or
-  authorize live machine integration.
+- Focus is the sole production design. Surface tone 0.16, radius 8px and
+  feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
+  layout and typography. Retired variants and appearance controls are removed;
+  their history is in `docs/design/HISTORY.md` and Git.
+- The Cover rail has five real favorite profiles above artwork. Focus uses
+  104px rolling status rows, 10px dot-to-label gap, stationary fading dividers,
+  and the circular 3×3 dot wave on the current process only. Shot complete is
+  the final row without dots. No right-panel timer, progress bar, description
+  or top strip. Stages follow real profile frames rather than demo timing.
+- Installed integration target: Decaid 0.9.1+3027, commit 14361a94. See
+  `docs/DECAID.md` for contract and operating-mode constraints. Static builds
+  and fixture tests do not establish Samsung WebView or hardware acceptance.
 
 - Prioritize readable dark surfaces, clear hierarchy, accessible contrast, and
   restrained decoration. Use chart/status color with accompanying labels.
@@ -85,14 +84,13 @@ technical decisions, and the prototype decision log for design iterations.
   reduced motion, and touch operation without hover dependence.
 - Use consistent components and theme tokens. Use tabular numerals for live
   metrics and prevent clipping when profile names or values grow.
-- Follow local TypeScript/React patterns. Existing prototypes use JSX; keep
-  exploratory changes isolated until promotion is explicitly requested.
+- Follow local TypeScript/React patterns. Production UI lives only in `src/`;
+  never reintroduce an exploratory picker or demo fallback into the skin.
 - Follow Prettier: two spaces, double quotes, no semicolons. Use `@/` imports
   where appropriate. Prefer small reusable components and domain functions.
-- Keep UI separate from transport. `brewTemperature` in the current UI type is
-  a demo abstraction, not a verified Decaid workflow field. Do not invent wire
-  fields from UI labels. Avoid new dependencies/frameworks without validating
-  static packaging, WebView support, and a concrete need.
+- Keep UI separate from transport. Temperature is represented by profile step
+  temperatures; preserve their relative offsets. Do not invent wire fields.
+  Avoid dependencies without a concrete need and verified static packaging.
 
 ## Workflow and validation
 
@@ -106,14 +104,13 @@ technical decisions, and the prototype decision log for design iterations.
    automation is available. The configured runner uses installed Google Chrome
    and port 4173. Follow the host's browser-tool policy when manual checks are
    required. Report any check that could not run.
-5. Prototype JSX is outside the TypeScript check and the scoped ESLint rules.
-   Validate it separately with
-   `npx vite build --config proto/home-brewing/vite.config.js --outDir artifacts/prototype-build`
-   and inspect changed concepts/states in the browser.
+5. Run `npm run test:e2e` against its isolated fixture build. No test may
+   contact real hardware. The test-only API fixture is never packaged.
 6. Check 1340 × 800 framing, long labels, overflow, touch targets, dialog focus,
-   state transitions, and zero gateway requests in demo mode. Respect the
-   difference between a scaled comparison canvas and the actual CSS viewport.
-7. Before live integration/release, verify Decaid skin installation, relative
+   state transitions, lifecycle, failed writes and command gating. Test network
+   failures without simulation fallback. Use the locked reference evidence in
+   `artifacts/focus-reference` when available; generated captures stay ignored.
+7. Before hardware release, verify Decaid skin installation, relative
    asset loading, API contracts, reconnect/resume, and behavior on the Samsung
    WebView. Hardware checks require actual device evidence and explicit scope.
 8. Review staged files for secrets and generated output. Never commit tokens,

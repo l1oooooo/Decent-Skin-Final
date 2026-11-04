@@ -1,0 +1,642 @@
+import {
+  commandBlock,
+  finite,
+  object,
+  parseMachine,
+  parseProfile,
+  parseWorkflow,
+  pouring,
+} from "./model"
+import type {
+  Device,
+  GatewaySnapshot,
+  MachineCommand,
+  ProfileRecord,
+  ShotEvent,
+  ShotRecord,
+  Workflow,
+} from "./types"
+
+export const initialSnapshot = (): GatewaySnapshot => ({
+  connection: "connecting",
+  message: "",
+  pending: false,
+  workflow: null,
+  profiles: [],
+  favorites: [],
+  devices: [],
+  deviceError: "",
+  machine: null,
+  machineReceived: 0,
+  scale: null,
+  scaleConnected: false,
+  water: null,
+  settings: null,
+  build: "",
+  samples: [],
+  elapsedKnown: false,
+  shotFrame: 0,
+  shotStart: null,
+  shotId: null,
+  complete: false,
+  stopped: false,
+  scaleLost: false,
+  shotProfile: null,
+})
+export function gatewayUrl() {
+  const override = import.meta.env.VITE_DECAID_URL as string | undefined
+  const url = new URL(
+    override || `${location.protocol}//${location.hostname}:8080`
+  )
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  )
+    throw new Error(
+      "VITE_DECAID_URL must be an HTTP(S) gateway origin without credentials or a path"
+    )
+  return url.origin
+}
+export class DecaidGateway {
+  private snapshot = initialSnapshot()
+  private listeners = new Set<() => void>()
+  private sockets = new Map<string, WebSocket>()
+  private retries = new Set<ReturnType<typeof setTimeout>>()
+  private abort = new AbortController()
+  private interval?: ReturnType<typeof setInterval>
+  private notification?: ReturnType<typeof setTimeout>
+  private receiving = false
+  private active = false
+  private syncing = false
+  private syncQueued = false
+  private lastTimestamp = 0
+  private stopPending = false
+  private generation = 0
+  private telemetryRevision = 0
+  private deviceRevision = 0
+  private workflowRevision = 0
+  private channels = new Set<string>()
+  private observedIdle = false
+  private shotDismissed = false
+  private restoredShot: string | null = null
+  private restoringShot: string | null = null
+  private restoreAttempts = new Map<string, number>()
+  readonly origin: string
+  private transport: typeof fetch
+  private socketFactory: (url: string) => WebSocket
+  constructor(
+    origin: string,
+    transport: typeof fetch = fetch,
+    socketFactory = (url: string) => new WebSocket(url)
+  ) {
+    this.origin = origin
+    this.transport = (input, init) => transport(input, init)
+    this.socketFactory = socketFactory
+  }
+  getSnapshot = () => this.snapshot
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+  private emit(patch: Partial<GatewaySnapshot>) {
+    this.snapshot = { ...this.snapshot, ...patch }
+    if (this.receiving) {
+      this.notification ??= setTimeout(this.notify, 100)
+    } else this.notify()
+  }
+  private notify = () => {
+    clearTimeout(this.notification)
+    this.notification = undefined
+    this.listeners.forEach((fn) => fn())
+  }
+  clearMessage = () => this.emit({ message: "" })
+  dismissShot = () => {
+    if (!pouring(this.snapshot.machine)) {
+      this.shotDismissed = true
+      this.emit({ complete: false })
+    }
+  }
+  async request(
+    path: string,
+    method = "GET",
+    body?: unknown
+  ): Promise<unknown> {
+    const controller = new AbortController()
+    const parent = this.abort.signal
+    const abort = () => controller.abort()
+    parent.addEventListener("abort", abort, { once: true })
+    if (parent.aborted) controller.abort()
+    const timeout = setTimeout(abort, 8000)
+    try {
+      const response = await this.transport(`${this.origin}${path}`, {
+        method,
+        signal: controller.signal,
+        headers:
+          body === undefined
+            ? undefined
+            : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+      const text = await response.text()
+      let data: unknown = null
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch {
+          if (response.ok)
+            throw new Error(`Decaid returned invalid JSON for ${path}`)
+        }
+      }
+      if (!response.ok) {
+        const detail =
+          data && typeof data === "object" && "error" in data
+            ? String(data.error)
+            : response.statusText
+        throw new Error(
+          `${response.status}: ${detail || "Decaid request failed"}`
+        )
+      }
+      return data
+    } catch (error) {
+      if (controller.signal.aborted && !parent.aborted)
+        throw new Error(
+          "Decaid did not respond. Check the gateway connection and try again.",
+          { cause: error }
+        )
+      throw error
+    } finally {
+      clearTimeout(timeout)
+      parent.removeEventListener("abort", abort)
+    }
+  }
+  start = () => {
+    if (this.active) return
+    this.active = true
+    this.abort = new AbortController()
+    this.generation++
+    for (const channel of [
+      "devices",
+      "machine/snapshot",
+      "scale/snapshot",
+      "machine/waterLevels",
+      "machine/shotState",
+    ])
+      this.open(channel)
+    void this.sync()
+    this.interval = setInterval(() => {
+      void this.sync()
+    }, 5000)
+    document.addEventListener("visibilitychange", this.resume)
+    window.addEventListener("online", this.resume)
+    window.addEventListener("pageshow", this.resume)
+  }
+  stop = () => {
+    this.active = false
+    this.generation++
+    this.syncing = false
+    this.syncQueued = false
+    this.abort.abort()
+    clearInterval(this.interval)
+    clearTimeout(this.notification)
+    this.notification = undefined
+    this.retries.forEach(clearTimeout)
+    this.retries.clear()
+    this.sockets.forEach((ws) => ws.close())
+    this.sockets.clear()
+    this.channels.clear()
+    document.removeEventListener("visibilitychange", this.resume)
+    window.removeEventListener("online", this.resume)
+    window.removeEventListener("pageshow", this.resume)
+  }
+  private resume = () => {
+    if (!document.hidden) {
+      this.emit({ machineReceived: 0 })
+      void this.sync()
+    }
+  }
+  private open(channel: string, attempt = 0) {
+    if (!this.active) return
+    const generation = this.generation
+    const ws = this.socketFactory(
+      `${this.origin.replace(/^http/, "ws")}/ws/v1/${channel}`
+    )
+    this.sockets.set(channel, ws)
+    ws.onopen = () => {
+      if (generation !== this.generation) return
+      attempt = 0
+      this.channels.add(channel)
+      void this.sync()
+    }
+    ws.onmessage = (event) => {
+      if (generation !== this.generation) return
+      try {
+        this.receive(channel, JSON.parse(String(event.data)))
+      } catch (error) {
+        this.emit({
+          message:
+            error instanceof Error ? error.message : "Invalid gateway update",
+        })
+      }
+    }
+    ws.onerror = () => ws.close()
+    ws.onclose = () => {
+      if (!this.active || generation !== this.generation) return
+      this.channels.delete(channel)
+      if (
+        ["devices", "machine/snapshot", "machine/shotState"].includes(channel)
+      ) {
+        this.observedIdle = false
+        this.emit({ connection: "offline", machineReceived: 0 })
+      }
+      if (channel === "scale/snapshot")
+        this.emit({ scale: null, scaleConnected: false })
+      const timer = setTimeout(
+        () => {
+          this.retries.delete(timer)
+          this.open(channel, attempt + 1)
+        },
+        Math.min(30000, 1000 * 2 ** attempt) + Math.random() * 300
+      )
+      this.retries.add(timer)
+    }
+  }
+  async sync() {
+    if (!this.active) return
+    if (this.syncing) {
+      this.syncQueued = true
+      return
+    }
+    this.syncing = true
+    const generation = this.generation
+    const deviceRevision = this.deviceRevision
+    const workflowRevision = this.workflowRevision
+    try {
+      const [devices, workflow, settings, info] = await Promise.all([
+        this.request("/api/v1/devices"),
+        this.request("/api/v1/workflow"),
+        this.request("/api/v1/settings"),
+        this.request("/api/v1/info"),
+      ])
+      if (generation !== this.generation) return
+      const mode = object(settings)
+      if (typeof mode.gatewayMode !== "string")
+        throw new Error("Decaid settings are incompatible")
+      if (deviceRevision === this.deviceRevision)
+        this.receive("devices", { devices })
+      this.emit({
+        ...(workflowRevision === this.workflowRevision && !this.snapshot.pending
+          ? {
+              workflow: parseWorkflow(workflow),
+              ...(!this.snapshot.shotProfile &&
+              this.snapshot.machine?.state.state === "espresso"
+                ? { shotProfile: parseWorkflow(workflow).profile }
+                : {}),
+            }
+          : {}),
+        settings: {
+          gatewayMode: mode.gatewayMode,
+          blockOnNoScale: mode.blockOnNoScale === true,
+        },
+        message: "",
+        build: String(
+          object(info).fullVersion ?? object(info).version ?? "Unknown version"
+        ),
+        connection: ["devices", "machine/snapshot", "machine/shotState"].every(
+          (c) => this.channels.has(c)
+        )
+          ? "online"
+          : "connecting",
+      })
+      if (
+        this.snapshot.devices.some(
+          (d) => d.type === "machine" && d.state === "connected"
+        )
+      ) {
+        const revision = this.telemetryRevision
+        const machine = await this.request("/api/v1/machine/state")
+        if (
+          generation === this.generation &&
+          revision === this.telemetryRevision
+        )
+          this.receive("machine/snapshot", machine)
+      }
+    } catch (error) {
+      if (generation === this.generation)
+        this.emit({
+          connection: "offline",
+          machineReceived: 0,
+          message:
+            error instanceof Error ? error.message : "Cannot reach Decaid",
+        })
+    } finally {
+      if (generation === this.generation) {
+        this.syncing = false
+        if (this.syncQueued) {
+          this.syncQueued = false
+          void this.sync()
+        }
+      }
+    }
+  }
+  receive(channel: string, raw: unknown) {
+    this.receiving = true
+    try {
+      this.process(channel, raw)
+    } finally {
+      this.receiving = false
+    }
+  }
+  private process(channel: string, raw: unknown) {
+    const data = object(raw)
+    if (channel === "devices") {
+      if (!Array.isArray(data.devices)) return
+      const devices = data.devices.map((value) => {
+        const d = object(value)
+        if (
+          ![d.id, d.name, d.type, d.state].every((v) => typeof v === "string")
+        )
+          throw new Error("Invalid Decaid device status")
+        return d as unknown as Device
+      })
+      this.deviceRevision++
+      const isConnected = devices.some(
+        (d) => d.type === "machine" && d.state === "connected"
+      )
+      if (!isConnected) this.observedIdle = false
+      const scaleConnected = devices.some(
+        (d) => d.type === "scale" && d.state === "connected"
+      )
+      const status = data.connectionStatus
+        ? object(data.connectionStatus)
+        : null
+      const error = status?.error ? object(status.error) : null
+      this.emit({
+        devices,
+        scaleConnected,
+        ...(scaleConnected ? {} : { scale: null }),
+        ...(status
+          ? {
+              deviceError: error
+                ? String(error.message ?? "Device connection needs attention")
+                : "",
+            }
+          : {}),
+        ...(!isConnected
+          ? { machine: null, machineReceived: 0, water: null }
+          : {}),
+      })
+    } else if (channel === "machine/snapshot") {
+      const m = parseMachine(data)
+      const timestamp = Date.parse(m.timestamp)
+      if (timestamp < this.lastTimestamp) return
+      this.telemetryRevision++
+      this.lastTimestamp = timestamp
+      const s = this.snapshot
+      const running = pouring(m)
+      if (m.state.state === "idle" || m.state.substate === "preparingForShot")
+        this.observedIdle = true
+      const wasRunning = pouring(s.machine)
+      const newShot =
+        running && !wasRunning && (s.shotStart === null || s.complete)
+      if (newShot) this.shotDismissed = false
+      const start = newShot ? timestamp : s.shotStart
+      const sample = {
+        elapsed: start === null ? 0 : Math.max(0, (timestamp - start) / 1000),
+        pressure: m.pressure,
+        flow: m.flow,
+        temperature: m.mixTemperature,
+        weight: s.scale?.weight ?? null,
+      }
+      const samples = newShot
+        ? [sample]
+        : (running || wasRunning) &&
+            (s.samples.length === 0 ||
+              timestamp > (s.machine ? Date.parse(s.machine.timestamp) : 0))
+          ? [...s.samples.slice(-3599), sample]
+          : s.samples
+      this.emit({
+        machine: m,
+        machineReceived: Date.now(),
+        shotStart: start,
+        samples,
+        ...(running ? { shotFrame: m.profileFrame } : {}),
+        ...(newShot
+          ? {
+              complete: false,
+              elapsedKnown: this.observedIdle,
+              stopped: false,
+              scaleLost: false,
+              shotProfile: s.workflow?.profile ?? null,
+            }
+          : {}),
+        ...(!running && wasRunning && m.state.state !== "espresso"
+          ? { complete: true }
+          : {}),
+      })
+    } else if (channel === "scale/snapshot") {
+      if (typeof data.status === "string")
+        this.emit({
+          scaleConnected: data.status === "connected",
+          ...(data.status !== "connected" ? { scale: null } : {}),
+        })
+      else if (finite(data.weight) && typeof data.timestamp === "string") {
+        const samples = this.snapshot.samples
+        const settling =
+          this.snapshot.complete &&
+          this.snapshot.shotId !== this.restoredShot &&
+          samples.length > 0
+        this.emit({
+          scaleConnected: true,
+          scale: { weight: data.weight, timestamp: data.timestamp },
+          ...(settling
+            ? {
+                samples: [
+                  ...samples.slice(0, -1),
+                  { ...samples[samples.length - 1], weight: data.weight },
+                ],
+              }
+            : {}),
+        })
+      }
+    } else if (channel === "machine/waterLevels") {
+      this.emit({ water: finite(data.currentLevel) ? data.currentLevel : null })
+    } else if (channel === "machine/shotState") {
+      if (typeof data.state !== "string" || typeof data.timestamp !== "string")
+        throw new Error("Invalid Decaid shot state")
+      const event = data as unknown as ShotEvent
+      if (["idle", "preheating"].includes(event.state)) this.observedIdle = true
+      const newShot =
+        event.shotId &&
+        event.shotId !== this.snapshot.shotId &&
+        !["finished", "idle"].includes(event.state)
+      if (newShot) this.shotDismissed = false
+      this.emit({
+        shotId: event.shotId ?? this.snapshot.shotId,
+        scaleLost: event.scaleLost === true,
+        ...(newShot
+          ? {
+              samples: [],
+              elapsedKnown: this.observedIdle,
+              shotFrame: 0,
+              shotStart: null,
+              complete: false,
+              stopped: false,
+              shotProfile: this.snapshot.workflow?.profile ?? null,
+            }
+          : {}),
+      })
+      if (event.state === "pouring" && this.snapshot.shotStart === null)
+        this.emit({ shotStart: Date.parse(event.timestamp) })
+      if (["stop", "abort", "terminal"].includes(event.decision?.kind ?? ""))
+        this.emit({
+          stopped: !["targetWeight", "targetVolume", "machineEnded"].includes(
+            event.decision?.reason ?? ""
+          ),
+          message:
+            event.decision?.kind === "abort" ||
+            event.decision?.reason === "error" ||
+            event.decision?.reason === "disconnected"
+              ? event.decision?.details ||
+                `Shot stopped: ${event.decision?.reason}`
+              : this.snapshot.message,
+        })
+      if (event.state === "finished" && !this.shotDismissed) {
+        this.emit({ complete: true })
+        if (
+          event.shotId &&
+          this.restoredShot !== event.shotId &&
+          this.restoringShot !== event.shotId &&
+          (this.restoreAttempts.get(event.shotId) ?? 0) < 3
+        ) {
+          this.restoringShot = event.shotId
+          void this.restoreShot(event.shotId)
+        }
+      }
+    }
+  }
+  private async restoreShot(id: string) {
+    this.restoreAttempts.set(id, (this.restoreAttempts.get(id) ?? 0) + 1)
+    try {
+      const record = await this.shot(id)
+      if (
+        this.snapshot.shotId !== id ||
+        !this.snapshot.complete ||
+        !record.measurements?.length
+      )
+        return
+      const start = Date.parse(record.measurements[0].machine.timestamp)
+      this.restoredShot = id
+      const samples = record.measurements.map((point) => ({
+        elapsed: Math.max(
+          0,
+          (Date.parse(point.machine.timestamp) - start) / 1000
+        ),
+        pressure: point.machine.pressure,
+        flow: point.machine.flow,
+        weight: point.scale?.weight ?? null,
+        temperature: point.machine.mixTemperature,
+      }))
+      this.emit({
+        samples,
+        elapsedKnown: true,
+        shotStart: start,
+        shotProfile: record.workflow?.profile ?? this.snapshot.shotProfile,
+      })
+    } catch {
+      // A sequencer terminal event may precede shot persistence. Retain observed readings.
+      if (this.snapshot.shotId === id) this.restoredShot = null
+    } finally {
+      if (this.restoringShot === id) this.restoringShot = null
+    }
+  }
+  async loadProfiles() {
+    const data = await this.request(
+      "/api/v1/profiles?visibility=visible&includeHidden=false"
+    )
+    if (!Array.isArray(data)) throw new Error("Invalid profile library")
+    const profiles: ProfileRecord[] = data.map((value) => {
+      const p = object(value)
+      if (typeof p.id !== "string")
+        throw new Error("Invalid profile identifier")
+      return { id: p.id, profile: parseProfile(p.profile) }
+    })
+    let favorites: string[] = []
+    try {
+      const stored = await this.request(
+        "/api/v1/store/decent-skin-codex/favorites"
+      )
+      if (Array.isArray(stored))
+        favorites = stored.filter((id): id is string => typeof id === "string")
+    } catch (error) {
+      if (!(error instanceof Error && error.message.startsWith("404:")))
+        throw error
+    }
+    this.emit({
+      profiles,
+      favorites: favorites.length
+        ? favorites.slice(0, 5)
+        : profiles.slice(0, 5).map((p) => p.id),
+    })
+  }
+  async updateWorkflow(patch: Partial<Workflow>) {
+    const block = commandBlock(this.snapshot)
+    if (block) throw new Error(block)
+    this.workflowRevision++
+    this.emit({ pending: true, message: "" })
+    try {
+      const result = await this.request("/api/v1/workflow", "PUT", patch)
+      this.workflowRevision++
+      this.emit({ workflow: parseWorkflow(result), complete: false })
+    } finally {
+      this.emit({ pending: false })
+    }
+  }
+  async command(state: MachineCommand) {
+    if (state === "idle") {
+      if (this.stopPending) return
+      this.stopPending = true
+      try {
+        await this.request("/api/v1/machine/state/idle", "PUT")
+      } finally {
+        this.stopPending = false
+      }
+      return
+    }
+    const block = commandBlock(this.snapshot)
+    if (block) throw new Error(block)
+    if (state === "espresso" && !this.snapshot.workflow?.profile)
+      throw new Error("Choose a profile before brewing")
+    if (
+      state === "espresso" &&
+      this.snapshot.settings?.blockOnNoScale &&
+      !this.snapshot.scaleConnected
+    )
+      throw new Error("Connect the scale before brewing")
+    this.emit({ pending: true, message: "" })
+    try {
+      await this.request(`/api/v1/machine/state/${state}`, "PUT")
+      await this.sync()
+    } finally {
+      this.emit({ pending: false })
+    }
+  }
+  async history(offset = 0): Promise<{ items: ShotRecord[]; total: number }> {
+    const data = object(
+      await this.request(`/api/v1/shots?limit=20&offset=${offset}`)
+    )
+    if (!Array.isArray(data.items) || !finite(data.total))
+      throw new Error("Invalid shot history")
+    return { items: data.items as ShotRecord[], total: data.total }
+  }
+  async shot(id: string): Promise<ShotRecord> {
+    return object(
+      await this.request(`/api/v1/shots/${encodeURIComponent(id)}`)
+    ) as unknown as ShotRecord
+  }
+}

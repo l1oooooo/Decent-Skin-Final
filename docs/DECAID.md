@@ -1,49 +1,67 @@
-# Decaid integration boundary
+# Decaid integration contract
 
-Official sources inspected during setup:
+## Verified source version
 
-- https://github.com/decentespresso/decaid
-- https://github.com/decentespresso/decaid/blob/main/doc/Skins.md
-- https://github.com/decentespresso/streamline-js
-- https://github.com/decentespresso/streamline-js/blob/main/src/modules/api.js
-- https://ui.shadcn.com/docs/installation/vite
+The tablet's `/api/v1/info` reported Decaid **0.9.1+3027**, commit **14361a94b32888f6a81182e9e239f513d39d060c**, build time 2026-10-28T06:20:27Z, local IP 192.168.50.13. Its network address was not reachable from the development computer. API compatibility below is a source/schema review, not a successful hardware session.
 
-The current milestone is entirely simulated. These notes guide a later integration, not a claim that an API adapter is implemented or hardware has been verified.
+Authoritative references:
 
-## Ownership
+- [Installed REST schema](https://github.com/decentespresso/decaid/blob/14361a94b32888f6a81182e9e239f513d39d060c/assets/api/rest_v1.yml)
+- [Installed WebSocket schema](https://github.com/decentespresso/decaid/blob/14361a94b32888f6a81182e9e239f513d39d060c/assets/api/websocket_v1.yml)
+- [Installed workflow handler](https://github.com/decentespresso/decaid/blob/14361a94b32888f6a81182e9e239f513d39d060c/lib/src/services/webserver/workflow_handler.dart)
+- [Installed profile model](https://github.com/decentespresso/decaid/blob/14361a94b32888f6a81182e9e239f513d39d060c/lib/src/models/data/profile.dart)
+- [Official skin guide](https://github.com/decentespresso/decaid/blob/14361a94b32888f6a81182e9e239f513d39d060c/doc/Skins.md)
 
-Decaid owns Bluetooth/USB, device connections, profile/workflow persistence, machine execution, scale integration, and shot logging. The skin supplies a web UI through REST and WebSocket APIs. Streamline is a behavioral reference, not a dependency or a codebase to migrate in place.
+The fields used here were also checked against main commit c9e2650; the installed version is the acceptance target.
 
-A production skin is served locally by Decaid. Port 3000 is the skin entry point and may redirect to an assigned skin origin. REST and WebSockets use port 8080. Desktop development requires an explicit gateway host; the desktop's localhost is not the tablet. Do not use the skin's arbitrary serving port as the API port.
+## Ownership and origin
 
-## Future adapter
+Decaid owns device discovery/pairing, connections, workflow uploads, execution, stop-at-weight and shot storage. This UI issues explicit commands and displays the returned state. It does not implement a competing shot sequencer, silently scan for hardware, retry machine commands or simulate measurements.
 
-Normalize API responses into UI-facing types behind the gateway boundary. The demo-only mode marker and scenario names are not backend machine-state enums; extend the contract deliberately when adding live support.
+Skin entry is port 3000, which redirects to an assigned origin. The API origin is the serving hostname on 8080 unless `VITE_DECAID_URL` explicitly supplies another HTTP(S) origin. Assets use relative URLs and are fully bundled. There is no service worker or cached command queue.
 
-- Prefer `GET/PUT /api/v1/workflow` for the active recipe. Dose and yield live in `context.targetDoseWeight` and `context.targetYield`. Brew temperature comes from the profile's step semantics; it is not a top-level workflow `brewTemperature` field.
-- `PUT /api/v1/machine/state/{state}` requests execution. Never invoke it during setup or demo testing. Validate current schema and command gating against the installed Decaid version before adding controls.
-- `/ws/v1/machine/snapshot` carries machine telemetry. Subscribe to device state independently; an open telemetry socket or a quiet interval does not establish machine connectivity.
-- Reconnect after real network closure, resynchronize workflow/device state, and dispose all subscriptions. Never replay queued machine actions after reconnect.
-- Embedded WebViews can be paused and later reloaded. Persist actual recipe state in Decaid, and restore it from the API on resume. Do not substitute stale demo data when live connections fail.
+The adapter requires the managed sequencing modes `tracking` or `disabled`. Full gateway mode is blocked for new operations: the official shot-state channel documents that no sequencer runs in background full mode. The skin does not silently change this setting. Decaid remains responsible for tare, weight stops, utility duration limits and recording.
 
-The docs include old example names and legacy fields alongside newer guidance. Verify API schemas and installed runtime behavior before live integration; do not copy illustrative snippets verbatim.
+## UI bindings
 
-## Tablet acceptance (later)
+| Control/data | Contract |
+| --- | --- |
+| Current recipe | GET `/api/v1/workflow` |
+| Dose / yield | PUT workflow with `context.targetDoseWeight` / `context.targetYield` |
+| Grind | PUT workflow with string `context.grinderSetting`; it records the setting, not a motor command |
+| Temperature | PUT complete preserved profile with equal offset applied to each step's `temperature`; preserve relative step temperatures |
+| Profile list | GET `/api/v1/profiles?visibility=visible&includeHidden=false` |
+| Profile selection | PUT workflow with returned complete `profile`, including executable fields; positive profile target weight becomes workflow target yield |
+| Favorite order | GET `/api/v1/store/decent-skin-codex/favorites`; only 404 means no stored preference |
+| Steam enable/time | `steamSettings.targetTemperature` (0 disables, 140 enables), `duration` |
+| Water temperature/time | `hotWaterData.targetTemperature`, `duration` |
+| Flush time | `rinseData.duration` |
+| Brew/steam/water/flush/stop | Explicit PUT `/api/v1/machine/state/{espresso,steam,hotWater,flush,idle}` |
+| Scale reconnect | Explicit PUT `/api/v1/devices/connect?deviceId=…` for a known scale; no automatic scan |
+| History / details | GET `/api/v1/shots?limit=20&offset=…`, `/api/v1/shots/{id}` |
+| Device connections | GET `/api/v1/devices` plus `/ws/v1/devices` |
+| Readings / rolling stage | `/ws/v1/machine/snapshot`; `profileFrame` is zero-based into actual profile steps |
+| Scale | `/ws/v1/scale/snapshot`, separate status and weight frames |
+| Water | `/ws/v1/machine/waterLevels`, `currentLevel` in **mm**, not percent |
+| Completion / stop reason | `/ws/v1/machine/shotState`; terminal reasons preserve manual stop vs completed shot |
+| Compatibility | GET `/api/v1/info`, `/api/v1/settings` |
 
-The supplied target is landscape 1340 × 800. Verify `innerWidth`, `innerHeight`, `devicePixelRatio`, and `visualViewport` in the actual tablet WebView. Check keyboard appearance, dialogs, touch interactions, font sizing, background/resume, offline assets, and real chart performance. Browser emulation alone is not device or hardware verification.
+Workflow writes are partial patches, preserving unrelated context and operation settings. A successful response replaces the acknowledged workflow. Failed writes remain visible and do not pretend to apply. Writes are not retried. Start controls require a connected machine, fresh readings, a valid managed mode, idle state, no pending write or device error, and a profile; Decaid's no-scale policy is respected.
 
-## Static frontend compatibility review
+## Lifecycle and data accuracy
 
-The repository-initialization review checked the official Decaid README, skin guide, Streamline README/package metadata, and shadcn Vite documentation. The skin guide explicitly includes a React/Vite build example. Streamline uses browser JavaScript as its application model; that does not impose a plain-JavaScript-only requirement on an independent skin.
+- Machine sockets remain open across hardware disconnects. Device state, not socket openness, controls machine connectivity.
+- Actual socket closure uses bounded exponential reconnect delay with jitter. Reconnect reads state again and never replays operations.
+- Five-second reads refresh workflow, settings, version and device state. Resume/online/page-show trigger resynchronization; stale workflow reads cannot overwrite a newer acknowledged edit.
+- Each request has an eight-second timeout; subscription disposal aborts outstanding requests and removes listeners.
+- Simultaneous stream updates publish to React in a 100ms batch; command guards read the latest state immediately. Explicit actions publish immediately.
+- Samples are bounded to 3,600 points; plots are clipped to the approved axes. A profile preview plots only actual pressure/flow targets, not fabricated values for an axis the step does not control. Timed segments are maximum durations, not predictions of exit-condition timing.
+- A newly attached client cannot recover an exact in-progress start time from the shot-state replay timestamp. It shows `—` for Time until a start is observed or the completed stored record supplies it. The chart covers the observed portion. This avoids displaying an invented elapsed time after a mid-shot reload.
+- Finished shots can hydrate from Decaid's saved measurements, with bounded retries if persistence is not yet ready. An interrupted/aborted shot may not have a stored record; observed data remains available.
+- No assumed connected-device weight, water level or temperature is substituted when unavailable.
 
-**Verified in this repository:** React/TypeScript is bundled by Vite, Tailwind is compiled at build time, Base UI components are local React source, and Geist is bundled. The generated output is static. Decaid is not expected to interpret source JSX or run the shadcn CLI. No SSR or server action is implemented.
+## Installation and device acceptance
 
-**Still to decide or verify:**
+Build using `npm run package:skin`; install the generated archive through Decaid's skin manager. Verify that API mode and installed version match the contract before machine testing. Check actual `innerWidth`, `innerHeight`, `devicePixelRatio`, `visualViewport`, Android System WebView version, font loading, relative assets, native dialogs, touch, reduced motion and background reload.
 
-- The supported Decaid release and gateway schema, including workflow temperature semantics and whether a requested machine action is allowed in the current gateway mode/state.
-- Actual Android System WebView compatibility with the emitted JavaScript and modern Tailwind/OKLCH CSS, plus focus, dialogs, touch input, lifecycle/resume, and chart performance.
-- Explicit live/demo selection, gateway configuration, reconnection, state persistence, and command gating. The current interface is demo-only.
-- Routing strategy if multiple production pages are added. Do not rely on a development-server fallback being provided by Decaid.
-- Final skin identifier, versioning, and distribution. Keep the existing demo metadata until a production identity is chosen. Private source-repository URLs are not unauthenticated install URLs; distribution needs a separate decision.
-
-Before reconfiguring shadcn, compare any new preset against the existing `components.json`, theme tokens, and Base UI APIs. Reinitialization is not required to establish this repository.
+Physical operations require a supervised device session: idle → heat → group-head start, profile-frame transitions, stop command, target-weight stop, disconnect/reconnect, steam/water/flush, and shot persistence. Automated tests use only an isolated fixture; they do not operate hardware.
