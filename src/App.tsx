@@ -11,7 +11,8 @@ import type { SettingsCategory } from "@/gateway/daily-settings"
 import FocusScreen from "@/skin/screen"
 import { ProfileDetail, ProfileLibrary } from "@/skin/profile-library"
 import { GrindEditor } from "@/skin/grind-editor"
-import { History } from "@/skin/history"
+import { HistoryPage, ShotDetail, ShotActions } from "@/skin/history"
+import { useShotHistory } from "@/skin/use-shot-history"
 import { useSkin } from "@/skin/use-skin"
 import { useProfileTransfer } from "@/skin/use-profile-transfer"
 import { useFavorites } from "@/skin/use-favorites"
@@ -28,12 +29,14 @@ import "@/skin/skin.css"
 export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
+  const history = useShotHistory(gateway)
   const daily = useDailySettings(gateway)
   const recipes = useRecipeEditor(gateway)
   const catalog = useCatalog(gateway)
   const editor = useFavorites(gateway, s.snapshot)
   const transfer = useProfileTransfer(gateway, s.reloadLibrary)
   const saving =
+    history.busy ||
     recipes.busy ||
     catalog.busy ||
     editor.saving ||
@@ -41,7 +44,8 @@ export default function App() {
     daily.saving ||
     s.snapshot.pending
   const nav = useNavigation(
-    editor.dirty ||
+    history.dirty ||
+      editor.dirty ||
       daily.dirty ||
       recipes.dirty ||
       catalog.dirty ||
@@ -49,6 +53,8 @@ export default function App() {
       saving ||
       transfer.selection !== null,
     (route) => {
+      if (route.page === "shot" && history.record?.id === route.id)
+        history.cancel()
       if (route.page === "edit") recipes.cancel()
       if (route.page === "inventory") catalog.cancelInventory()
       if (route.page === "recipe") catalog.cancelPreference()
@@ -59,22 +65,32 @@ export default function App() {
       }
     },
     (route) =>
-      route.page === "edit"
-        ? recipes.dirty || recipes.busy
-        : route.page === "inventory"
-          ? catalog.dirty || catalog.busy
-          : route.page === "recipe"
-            ? catalog.preferenceDirty || catalog.busy
-            : route.page === "settings"
-              ? daily.dirty || daily.saving
-              : route.page === "favorites"
-                ? editor.dirty || editor.saving
-                : route.page === "library"
-                  ? transfer.selection !== null ||
-                    transfer.operation === "import" ||
-                    (route.slot !== undefined && editor.dirty)
-                  : false
+      route.page === "shot"
+        ? (history.record?.id === route.id && history.dirty) || history.busy
+        : route.page === "edit"
+          ? recipes.dirty || recipes.busy
+          : route.page === "inventory"
+            ? catalog.dirty || catalog.busy
+            : route.page === "recipe"
+              ? catalog.preferenceDirty || catalog.busy
+              : route.page === "settings"
+                ? daily.dirty || daily.saving
+                : route.page === "favorites"
+                  ? editor.dirty || editor.saving
+                  : route.page === "library"
+                    ? transfer.selection !== null ||
+                      transfer.operation === "import" ||
+                      (route.slot !== undefined && editor.dirty)
+                    : false
   )
+  const openHistory = useEffectEvent(() => {
+    if (nav.route.page === "history" && !history.loaded) void history.list()
+    if (nav.route.page === "shot" && nav.route.id)
+      void history.open(nav.route.id)
+  })
+  useEffect(() => {
+    openHistory()
+  }, [nav.route.page, nav.route.id])
   const openPage = useEffectEvent(() => {
     const record = s.snapshot.profiles.find((p) => p.id === nav.route.id)
     if (nav.route.page === "edit" && (!nav.route.id || record))
@@ -138,9 +154,11 @@ export default function App() {
     if (nav.route.page === "home" && previousPage.current !== "home") {
       const label = s.active
         ? "Stop extraction"
-        : previousPage.current === "settings"
-          ? "Settings"
-          : "Browse profiles"
+        : ["history", "shot"].includes(previousPage.current)
+          ? "History"
+          : previousPage.current === "settings"
+            ? "Settings"
+            : "Browse profiles"
       document
         .querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)
         ?.focus()
@@ -160,23 +178,27 @@ export default function App() {
   }
   const page = nav.route.page
   const title =
-    page === "edit"
-      ? "Profile editor"
-      : page === "recipe"
-        ? "Recipe preferences"
-        : page === "inventory"
-          ? "Coffee and equipment"
-          : page === "settings"
-            ? (settingsCategories.find((c) => c.id === nav.route.category)
-                ?.title ?? "Settings")
-            : page === "favorites"
-              ? "Manage favorites"
-              : page === "profile"
-                ? (s.allProfiles.find((p) => p.id === nav.route.id)?.name ??
-                  "Profile details")
-                : assignment === null
-                  ? "Profile library"
-                  : `Choose favorite ${assignment + 1}`
+    page === "history"
+      ? "Shot history"
+      : page === "shot"
+        ? "Shot details"
+        : page === "edit"
+          ? "Profile editor"
+          : page === "recipe"
+            ? "Recipe preferences"
+            : page === "inventory"
+              ? "Coffee and equipment"
+              : page === "settings"
+                ? (settingsCategories.find((c) => c.id === nav.route.category)
+                    ?.title ?? "Settings")
+                : page === "favorites"
+                  ? "Manage favorites"
+                  : page === "profile"
+                    ? (s.allProfiles.find((p) => p.id === nav.route.id)?.name ??
+                      "Profile details")
+                    : assignment === null
+                      ? "Profile library"
+                      : `Choose favorite ${assignment + 1}`
   function browse() {
     navigate({ page: "library" })
   }
@@ -278,6 +300,7 @@ export default function App() {
       ) : page === "home" ? (
         <FocusScreen
           s={s}
+          onHistory={() => navigate({ page: "history" })}
           onSettings={() => navigate({ page: "settings" })}
           onBrowse={browse}
           onAssign={assign}
@@ -299,7 +322,11 @@ export default function App() {
                   : undefined
           }
           actions={
-            page === "edit" ? (
+            page === "shot" ? (
+              history.record?.id === nav.route.id ? (
+                <ShotActions history={history} />
+              ) : null
+            ) : page === "edit" ? (
               <ProfileEditorActions editor={recipes} />
             ) : page === "favorites" ? (
               <>
@@ -371,6 +398,18 @@ export default function App() {
               }}
             />
           )}
+          {page === "history" && (
+            <HistoryPage history={history} navigate={navigate} />
+          )}
+          {page === "shot" && (
+            <ShotDetail
+              key={nav.route.id}
+              s={s}
+              history={history}
+              id={nav.route.id}
+              navigate={navigate}
+            />
+          )}
           {page === "edit" && <ProfileEditor s={s} editor={recipes} />}
           {page === "recipe" && <RecipePreferences catalog={catalog} />}
           {page === "inventory" && <InventoryPage s={s} catalog={catalog} />}
@@ -392,7 +431,6 @@ export default function App() {
           onStop={s.active || s.operation ? s.stop : undefined}
         />
       )}
-      {s.modal === "history" && <History s={s} />}
       {s.modal === "grind" && <GrindEditor s={s} />}
     </div>
   )

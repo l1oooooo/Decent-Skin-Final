@@ -1,4 +1,5 @@
 import { RecipeGateway } from "./recipes"
+import { ShotHistoryGateway } from "./shot-history"
 import type { ProfileRecord } from "./types"
 import {
   DailySettingsGateway,
@@ -101,6 +102,7 @@ export class DecaidGateway {
   private settingsRevision = 0
   private preferencesRevision = 0
   readonly daily = new DailySettingsGateway(this)
+  readonly shots = new ShotHistoryGateway(this)
   private favoritesRevision = 0
   private favoritesSaving = false
   private channels = new Set<string>()

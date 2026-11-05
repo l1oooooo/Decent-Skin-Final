@@ -33,9 +33,11 @@ const artworkNames = [
 export function RevisionHeader({
   s,
   onSettings,
+  onHistory,
 }: {
   s: SkinSession
   onSettings: () => void
+  onHistory: () => void
 }) {
   return (
     <header className="flex h-[72px] shrink-0 items-center border-b border-border pr-7">
@@ -87,12 +89,11 @@ export function RevisionHeader({
       <Action
         variant="ghost"
         aria-label="History"
-        aria-haspopup="dialog"
         title="History"
         className="ml-6 !size-12 !px-0 text-muted-foreground"
         onClick={() => {
           s.setSettings(null)
-          s.setModal("history")
+          onHistory()
         }}
       >
         <History size={16} aria-hidden="true" />

@@ -8,6 +8,7 @@ import {
   Settings,
   Star,
   Coffee,
+  History,
 } from "lucide-react"
 import { RevisionHeader } from "./chrome"
 import { Action } from "./primitives"
@@ -114,7 +115,11 @@ export function PageShell({
   }, [route.page, route.id, route.category, route.slot])
   return (
     <div className="focus-page flex h-full flex-col bg-background">
-      <RevisionHeader s={s} onSettings={() => navigate({ page: "settings" })} />
+      <RevisionHeader
+        s={s}
+        onSettings={() => navigate({ page: "settings" })}
+        onHistory={() => navigate({ page: "history" })}
+      />
       <div className="flex min-h-0 flex-1">
         <nav
           aria-label="Skin pages"
@@ -127,6 +132,7 @@ export function PageShell({
               ["library", "Profile library", Library],
               ["favorites", "Manage favorites", Star],
               ["inventory", "Coffee & equipment", Coffee],
+              ["history", "Shot history", History],
             ] as const
           ).map(([page, label, Icon]) => (
             <Action

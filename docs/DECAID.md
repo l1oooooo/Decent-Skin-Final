@@ -185,3 +185,50 @@ snapshots coffee labels into workflow context; selecting a grinder records its
 equipment ID/model/burrs. Archiving leaves active and historical context intact,
 and archived items cannot be newly selected until restored. A batch belonging
 to an archived bean is also blocked from selection.
+
+
+## Shot history (phase 6)
+
+Rechecked the installed-target `shots_handler.dart`, `shot_record.dart`,
+`shot_annotations.dart`, `shot_snapshot.dart` and `data_export_handler.dart` at
+commit `14361a94b32888f6a81182e9e239f513d39d060c`. This was source review and
+isolated-fixture validation, with no live device requests.
+
+| Action | Contract and ownership |
+| --- | --- |
+| List/filter | GET `shots` with limit=20, offset, order=asc/desc, search, profileTitle, coffeeName, coffeeRoaster and grinderModel; response items/total; list excludes measurements |
+| Detail | GET `shots/{id}`; retain the raw record even if its historical profile is incomplete |
+| Annotation Save | PUT `shots/{id}` with only changed `annotations` fields: actualDoseWeight, actualYield, drinkTds, drinkEy, enjoyment and espressoNotes |
+| Repeat | GET the fresh record, validate executable profile, then existing gated PUT workflow with profile/context only; no start, device, utility or preference write |
+| Export | GET each selected saved record, then download a JSON array; single record or current page, at most 20; any failed read aborts the export |
+| Delete | Confirm permanent deletion, then DELETE `shots/{id}`; require success=true and matching id before removing the record from the UI |
+
+Canonical `annotations` presence takes precedence over the legacy `shotNotes`
+alias, including explicit null/empty values. Numeric clears use null; notes clear
+with an empty string. Unknown annotations/extras are preserved through partial
+patches. Measurements and creation/update timestamps are never writable here.
+Enjoyment is 0–10. Numeric assessments must be finite and nonnegative; the UI
+caps dose/yield at 1,000/10,000 g and percentage fields at 100.
+
+Recorded curves use only timestamped machine/scale measurements. Missing fields
+remain gaps, invalid/out-of-order samples are omitted with a count, and elapsed
+time starts at the first recorded sample. The displayed span and last scale
+weight are labeled as recorded data, not a guaranteed full-shot duration or
+annotated yield. No target preview substitutes for missing measurements.
+
+Repeat uses the historical workflow targets, not annotations or current saved
+profile preferences. It retains historical equipment/batch references, clears
+absent known coffee/equipment labels and uses a positive profile target weight
+only when recorded target yield is absent. Incomplete/unsupported recipes block
+Repeat. A workflow change during the detail read also blocks it.
+
+The installed `data/export` handler creates a broad backup; it does not filter
+selected shots. Focus therefore exports canonical shot records directly rather
+than presenting a full backup as a selected-shot export. File download behavior
+still needs Samsung WebView acceptance.
+
+One App-owned history state retains filters, paging and annotation drafts across
+routes and observed-shot interruption. Reads are fenced; save acknowledgements
+preserve newer local edits. Navigation guards unsaved changes, and no failed
+write is replayed automatically. The API offers no revision precondition, so
+this is not cross-client conflict detection.

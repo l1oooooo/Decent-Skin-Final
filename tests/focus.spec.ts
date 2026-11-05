@@ -60,13 +60,19 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   )
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await page.getByRole("button", { name: "History", exact: true }).click()
-  await expect(page.getByRole("dialog")).toContainText("Recent shots")
+  await expect(
+    page.getByRole("heading", { name: "Shot history", exact: true })
+  ).toBeVisible()
   await page
-    .getByRole("button", { name: /80's Espresso/ })
-    .last()
+    .getByRole("button", { name: /D-Flow \/ default.*annotated yield/ })
     .click()
-  await expect(page.getByRole("dialog")).toContainText("targetWeight")
-  await page.keyboard.press("Escape")
+  await expect(page.getByText("targetWeight", { exact: true })).toBeVisible()
+  await page
+    .getByRole("button", { name: "Return to Home", exact: true })
+    .click()
+  await expect(
+    page.getByRole("button", { name: "History", exact: true })
+  ).toBeFocused()
   expect(errors).toEqual([])
 })
 

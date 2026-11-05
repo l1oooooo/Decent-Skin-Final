@@ -1,6 +1,6 @@
 # Decent Focus
 
-Focus is the locked Home and brewing screen for the Decaid skin. Settings, profile library/details and favorite management share its visual system. The locked Monochrome Studio design uses surface tone **0.16**, the Cover profile rail and the rolling Focus brewing status. It is rendered directly at the requested **1340 × 800** landscape viewport; no exploration picker, appearance controls or simulated data ships in the application.
+Focus is the locked Home and brewing screen for the Decaid skin. Settings, profile library/details, favorite management and shot history share its visual system. The locked Monochrome Studio design uses surface tone **0.16**, the Cover profile rail and the rolling Focus brewing status. It is rendered directly at the requested **1340 × 800** landscape viewport; no exploration picker, appearance controls or simulated data ships in the application.
 
 ## Run and build
 
@@ -30,7 +30,7 @@ The library supports search, sorting, visible/hidden views, details/target previ
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–5 are implemented; phases 6–8 remain planned and phase 9 is device acceptance. See the verification record for fixture and device status.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–6 are implemented; phases 7–8 remain planned and phase 9 is device acceptance. See the verification record for fixture and device status.
 
 ## Tests and limits
 
@@ -96,3 +96,24 @@ navigation and survive shot interruption in memory. Confirming discard or comple
 reload loses unsaved edits. A pending profile save has a separate durable
 recovery record: **Retry pending save** finds an already saved profile and
 finishes outstanding reference updates without blindly resubmitting content.
+
+
+### Shot history
+
+The existing **History** button opens a shared full-page list. Search and filter
+by profile title, coffee, roaster or grinder model; browse 20 records per page.
+Open a shot for recorded curves, recipe stages, context and its stored stop
+reason. Missing measurements remain gaps; incomplete records never substitute
+a current recipe or simulated trace.
+
+Edit actual dose/yield, TDS, extraction yield, enjoyment (0–10) and shot notes.
+Save changes only annotations; numeric blanks clear values. Failed saves and
+edits made during a save remain in the draft. Refresh preserves unsaved fields;
+Cancel restores acknowledged annotations. Shot interruption retains the draft
+in memory, while a completed reload discards unsaved changes.
+
+**Repeat recipe** loads the recorded profile and coffee/equipment context only;
+it never starts extraction or changes utility settings. **Export saved shot**
+and **Export this page** download arrays of complete saved JSON records,
+excluding unsaved edits. Deletion requires confirmation and has no Undo.
+Routes are `?page=history` and `?page=shot&shot=<encoded ID>`.

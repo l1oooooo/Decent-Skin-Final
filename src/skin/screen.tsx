@@ -9,10 +9,12 @@ import Focus from "./focus"
 export default function FocusScreen({
   s,
   onSettings,
+  onHistory,
   onBrowse,
   onAssign,
 }: {
   s: SkinSession
+  onHistory: () => void
   onSettings: () => void
   onBrowse: () => void
   onAssign: (slot: number) => void
@@ -31,7 +33,7 @@ export default function FocusScreen({
       ref={surface}
       className="focus-skin flex h-full flex-col bg-background"
     >
-      <RevisionHeader s={s} onSettings={onSettings} />
+      <RevisionHeader s={s} onSettings={onSettings} onHistory={onHistory} />
       <div className="flex min-h-0 flex-1">
         <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="flex min-w-0 flex-1 flex-col px-7 py-6">

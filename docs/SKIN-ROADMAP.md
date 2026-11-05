@@ -11,10 +11,11 @@ Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Dec
 | 3 — Favorites and library | Implemented: five nullable positions, assignment/swaps/reorder/clear, acknowledged Save/Cancel, ID-safe selection, details/preview/sorting, hide/restore and import/export | Fixture-verified; device acceptance pending |
 | 4 — Daily-use settings | Implemented: explicit connections, utility/policy drafts, machine power, display/presence, schedules, units and descriptor-gated grinder commands | Fixture-verified; device acceptance pending |
 | 5 — Recipes, coffee and equipment | Implemented: stage/JSON editors, default forks, lineage/revert, ID recovery, recipe preferences and bean/batch/grinder inventory | Fixture-verified; device acceptance pending |
-| 6–8 | Planned; Settings category descriptions identify future scope | Not implemented or accepted |
-| 9 — Tablet acceptance | Pending | No hardware operations performed in phases 2–5 |
+| 6 — History | Implemented: filtered/paged list, recorded curves/context, canonical annotations, recipe repeat, saved-record export and confirmed deletion | Fixture-verified; device acceptance pending |
+| 7–8 | Planned; Settings category descriptions identify future scope | Not implemented or accepted |
+| 9 — Tablet acceptance | Pending | No hardware operations performed in phases 2–6 |
 
-The library now uses the shared full-page layout. Daily-use Settings categories are operational where the installed API and returned capabilities support them. Later-phase categories remain informational. Profile content editing and coffee/equipment inventory are available. Favorite, recipe, inventory and settings drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. Profile-save recovery records persist until outstanding reference updates finish. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
+The library now uses the shared full-page layout. Daily-use Settings categories are operational where the installed API and returned capabilities support them. Later-phase categories remain informational. Profile content editing and coffee/equipment inventory are available. Favorite, recipe, inventory, history annotation and settings drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. Profile-save recovery records persist until outstanding reference updates finish. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
 
 ## 1. Deliverables, decisions, and evidence
 

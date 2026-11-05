@@ -1,5 +1,40 @@
 # Focus release-candidate verification
 
+## Phase 6 — shot history, November 4, 2026
+
+- `npm run check` passes TypeScript, ESLint, **50 gateway tests** and the
+  production build. The JS bundle is about 573 kB / 183 kB gzip; Vite's existing
+  500 kB advisory remains. No dependencies or locked theme tokens changed.
+- The initial targeted browser run passed **all six scenarios**: locked Focus,
+  shared-page navigation, server filters/paging/Back with one session, failed
+  and overlapping annotation edits with canonical clears, repeat/export/delete,
+  and missing/partial records with physical-shot interruption and read retry.
+  After the development-remount fix and interrupted-draft protection, the final
+  history run passed **all four scenarios** again (4.8 minutes), including
+  opening another record without losing the retained draft. This is targeted
+  coverage, not a full-suite claim.
+- Annotation tests verify that workflow and measurements remain unchanged,
+  unknown extras survive, failed writes retain edits and later edits survive
+  acknowledgement. Repeat writes only profile/context and never a start command.
+  Export matches the saved record; deletion tests cover Cancel, failure and
+  acknowledged removal. All mutations run against disposable fixture records.
+- The Home regression at 1340 × 800 has **zero changed RGB pixels** in the body
+  `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)` compared with
+  `artifacts/phase-2/home-before.png`.
+- Manual in-app checks cover direct history/detail entry under development
+  remounts, recorded chart rendering, fixed footer actions and target framing:
+  no document overflow and no visible interactive controls below 44px.
+  Evidence: `artifacts/phase-6-preview.png`, `artifacts/phase-6-curves.png`
+  and browser captures in `artifacts/phase-6/`.
+- The production archive is **570,416 bytes**, with 12 entries, root index and
+  manifest, relative asset URLs and bundled fonts. Fixture origins, test routes,
+  source/dependency directories and environment files are excluded.
+
+This is desktop/fixture evidence only. No real machine discovery, connection or
+hardware command was performed. Samsung WebView installation, file downloads,
+actual viewport and touch/keyboard behavior, lifecycle and device acceptance
+remain pending. Export is saved-shot JSON, not a full Decaid backup.
+
 ## Phase 5 — recipes, coffee and equipment, November 4, 2026
 
 - `npm run check` passes TypeScript, ESLint, **42 gateway tests** and the

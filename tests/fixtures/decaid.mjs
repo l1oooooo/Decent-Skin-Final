@@ -85,7 +85,7 @@ let workflow,
   started,
   commandLog,
   library,
-  favorites, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
+  favorites, shots, failReadPath, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
 function reset() {
   workflow = structuredClone(baseWorkflow)
   state = "idle"
@@ -101,6 +101,8 @@ function reset() {
   library = structuredClone(profiles)
   recipeStore = {}
   inventory = {beans:[],"bean-batches":[],grinders:[]}
+  failReadPath=null
+  shots=[{id:"record",timestamp:"2026-11-04T12:00:00.000Z",workflow:structuredClone(baseWorkflow),stopReason:"targetWeight",annotations:{actualDoseWeight:18,actualYield:50,enjoyment:8,espressoNotes:"Sweet and balanced",extras:{source:"fixture"}},measurements:Array.from({length:31},(_,i)=>({machine:{timestamp:new Date(Date.parse("2026-11-04T12:00:00Z")+i*1000).toISOString(),pressure:i<6?i:8,flow:2,mixTemperature:88,profileFrame:i<7?0:i<18?1:2,state:{state:"espresso",substate:"pouring"}},scale:i<5?null:{weight:(i-4)*1.9}}))}]
   favorites = undefined
   preferences = undefined
   wifi = []
@@ -240,6 +242,8 @@ const server = createServer(async (req, res) => {
     if (data.profiles) library = data.profiles
     if (data.recipeStore) recipeStore = data.recipeStore
     if (data.inventory) inventory = data.inventory
+    if ("shots" in data) shots=data.shots
+    if ("failReadPath" in data) failReadPath=data.failReadPath
     if (state === "espresso") {
       started = true
       shotId ||= "fixture-shot"
@@ -255,6 +259,7 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/__test/requests") return reply(commandLog)
   if (req.method !== "GET" || url.pathname === "/api/v1/devices/scan")
     commandLog.push({ path: url.pathname, method: req.method, body: data })
+  if (failReadPath === url.pathname && req.method === "GET") return reply({error:"Read unavailable"},503)
   if ((error || failPath === url.pathname) && req.method !== "GET") return reply({ error: error || "Section write rejected" }, 500)
   if (url.pathname === "/api/v1/devices") return reply(devices())
   if (url.pathname === "/api/v1/settings") {
@@ -394,29 +399,26 @@ const server = createServer(async (req, res) => {
     emit()
     return reply({ outcome: "connected", state: "connected" })
   }
-  if (url.pathname === "/api/v1/shots")
-    return reply({
-      items: [
-        {
-          id: "record",
-          timestamp: new Date().toISOString(),
-          workflow,
-          annotations: { actualYield: 50 },
-        },
-      ],
-      total: 1,
-      limit: 20,
-      offset: 0,
-    })
-  if (url.pathname === "/api/v1/shots/record")
-    return reply({
-      id: "record",
-      timestamp: new Date().toISOString(),
-      workflow,
-      stopReason: "targetWeight",
-      annotations: { actualYield: 50 },
-      measurements: [],
-    })
+  if(url.pathname === "/api/v1/shots") {
+    let selected=[...shots]
+    for(const key of ["profileTitle","coffeeName","coffeeRoaster","grinderModel","search"]){const query=url.searchParams.get(key)?.toLowerCase();if(query)selected=selected.filter(shot=>String(key === "profileTitle"?shot.workflow?.profile?.title:key === "search"?[shot.workflow?.profile?.title,shot.workflow?.context?.coffeeName,shot.annotations?.espressoNotes].join(" "):shot.workflow?.context?.[key]??"").toLowerCase().includes(query))}
+    selected.sort((a,b)=>(Date.parse(a.timestamp)-Date.parse(b.timestamp))*(url.searchParams.get("order")==="asc"?1:-1))
+    const limit=Number(url.searchParams.get("limit")??20),offset=Number(url.searchParams.get("offset")??0)
+    return reply({items:selected.slice(offset,offset+limit).map(({measurements,...record})=>record),total:selected.length,limit,offset})
+  }
+  if(url.pathname.startsWith("/api/v1/shots/")) {
+    const id=decodeURIComponent(url.pathname.split("/").at(-1)),record=shots.find(s=>s.id===id)
+    if(!record)return reply({error:"Shot not found"},404)
+    if(req.method === "DELETE"){shots=shots.filter(s=>s.id!==id);return reply({success:true,id})}
+    if(req.method === "PUT"){
+      if("measurements" in data || "workflow" in data)return reply({error:"Read-only fields"},400)
+      const before=record.annotations??{espressoNotes:record.shotNotes,extras:record.metadata}
+      record.annotations=merge(before,data.annotations??{})
+      for(const [key,value] of Object.entries(record.annotations))if(value===null)delete record.annotations[key]
+      record.updatedAt=new Date().toISOString()
+    }
+    return reply(record)
+  }
   reply({ error: "Unknown fixture route" }, 404)
 })
 server.on("upgrade", (req, socket) => {

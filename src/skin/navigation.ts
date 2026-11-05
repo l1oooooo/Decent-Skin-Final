@@ -9,6 +9,8 @@ export type Page =
   | "edit"
   | "recipe"
   | "inventory"
+  | "history"
+  | "shot"
 export interface Route {
   page: Page
   id?: string
@@ -27,12 +29,14 @@ function readRoute(): Route {
       "edit",
       "recipe",
       "inventory",
+      "history",
+      "shot",
     ].includes(page ?? "")
   )
     return { page: "home" }
   return {
     page: page as Page,
-    id: query.get("profile") ?? undefined,
+    id: query.get(page === "shot" ? "shot" : "profile") ?? undefined,
     category: query.get("category") ?? undefined,
     slot:
       page === "library" && /^[0-4]$/.test(query.get("slot") ?? "")
@@ -42,10 +46,11 @@ function readRoute(): Route {
 }
 function routeUrl(route: Route) {
   const url = new URL(location.href)
-  for (const key of ["page", "profile", "category", "slot"])
+  for (const key of ["page", "profile", "shot", "category", "slot"])
     url.searchParams.delete(key)
   if (route.page !== "home") url.searchParams.set("page", route.page)
-  if (route.id) url.searchParams.set("profile", route.id)
+  if (route.id)
+    url.searchParams.set(route.page === "shot" ? "shot" : "profile", route.id)
   if (route.category) url.searchParams.set("category", route.category)
   if (route.page === "library" && route.slot !== undefined)
     url.searchParams.set("slot", String(route.slot))
@@ -86,7 +91,7 @@ export function useNavigation(
         (current.current.route.page === "favorites" ||
           current.current.route.page === "library" ||
           current.current.route.page === "settings" ||
-          ["edit", "recipe", "inventory"].includes(
+          ["edit", "recipe", "inventory", "shot"].includes(
             current.current.route.page
           )) &&
         !(
@@ -137,7 +142,7 @@ export function useNavigation(
       (route.page === "favorites" ||
         route.page === "library" ||
         route.page === "settings" ||
-        ["edit", "recipe", "inventory"].includes(route.page)) &&
+        ["edit", "recipe", "inventory", "shot"].includes(route.page)) &&
       !(route.page === "library" && next.page === "favorites") &&
       !(route.page === "settings" && next.page === "settings") &&
       !preserve

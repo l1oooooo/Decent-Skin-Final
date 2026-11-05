@@ -86,6 +86,11 @@ technical decisions, and the design history for previous iterations.
 - Recipe preferences are Focus-owned KV, separate from executable definitions
   and workflow context. Inventory updates are field patches; archive instead of
   deleting records and preserve historical context. Equipment IDs are not device IDs.
+- Shot history preserves raw records for display/export. Write only changed
+  canonical annotation fields; never mutate measurements or recorded workflows.
+  Repeat loads the recorded profile/context through the existing workflow guard,
+  without applying utility settings or issuing a start command. Missing records
+  and incomplete traces stay explicit; permanent deletion requires confirmation.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   layout and typography. Retired variants and appearance controls are removed;
