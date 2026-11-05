@@ -308,3 +308,28 @@ bounded to 128 MiB even without Content-Length to avoid unbounded tablet memory;
 use native data management for larger exports. Imports pass the File directly
 (up to the server's 2 GiB ceiling). Legacy Decaid ZIPs can omit metadata; Tcl/
 de1app migration is not reimplemented without a public contract.
+
+## Phase 8 — extensions and support
+
+Checked against Decaid `14361a94` and Streamline `65460d41`. Focus uses the
+existing gateway and operation lock; plugin and support drafts live in App.
+No plugin code runs inside Focus and no extension changes Home.
+
+| Operation | Installed endpoint and behavior |
+| --- | --- |
+| Inventory | `GET /api/v1/plugins`: manifest declarations plus `loaded`, `autoLoad`, source and pending update. Missing/incompatible inventory is an error, not an empty catalog. |
+| Plugin settings | `GET/POST /api/v1/plugins/{id}/settings`. POST patches declared fields and can reload a running plugin. Only dirty fields are sent; hidden/unknown declarations stay untouched. Secure values return `{isSet}`; explicit `null` removes a credential. No credential is persisted by Focus. |
+| Lifecycle | Explicit POST `enable`/`disable`; confirmed DELETE of the plugin removes its saved settings. Manifest version, permissions and pending candidate are reread before lifecycle writes. |
+| Installation | POST `plugins/install/github-release` with `repo`, optional `assetName`, `includePrerelease:false`, or `github-branch` with `repo`/`branch`. Arbitrary URL installation is 501; local ZIP/folder flows remain native. |
+| Updates | POST `plugins/update` checks **and installs** managed updates without new permissions. Added permissions become `pendingUpdate`; POST `{id}/update/approve` approves that candidate. Partial failures retain successes and per-source errors; inventory is refreshed even after a failed update pass. |
+| Plugin launch | A running plugin with `api` permission and declared HTTP `ui` endpoint gets a separate-tab link. URL is constructed on the configured API origin; `returnTo` preserves the actual skin origin/port/path and routes back to that plugin. Reject credentials or sensitive query parameters. No iframe, proxy token, arbitrary manifest URL or Home injection. |
+| Diagnostics | Read-only `info`, `machine/info`, `machine/capabilities`, `diagnostics/ble`; log reads are explicit. `logs?kb=256&order=desc` and `webview/logs?order=desc` are plain text with a client-side 256 KiB display bound. No diagnostic upload or machine scan. |
+| System preferences | Patch only `settings.logLevel` and `settings.automaticUpdateCheck`. Gateway mode is displayed with native guidance; never changed automatically. |
+| Account | `GET account/decent` exposes `loggedIn` only. Login, credential management and account/support consent remain in native Decaid. The scoped account proxy needs native-issued authorization; Focus does not acquire or pass those credentials to plugins. |
+| Feedback | Explicit POST `feedback` after reviewing description/type, confirming the destination and checking account status. Always send `includeLogs:false` and `includeSystemInfo:false`; no screenshots. The installed default destination is `decentespresso/decaid` issues, and the service may link the issue to a Decent support conversation. A failed/ambiguous response retains text and does not retry automatically. |
+
+DYE2, shot-upload, Home Assistant and assisted-dial-in launch points derive from
+installed manifests. Product names alone never imply support. Plugin pages may
+ignore `returnTo`; closing their tab leaves Focus open. Plugin UI/device behavior,
+Android account prompts and external feedback delivery require supervised device
+acceptance; isolated fixture checks do not establish those outcomes.

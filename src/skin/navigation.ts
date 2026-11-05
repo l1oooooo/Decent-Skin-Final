@@ -15,6 +15,7 @@ export interface Route {
   page: Page
   id?: string
   category?: string
+  plugin?: string
   slot?: number
 }
 function readRoute(): Route {
@@ -38,6 +39,7 @@ function readRoute(): Route {
     page: page as Page,
     id: query.get(page === "shot" ? "shot" : "profile") ?? undefined,
     category: query.get("category") ?? undefined,
+    plugin: query.get("plugin") ?? undefined,
     slot:
       page === "library" && /^[0-4]$/.test(query.get("slot") ?? "")
         ? Number(query.get("slot"))
@@ -46,12 +48,18 @@ function readRoute(): Route {
 }
 function routeUrl(route: Route) {
   const url = new URL(location.href)
-  for (const key of ["page", "profile", "shot", "category", "slot"])
+  for (const key of ["page", "profile", "shot", "category", "slot", "plugin"])
     url.searchParams.delete(key)
   if (route.page !== "home") url.searchParams.set("page", route.page)
   if (route.id)
     url.searchParams.set(route.page === "shot" ? "shot" : "profile", route.id)
   if (route.category) url.searchParams.set("category", route.category)
+  if (
+    route.page === "settings" &&
+    route.category === "extensions" &&
+    route.plugin
+  )
+    url.searchParams.set("plugin", route.plugin)
   if (route.page === "library" && route.slot !== undefined)
     url.searchParams.set("slot", String(route.slot))
   return url

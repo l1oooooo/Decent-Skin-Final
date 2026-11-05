@@ -1,5 +1,45 @@
 # Focus release-candidate verification
 
+## Phase 8 — extensions and support, November 4, 2026
+
+- `npm run check` passes TypeScript, ESLint, **74 gateway tests** and the
+  production build. The JS bundle is about 653 kB / 205 kB gzip; Vite's existing
+  500 kB advisory remains. No dependencies or locked theme tokens changed.
+- Contract checks use Decaid `14361a94` and Streamline `65460d41`. Unit coverage
+  includes strict inventory/settings responses, hidden and unsupported fields,
+  secure credential clears, manifest changes before writes, permission candidate
+  changes, safe launch/return URLs, supported installation bodies, command gates,
+  text-only feedback/account checks and bounded plain-text logs.
+- Targeted browser checks cover retained failed drafts, hidden/secure field
+  preservation, shot interruption, safe return links, lifecycle actions,
+  permission approval, partial updates, installation and cancelled removal.
+  Help coverage verifies local diagnostics/log reads, owned system-preference
+  patches, explicit feedback review, failed-submission retention and successful
+  acknowledgement without attachments. Startup runs exposed delayed initial
+  reads in headless Chrome; traces showed successful fixture responses. Read-only
+  support loads now start immediately, and the support/recovery checks wait for
+  gateway readiness and use the visible Refresh action. Production request
+  timeouts and command gates were not relaxed. All **four phase 8 scenarios**
+  passed across targeted runs; the final support and unavailable-endpoint run
+  passed **both scenarios** (2.7 minutes), including explicit credential removal
+  only on Save, missing inventory, signed-out feedback and unavailable WebView
+  logs. This is targeted coverage, not a full-suite claim.
+- The locked Focus browser regression passes. Its 1340 × 800 capture has **zero
+  changed RGB pixels** in the body `(0,72)–(1340,704)` and footer
+  `(0,704)–(1340,800)` compared with `artifacts/phase-2/home-before.png`.
+- Manual in-app checks cover Help and plugin settings, direct entry, masked
+  credentials, declared launch/return links, no document overflow and visible
+  form controls at least 44px. No console errors or warnings were recorded.
+  Evidence: `artifacts/phase-8-preview.png`.
+- The production archive is **593,205 bytes**, with 12 entries, root index and
+  manifest, relative entry assets, bundled font and artwork. Fixture origins,
+  test routes, source/dependency directories and environment files are excluded.
+
+All operations ran against the isolated API fixture. No real hardware commands,
+plugin downloads, account login or external feedback submission were performed.
+Installed plugin UI behavior, native account/consent flows, external delivery and
+Samsung WebView acceptance remain phase 9 work.
+
 ## Phase 7 — advanced operations, November 4, 2026
 
 - `npm run check` passes TypeScript, ESLint, **63 gateway tests** and the

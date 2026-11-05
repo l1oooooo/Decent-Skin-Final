@@ -85,7 +85,7 @@ let workflow,
   started,
   commandLog,
   library,
-  advancedState, firmwareResponse, favorites, shots, failReadPath, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
+  extensionState, advancedState, firmwareResponse, favorites, shots, failReadPath, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
 function reset() {
   firmwareResponse?.end()
   firmwareResponse = null
@@ -100,6 +100,12 @@ function reset() {
     app:{phase:"available",currentVersion:"0.9.1+3027",latestVersion:"0.9.2",releaseUrl:"https://github.com/decentespresso/decaid/releases",installable:true,releaseNotes:"Fixture update"},
     skins:[{id:"decent-skin-codex",name:"Decent Focus",version:"0.2.0",path:"fixture",isBundled:false},{id:"bundled",name:"Bundled skin",version:"1.0",path:"fixture",isBundled:true}],defaultSkin:"decent-skin-codex",
     transfer:{profiles:{imported:2,skipped:1},shots:{imported:0,skipped:0,errors:["Fixture rejected shot"]}},
+  }
+  extensionState = {
+    account: {loggedIn:true},
+    plugins: [{id:"fixture.tools",name:"Fixture tools",version:"1.0",description:"Isolated extension with a long descriptive name for touch layout verification",loaded:true,autoLoad:true,permissions:["api","log"],api:[{id:"ui",type:"http"}],settings:{nickname:{type:"string",label:"Display name",default:"Fixture"},threshold:{type:"number",label:"Minimum shot length",default:5},autoUpload:{type:"boolean",label:"Automatic shot upload",default:false},mode:{type:"enum",label:"Upload mode",values:["manual","queued"],default:"manual"},token:{type:"string",label:"Service credential",secure:true},internal:{type:"string",hidden:true,default:"keep"},unknown:{type:"object",label:"Unsupported setting"}},source:{kind:"github_release",repo:"fixture/tools",lastChecked:null,lastError:null},pendingUpdate:null}, {id:"fixture.stopped",name:"Stopped extension",version:"1.0",loaded:false,autoLoad:false,permissions:[],settings:{},api:[]}],
+    settings: {"fixture.tools":{nickname:"Fixture",threshold:5,autoUpload:false,mode:"manual",token:{isSet:true},internal:"keep"}},
+    updateFailure:false,
   }
   workflow = structuredClone(baseWorkflow)
   state = "idle"
@@ -127,7 +133,7 @@ function reset() {
   grinderRunning = false
   failPath = null
   daily = {
-    settings: { blockOnNoScale:true,blockTareDuringShot:true,stopHotWaterAtWeight:true,scalePowerMode:"disabled",weightFlowMultiplier:1,volumeFlowMultiplier:0.3,hotWaterFlowMultiplier:0.3,preferredMachineId:null,preferredScaleId:null,preferredGrinderDeviceId:null,chargingMode:"balanced",nightModeEnabled:false,nightModeSleepTime:1320,nightModeMorningTime:420,keepAwake:true,lowBatteryBrightnessLimit:true },
+    settings: { logLevel:"INFO",automaticUpdateCheck:false,blockOnNoScale:true,blockTareDuringShot:true,stopHotWaterAtWeight:true,scalePowerMode:"disabled",weightFlowMultiplier:1,volumeFlowMultiplier:0.3,hotWaterFlowMultiplier:0.3,preferredMachineId:null,preferredScaleId:null,preferredGrinderDeviceId:null,chargingMode:"balanced",nightModeEnabled:false,nightModeSleepTime:1320,nightModeMorningTime:420,keepAwake:true,lowBatteryBrightnessLimit:true },
     machine: { fan:40,tankTemp:25,steamPurgeMode:0 }, advanced:{refillKitSetting:2,heaterPh1Flow:2,heaterPh2Flow:4,heaterIdleTemp:99,heaterPh2Timeout:1,heaterVoltage:120},
     display:{brightness:70,requestedBrightness:70,wakeLockEnabled:true,wakeLockOverride:false,platformSupported:{brightness:true,wakeLock:true},lowBatteryBrightnessActive:false},
     presence:{userPresenceEnabled:false,sleepTimeoutMinutes:30},
@@ -243,6 +249,7 @@ const server = createServer(async (req, res) => {
   }
   if (url.pathname === "/__test/state") {
     if(data.advanced) merge(advancedState,data.advanced)
+    if(data.extensions) merge(extensionState,data.extensions)
     state = data.state ?? state
     substate = data.substate ?? (state === "espresso" ? "pouring" : "idle")
     elapsed = data.elapsed ?? elapsed
@@ -317,6 +324,33 @@ const server = createServer(async (req, res) => {
   if(url.pathname === "/api/v1/data/export"){res.writeHead(200,{"Content-Type":"application/zip"});res.end(Buffer.from("UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==","base64"));return}
   if(url.pathname === "/api/v1/data/import")return reply(advancedState.transfer,207)
   if(url.pathname === "/api/v1/data/sync")return reply({status:"partial",complete:false,partial:true,mode:data.mode,pull:advancedState.transfer,phases:{pull:{status:"partial"},push:{status:"skipped",reason:"pull_incomplete"}}},207)
+  if(url.pathname === "/api/v1/plugins")return reply(extensionState.plugins)
+  if(url.pathname === "/api/v1/plugins/update") {
+    extensionState.plugins[0].pendingUpdate={version:"2.0",releaseTag:"v2.0",addedPermissions:["network.tcp"],detectedAt:new Date().toISOString()}
+    if(extensionState.updateFailure){extensionState.plugins[0].source.lastError="Fixture update partially failed";return reply({error:"Some plugin updates failed"},500)}
+    return reply({message:"Plugin update check complete"})
+  }
+  if(url.pathname.startsWith("/api/v1/plugins/install/")){
+    const p={id:"fixture.installed",name:"Installed extension",version:"1.0",loaded:false,autoLoad:false,permissions:[],settings:{},api:[]}
+    extensionState.plugins.push(p);return reply({message:"Plugin installed",id:p.id,version:p.version,loaded:false})
+  }
+  if(url.pathname.startsWith("/api/v1/plugins/")) {
+    const [,id,suffix]=url.pathname.match(/^\/api\/v1\/plugins\/([^/]+)(.*)$/)??[]
+    const p=extensionState.plugins.find(p=>p.id===id)
+    if(!p)return reply({error:"Plugin missing"},404)
+    if(suffix==="/settings") {
+      const settings=extensionState.settings[id]??={}
+      if(req.method==="POST")for(const [key,value] of Object.entries(data)){if(p.settings[key]?.secure)settings[key]={isSet:value!==null};else if(value===null)delete settings[key];else settings[key]=value}
+      return reply(settings)
+    }
+    if(suffix==="/enable"||suffix==="/disable"){p.loaded=p.autoLoad=suffix==="/enable";return reply({message:"Updated",id})}
+    if(suffix==="/update/approve"){p.version=p.pendingUpdate.version;p.permissions.push(...p.pendingUpdate.addedPermissions);p.pendingUpdate=null;return reply({message:"Plugin updated",id,version:p.version})}
+    if(suffix===""&&req.method==="DELETE"){extensionState.plugins=extensionState.plugins.filter(p=>p.id!==id);delete extensionState.settings[id];return reply({message:"Plugin removed",id})}
+    if(suffix==="/ui"){res.writeHead(200,{"Content-Type":"text/html"});res.end("<h1>Isolated plugin UI</h1><p>Close this tab to return to Focus.</p>");return}
+  }
+  if(url.pathname === "/api/v1/account/decent")return reply(extensionState.account)
+  if(url.pathname === "/api/v1/feedback")return reply({success:true,issueNumber:123,issueUrl:"https://github.com/decentespresso/decaid/issues/123"},201)
+  if(url.pathname === "/api/v1/logs"||url.pathname === "/api/v1/webview/logs"){res.writeHead(200,{"Content-Type":"text/plain"});res.end("Fixture diagnostic log — no hardware or external service was contacted.\n");return}
   if (url.pathname === "/api/v1/devices") return reply(devices())
   if (url.pathname === "/api/v1/settings") {
     if(req.method === "POST") Object.assign(daily.settings,data)

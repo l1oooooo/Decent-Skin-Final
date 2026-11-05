@@ -103,6 +103,14 @@ technical decisions, and the design history for previous iterations.
   Data transfers are nontransactional: preserve section errors and conflict
   policy, and never claim rollback. ZIP section selection is not exposed by the
   installed HTTP handler; section selection belongs to sync.
+- Extensions never inject into Home or execute inside Focus. Render only visible,
+  supported manifest fields; patch changed fields and preserve secure `{isSet}`
+  markers. Credential removal is explicit `null`, never an empty default write.
+  Plugin updates can install immediately; added permissions require separate
+  candidate approval. Launch only declared same-plugin HTTP UI routes with a
+  validated return address and no credential sharing. Feedback is explicitly
+  reviewed text with automatic attachments disabled; account credentials and
+  consent remain in native Decaid.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   layout and typography. Retired variants and appearance controls are removed;

@@ -1,3 +1,5 @@
+import { useExtensions } from "@/skin/use-extensions"
+import { ExtensionsPage } from "@/skin/extensions"
 import { useAdvanced } from "@/skin/use-advanced"
 import { AdvancedPage } from "@/skin/advanced"
 import { useRecipeEditor } from "@/skin/use-recipe-editor"
@@ -32,6 +34,7 @@ export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
   const advanced = useAdvanced(gateway)
+  const extensions = useExtensions(gateway)
   const history = useShotHistory(gateway)
   const daily = useDailySettings(gateway)
   const recipes = useRecipeEditor(gateway)
@@ -39,6 +42,7 @@ export default function App() {
   const editor = useFavorites(gateway, s.snapshot)
   const transfer = useProfileTransfer(gateway, s.reloadLibrary)
   const saving =
+    !!extensions.busy ||
     !!advanced.busy ||
     history.busy ||
     recipes.busy ||
@@ -48,7 +52,8 @@ export default function App() {
     daily.saving ||
     s.snapshot.pending
   const nav = useNavigation(
-    advanced.dirty ||
+    extensions.dirty ||
+      advanced.dirty ||
       history.dirty ||
       editor.dirty ||
       daily.dirty ||
@@ -66,6 +71,7 @@ export default function App() {
       if (route.page === "settings") {
         daily.cancel()
         advanced.clear()
+        extensions.clear()
       }
       if (route.page === "favorites" || route.page === "library") {
         editor.cancel()
@@ -82,7 +88,9 @@ export default function App() {
             : route.page === "recipe"
               ? catalog.preferenceDirty || catalog.busy
               : route.page === "settings"
-                ? daily.dirty ||
+                ? extensions.dirty ||
+                  !!extensions.busy ||
+                  daily.dirty ||
                   daily.saving ||
                   advanced.dirty ||
                   !!advanced.busy
@@ -382,6 +390,15 @@ export default function App() {
           {page === "settings" && (
             <>
               <SettingsPage category={nav.route.category} navigate={navigate} />
+              {["extensions", "help"].includes(nav.route.category ?? "") && (
+                <ExtensionsPage
+                  key={nav.route.category}
+                  s={s}
+                  h={extensions}
+                  route={nav.route}
+                  navigate={navigate}
+                />
+              )}
               {["calibration", "maintenance", "updates", "machine"].includes(
                 nav.route.category ?? ""
               ) && (

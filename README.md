@@ -30,7 +30,7 @@ The library supports search, sorting, visible/hidden views, details/target previ
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–7 are implemented; phase 8 remains planned and phase 9 is device acceptance. See the verification record for fixture and device status.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–8 are implemented; phase 9 is device acceptance. See the verification record for fixture and device status.
 
 ## Tests and limits
 
@@ -156,3 +156,29 @@ in the native data-management flow.
 Routes: `?page=settings&category=calibration`, `maintenance`, `machine`, or
 `updates`. Operation state and drafts live above page navigation. Hardware and
 Samsung WebView acceptance remain required before deployment.
+
+### Extensions and support
+
+**Settings → Extensions** lists installed plugins, runtime/startup state,
+permissions and update outcomes. Open a plugin’s settings to edit its exposed
+manifest fields. Save sends only changed fields; secure credentials remain
+masked and clearing one requires Save. Plugin pages open separately with a
+return address to this skin. DYE2, shot upload, Home Assistant and assisted
+dial-in appear only when their installed manifests provide the needed UI.
+
+Enable, disable, remove, install and update are explicit actions. **Check and
+install plugin updates** can install updates immediately; added permissions need
+separate approval. Partial successes remain installed. GitHub releases/branches
+are supported; local ZIP/folder installation remains in native Decaid.
+
+**Settings → System and help** includes versions, log/update-check preferences,
+quick start, diagnostics, logs, account status and reviewed feedback. Feedback
+sends only your description/type through Decaid to its configured GitHub issue
+repository and may link to Decent support. It attaches no logs, screenshots or
+system information. Login, credentials, account consent and private support
+packages remain native. No feedback or diagnostic upload happens on page load.
+
+Direct routes are `?page=settings&category=extensions`, optionally with
+`&plugin=<encoded ID>`, and `?page=settings&category=help`. Drafts survive page
+navigation and shot interruption within the session, but not a reload. Device
+acceptance remains phase 9.
