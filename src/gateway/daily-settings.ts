@@ -172,6 +172,10 @@ export const fields: Record<
     machine: [
       temperature("tankTemp", "Tank temperature", 10, 40),
       temperature("fan", "Fan threshold", 0, 50),
+      select("steamPurgeMode", "Steam purge behavior", [
+        ["0", "Normal"],
+        ["1", "Two-tap stop"],
+      ]),
     ],
     advanced: [
       select(
@@ -300,7 +304,9 @@ export function validateField(
   if (field.kind === "select") {
     if (!field.options?.some((o) => o.value === String(raw)))
       throw new Error("Choose a listed option.")
-    return field.key === "refillKitSetting" ? Number(raw) : raw
+    return ["refillKitSetting", "steamPurgeMode"].includes(field.key)
+      ? Number(raw)
+      : raw
   }
   if (field.kind === "time") {
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(raw)))

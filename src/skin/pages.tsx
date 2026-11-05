@@ -268,7 +268,7 @@ export function SettingsPage({
           >
             Open coffee and equipment
           </Action>
-        ) : selected.phase !== 4 ? (
+        ) : ![4, 7].includes(selected.phase) ? (
           <PageMessage>
             These controls are not available yet. Manage them in Decaid for now.
           </PageMessage>
@@ -297,7 +297,7 @@ export function SettingsPage({
               </p>
             </div>
             <span className="text-[12px] text-muted-foreground">
-              {c.phase <= 5 ? "Available" : "Planned"}
+              {c.phase <= 7 ? "Available" : "Planned"}
             </span>
             <ChevronRight size={18} aria-hidden="true" />
           </button>

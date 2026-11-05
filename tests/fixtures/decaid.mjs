@@ -85,8 +85,22 @@ let workflow,
   started,
   commandLog,
   library,
-  favorites, shots, failReadPath, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
+  advancedState, firmwareResponse, favorites, shots, failReadPath, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
 function reset() {
+  firmwareResponse?.end()
+  firmwareResponse = null
+  advancedState = {
+    capabilities: [], steamTemperature: 50, flowMultiplier: 1,
+    sensors: {flow:1,pressure:1,temperature:0}, factory:{flow:1,pressure:1,temperature:0},
+    scale:{step:"idle",detectedCell:"none",subState:"done",secondsRemaining:0,status:"none"},
+    cupWarmer:{temperature:60,enabled:false,currentTemperature:24},
+    preheat:{enabled:false,leadMinutes:20,active:false},
+    ledStrip:{frontStrip:{awake:"FFFF80000000",sleeping:"000000000000"},backStrip:{awake:"FFFF80000000",sleeping:"000000000000"},frontSwitch:{awake:"FFFF80000000",sleeping:"000000000000"}},
+    firmwareMode:"done", firmwareState:"idle", firmwareBuild:100,
+    app:{phase:"available",currentVersion:"0.9.1+3027",latestVersion:"0.9.2",releaseUrl:"https://github.com/decentespresso/decaid/releases",installable:true,releaseNotes:"Fixture update"},
+    skins:[{id:"decent-skin-codex",name:"Decent Focus",version:"0.2.0",path:"fixture",isBundled:false},{id:"bundled",name:"Bundled skin",version:"1.0",path:"fixture",isBundled:true}],defaultSkin:"decent-skin-codex",
+    transfer:{profiles:{imported:2,skipped:1},shots:{imported:0,skipped:0,errors:["Fixture rejected shot"]}},
+  }
   workflow = structuredClone(baseWorkflow)
   state = "idle"
   substate = "idle"
@@ -114,7 +128,7 @@ function reset() {
   failPath = null
   daily = {
     settings: { blockOnNoScale:true,blockTareDuringShot:true,stopHotWaterAtWeight:true,scalePowerMode:"disabled",weightFlowMultiplier:1,volumeFlowMultiplier:0.3,hotWaterFlowMultiplier:0.3,preferredMachineId:null,preferredScaleId:null,preferredGrinderDeviceId:null,chargingMode:"balanced",nightModeEnabled:false,nightModeSleepTime:1320,nightModeMorningTime:420,keepAwake:true,lowBatteryBrightnessLimit:true },
-    machine: { fan:40,tankTemp:25 }, advanced:{refillKitSetting:2},
+    machine: { fan:40,tankTemp:25,steamPurgeMode:0 }, advanced:{refillKitSetting:2,heaterPh1Flow:2,heaterPh2Flow:4,heaterIdleTemp:99,heaterPh2Timeout:1,heaterVoltage:120},
     display:{brightness:70,requestedBrightness:70,wakeLockEnabled:true,wakeLockOverride:false,platformSupported:{brightness:true,wakeLock:true},lowBatteryBrightnessActive:false},
     presence:{userPresenceEnabled:false,sleepTimeoutMinutes:30},
     info:{model:"DE1",serialNumber:"fixture-only",firmwareVersion:"fixture",extra:{refillKit:false}},
@@ -146,6 +160,7 @@ function machine() {
     pressure: state === "espresso" ? (elapsed < 7 ? 3 : 9) : 0,
     flow: state === "espresso" ? (elapsed < 7 ? 2 : 1.6) : 0,
     mixTemperature: state === "heating" ? 78 : 88,
+    groupTemperature: 88, steamTemperature: advancedState.steamTemperature,
     profileFrame: elapsed < 7 ? 0 : elapsed < 18 ? 1 : 2,
   }
 }
@@ -216,7 +231,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`)
   let body = ""
   for await (const chunk of req) body += chunk
-  const data = body ? JSON.parse(body) : {}
+  const data = url.pathname === "/api/v1/data/import" ? {archiveBytes:Buffer.byteLength(body)} : body ? JSON.parse(body) : {}
   const reply = (value, status = 200) => {
     res.writeHead(status, { "Content-Type": "application/json" })
     res.end(JSON.stringify(value))
@@ -227,6 +242,7 @@ const server = createServer(async (req, res) => {
     return reply({ ok: true })
   }
   if (url.pathname === "/__test/state") {
+    if(data.advanced) merge(advancedState,data.advanced)
     state = data.state ?? state
     substate = data.substate ?? (state === "espresso" ? "pouring" : "idle")
     elapsed = data.elapsed ?? elapsed
@@ -261,6 +277,46 @@ const server = createServer(async (req, res) => {
     commandLog.push({ path: url.pathname, method: req.method, body: data })
   if (failReadPath === url.pathname && req.method === "GET") return reply({error:"Read unavailable"},503)
   if ((error || failPath === url.pathname) && req.method !== "GET") return reply({ error: error || "Section write rejected" }, 500)
+  if(url.pathname === "/api/v1/machine/calibration") {if(req.method==="POST") advancedState.flowMultiplier=data.flowMultiplier;return reply({flowMultiplier:advancedState.flowMultiplier})}
+  if(url.pathname.startsWith("/api/v1/machine/calibration/")) {
+    const target=url.pathname.split("/").at(-1)
+    if(req.method==="PUT")advancedState.sensors[target]=target==="temperature"?advancedState.sensors[target]+data.measuredValue-data.de1ReportedValue:advancedState.sensors[target]*data.measuredValue/data.de1ReportedValue
+    const source=url.searchParams.get("source")??"current"
+    return reply({target,source,de1ReportedValue:target==="temperature"?0:1,measuredValue:(source==="factory"?advancedState.factory:advancedState.sensors)[target]})
+  }
+  if(url.pathname === "/api/v1/machine/scaleCalibration") {
+    if(!advancedState.capabilities.includes("scaleCalibration"))return reply({error:"Unsupported"},404)
+    if(req.method==="PUT") {
+      advancedState.scale=data.command==="abort"?{step:"idle",subState:"done",status:"none",detectedCell:"none",secondsRemaining:0}:{step:data.command==="zero"?"zeroing":"calLatch",subState:"settling",status:"none",detectedCell:"none",secondsRemaining:5}
+      return reply({status:"accepted",state:advancedState.scale},202)
+    }
+    return reply(advancedState.scale)
+  }
+  const extras={"/api/v1/machine/cupWarmer":"cupWarmer","/api/v1/machine/cupWarmer/preheat":"preheat","/api/v1/machine/ledStrip":"ledStrip"}
+  if(extras[url.pathname]){const key=extras[url.pathname];if(!advancedState.capabilities.includes(key))return reply({error:"Unsupported"},404);if(req.method==="PUT")merge(advancedState[key],data);return reply(advancedState[key])}
+  if(url.pathname === "/api/v1/machine/settings/reset"){daily.advanced={refillKitSetting:2,heaterPh1Flow:2,heaterPh2Flow:4,heaterIdleTemp:99,heaterPh2Timeout:1,heaterVoltage:120};return reply({},202)}
+  if(url.pathname === "/api/v1/machine/firmware") {
+    if(req.method==="DELETE"){advancedState.firmwareState="idle";firmwareResponse?.end(JSON.stringify({status:"error",error:"Cancelled"})+"\n");firmwareResponse=null;return reply({operation:{state:"idle"}},202)}
+    return reply({machine:{model:daily.info.model,build:advancedState.firmwareBuild},operation:{state:advancedState.firmwareState},artifacts:[{id:"fixture-101",build:101,eligibility:{status:"applicable",reasons:[]}},{id:"ineligible",build:99,eligibility:{status:"notApplicable",reasons:["not_newer"]}}]})
+  }
+  if(url.pathname === "/api/v1/machine/firmware/apply") {
+    if(data.artifactId!=="fixture-101"||data.force)return reply({error:"Ineligible"},422)
+    advancedState.firmwareState="uploading";firmwareResponse=res
+    res.writeHead(200,{"Content-Type":"application/x-ndjson"})
+    res.write(JSON.stringify({status:"uploading",progress:1})+"\n")
+    if(advancedState.firmwareMode==="hold")return
+    setTimeout(()=>{if(res.destroyed)return;advancedState.firmwareState="idle";if(advancedState.firmwareMode==="done"){advancedState.firmwareBuild=101;res.end(JSON.stringify({status:"done",progress:1})+"\n")}else if(advancedState.firmwareMode==="error")res.end(JSON.stringify({status:"error",error:"Verification rejected"})+"\n");else res.end();firmwareResponse=null},400)
+    return
+  }
+  if(url.pathname === "/api/v1/update")return reply(advancedState.app)
+  if(url.pathname === "/api/v1/webui/skins")return reply(advancedState.skins)
+  if(url.pathname === "/api/v1/webui/skins/default"){if(req.method==="PUT"){advancedState.defaultSkin=data.skinId;return reply({success:true,skinId:data.skinId})}return reply(advancedState.skins.find(s=>s.id===advancedState.defaultSkin))}
+  if(url.pathname === "/api/v1/webui/skins/update")return reply({message:"Skin update completed"})
+  if(url.pathname.startsWith("/api/v1/webui/skins/install/")){advancedState.skins.push({id:"installed-fixture",name:"Installed fixture",version:"1.0",isBundled:false,path:"fixture"});return reply({success:true})}
+  if(url.pathname.startsWith("/api/v1/webui/skins/")&&req.method==="DELETE"){const id=decodeURIComponent(url.pathname.split("/").at(-1));advancedState.skins=advancedState.skins.filter(s=>s.id!==id);return reply({success:true,id})}
+  if(url.pathname === "/api/v1/data/export"){res.writeHead(200,{"Content-Type":"application/zip"});res.end(Buffer.from("UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==","base64"));return}
+  if(url.pathname === "/api/v1/data/import")return reply(advancedState.transfer,207)
+  if(url.pathname === "/api/v1/data/sync")return reply({status:"partial",complete:false,partial:true,mode:data.mode,pull:advancedState.transfer,phases:{pull:{status:"partial"},push:{status:"skipped",reason:"pull_incomplete"}}},207)
   if (url.pathname === "/api/v1/devices") return reply(devices())
   if (url.pathname === "/api/v1/settings") {
     if(req.method === "POST") Object.assign(daily.settings,data)
@@ -276,7 +332,7 @@ const server = createServer(async (req, res) => {
     if(req.method === "POST") Object.assign(daily[key],data)
     return reply(daily[key])
   }
-  if(url.pathname === "/api/v1/machine/capabilities") return reply({capabilities:[]})
+  if(url.pathname === "/api/v1/machine/capabilities") return reply({capabilities:advancedState.capabilities})
   if(url.pathname === "/api/v1/display/brightness") { daily.display.requestedBrightness=data.brightness;daily.display.brightness=daily.display.lowBatteryBrightnessActive?Math.min(20,data.brightness):data.brightness;return reply(daily.display) }
   if(url.pathname === "/api/v1/display/wakelock") { daily.display.wakeLockOverride=req.method === "POST";return reply(daily.display) }
   if(url.pathname === "/api/v1/machine/heartbeat") return reply({timeout:1800})
@@ -438,7 +494,13 @@ server.on("upgrade", (req, socket) => {
   socket.on("error", () => sockets.delete(socket))
   socket.on("data", (buffer) => {
     if ((buffer[0] & 15) === 8) socket.end()
+    else if(req.url === "/ws/v1/update" && (buffer[0]&15)===1){
+      const len=buffer[1]&127,offset=len===126?4:2,mask=buffer.subarray(offset,offset+4),payload=Buffer.from(buffer.subarray(offset+4))
+      for(let i=0;i<payload.length;i++)payload[i]^=mask[i%4]
+      try{const value=JSON.parse(payload.toString());commandLog.push({path:"/ws/v1/update",method:"WS",body:value});advancedState.app.phase=value.command==="install"?"downloading":"checking";socket.write(frame(advancedState.app))}catch{socket.write(frame({error:"Invalid command"}))}
+    }
   })
+  if(req.url === "/ws/v1/update")socket.write(frame(advancedState.app))
   emit()
 })
 setInterval(() => emit(), 500).unref()

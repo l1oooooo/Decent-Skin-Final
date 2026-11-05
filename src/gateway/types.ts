@@ -62,6 +62,8 @@ export interface MachineSnapshot {
   flow: number
   pressure: number
   mixTemperature: number
+  groupTemperature?: number
+  steamTemperature?: number
   targetPressure?: number
   profileFrame: number
 }

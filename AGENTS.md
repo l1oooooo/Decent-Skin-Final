@@ -91,6 +91,18 @@ technical decisions, and the design history for previous iterations.
   Repeat loads the recorded profile/context through the existing workflow guard,
   without applying utility settings or issuing a start command. Missing records
   and incomplete traces stay explicit; permanent deletion requires confirmation.
+- Advanced procedures share the App-owned operation state and existing gateway.
+  Keep sensor correction, flow estimation, load-cell steps, maintenance,
+  machine firmware, app updates, skin updates and data transfer distinct.
+  Never infer success from elapsed time or upload percentage. Firmware requires
+  terminal verified `done`; maintenance requires observed active then idle.
+  Cancel cannot leave a delayed start queued. No automatic wake/cooldown start,
+  steam restoration, update, discovery or command replay is allowed.
+- Sensor corrections consume one paired observation and are reread after writes.
+  Lighting writes preserve the unedited zone; front-switch colors are read-only.
+  Data transfers are nontransactional: preserve section errors and conflict
+  policy, and never claim rollback. ZIP section selection is not exposed by the
+  installed HTTP handler; section selection belongs to sync.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   layout and typography. Retired variants and appearance controls are removed;

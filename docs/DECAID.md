@@ -232,3 +232,79 @@ routes and observed-shot interruption. Reads are fenced; save acknowledgements
 preserve newer local edits. Navigation guards unsaved changes, and no failed
 write is replayed automatically. The API offers no revision precondition, so
 this is not cross-client conflict detection.
+
+
+## Advanced operations (phase 7)
+
+Rechecked local source at installed commit
+`14361a94b32888f6a81182e9e239f513d39d060c`: `de1handler.dart`,
+`firmware_handler.dart`, `update_handler.dart`, `webui_handler.dart`,
+`data_export_handler.dart`, `data_sync_handler.dart`, the REST schema, machine
+states and data-transfer result models. Streamline reference commit
+`65460d41e47bac266a9b3e25bcfa966217f7e90e` informed calibration correction math,
+service bounds, load-cell result handling and descaling preparation. No machine
+or tablet endpoint was contacted during development.
+
+| Surface | Contract and result policy |
+| --- | --- |
+| Sensor calibration | GET current/factory `machine/calibration/{flow,pressure,temperature}`; PUT paired `de1ReportedValue`/`measuredValue`, then read back |
+| Flow estimation | GET/POST `machine/calibration` with flowMultiplier 0.13–2.0; separate from app stop-compensation multipliers |
+| Load cells | Capability `scaleCalibration`; GET/PUT `machine/scaleCalibration`, zero/latch/abort with known mass 1–10,000 g; poll actual step/subState/status/cell |
+| Maintenance | PUT `machine/state/{cleaning,descaling,airPurge}` and existing snapshot stream; explicit idle request to Stop |
+| Advanced heater | GET/POST `machine/settings/advanced`; warmup/test flow 0–10 ml/s, idle temperature 0–99 °C, test timeout 0–60 whole seconds, voltage 120/230 |
+| Service reset | DELETE `machine/settings/reset`, then read back; machine settings only, no profile/workflow reset |
+| Steam purge | Existing Machine settings owner, steamPurgeMode 0 normal / 1 two-tap stop; fan/refill retain their existing owners |
+| Cup warmer/preheat | Returned capabilities plus GET/PUT `machine/cupWarmer` and `/preheat`; 0–80 whole °C, 0–120 whole lead minutes |
+| Lighting | Capability `ledStrip`; GET/PUT `machine/ledStrip`; persist front/back palettes, preserve other zone, display canonical reread; derived frontSwitch is not writable |
+| Machine firmware | GET `machine/firmware` eligibility/catalog; POST `/apply` with artifactId and force=false; parse bounded NDJSON; DELETE firmware for explicit cancellation |
+| Decaid update | GET `update`; explicit one-shot WS `update` command check/install; no reconnect replay; poll phase/version/installable state; native installer remains authoritative |
+| Skin management | GET skins/default, explicit PUT default, POST install from GitHub release/branch or URL, POST update, confirmed DELETE user skin; Focus and bundled skins cannot be removed here |
+| Backup/import | GET data/export ZIP, POST data/import ZIP with onConflict; process 200/207 section results, retain errors/warnings/imported/skipped counts |
+| Sync | POST data/sync with explicit target origin, mode, onConflict and nonempty sections; continueOnPullFailure=false; preserve phase metadata even on non-2xx partial responses |
+
+Sensor calibration is a correction: flow/pressure multiply by measured/reported;
+temperature adds measured minus reported. Read responses store the calibration
+in measuredValue, not de1ReportedValue. Restore-factory first reads current C
+and factory F, then writes C/F as the reported/measured pair. Measured sensor
+inputs use Celsius, not display-unit temperature offsets. Zero/nonfinite/out-of-
+range values are blocked; ratio corrections use the reference's 0.75–1.33 band.
+Observation fields clear after an attempt to prevent accidental double
+correction; uncertain writes require fresh readings and manual review.
+
+Load-cell zero ignores the previous latch status. A latch result of incomplete
+means only one cell is solved; it is not overall calibration success. Error
+states stay explicit. Firmware verification requires a terminal done event;
+100% upload, closed streams, timeout, or a catalog reporting idle are not proof
+of verified completion. Reload/reconnect can recover current operation state,
+but cannot reconstruct a lost terminal result. No raw firmware upload or force
+option bypasses eligibility.
+
+Maintenance never queues a wake/cooldown start. Descaling requires fresh steam
+readings at or below 60 °C and workflow steam target 0. Disabling/restoring steam
+are explicit workflow edits. A start request is followed by real state
+observation; unknown/disconnected/interrupted states never produce a completion
+claim. Cancellation invalidates monitoring, waits for the outstanding start,
+then sends one idle command to the same connected machine. The device's own
+physical Stop remains necessary if connectivity is unavailable.
+
+Machine writes use the existing fresh-state, mode, identity and pending-operation
+gates. Drafts for a replaced device remain blocked until cancelled and refreshed.
+All operations remain App-owned across Settings navigation; unload guards active
+work. No operational request is sent by a page visit. A dedicated update socket
+opens only for an explicit app command and is never used as a command queue.
+
+Skin update is not check-only: the installed handler immediately installs newer
+remote artifacts, keeps successful updates on partial failure, and reports a
+plain-language error. Focus rereads the installed list and preserves its current
+origin/path. App download/install phase does not establish the running version;
+verify the version after native installation/restart.
+
+The public ZIP handlers do not read a section-selection parameter, despite the
+internal transfer service supporting sections. Full archive import/export is
+therefore labeled honestly. Sync alone offers selected sections. Import counts
+include overwrites under the chosen policy; the API exposes no separate
+replacement count. No transaction or rollback is implied. Browser exports are
+bounded to 128 MiB even without Content-Length to avoid unbounded tablet memory;
+use native data management for larger exports. Imports pass the File directly
+(up to the server's 2 GiB ceiling). Legacy Decaid ZIPs can omit metadata; Tcl/
+de1app migration is not reimplemented without a public contract.

@@ -1,3 +1,5 @@
+import { useAdvanced } from "@/skin/use-advanced"
+import { AdvancedPage } from "@/skin/advanced"
 import { useRecipeEditor } from "@/skin/use-recipe-editor"
 import { ProfileEditor, ProfileEditorActions } from "@/skin/profile-editor"
 import { useCatalog } from "@/skin/use-catalog"
@@ -29,6 +31,7 @@ import "@/skin/skin.css"
 export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
+  const advanced = useAdvanced(gateway)
   const history = useShotHistory(gateway)
   const daily = useDailySettings(gateway)
   const recipes = useRecipeEditor(gateway)
@@ -36,6 +39,7 @@ export default function App() {
   const editor = useFavorites(gateway, s.snapshot)
   const transfer = useProfileTransfer(gateway, s.reloadLibrary)
   const saving =
+    !!advanced.busy ||
     history.busy ||
     recipes.busy ||
     catalog.busy ||
@@ -44,7 +48,8 @@ export default function App() {
     daily.saving ||
     s.snapshot.pending
   const nav = useNavigation(
-    history.dirty ||
+    advanced.dirty ||
+      history.dirty ||
       editor.dirty ||
       daily.dirty ||
       recipes.dirty ||
@@ -58,7 +63,10 @@ export default function App() {
       if (route.page === "edit") recipes.cancel()
       if (route.page === "inventory") catalog.cancelInventory()
       if (route.page === "recipe") catalog.cancelPreference()
-      if (route.page === "settings") daily.cancel()
+      if (route.page === "settings") {
+        daily.cancel()
+        advanced.clear()
+      }
       if (route.page === "favorites" || route.page === "library") {
         editor.cancel()
         transfer.cancel()
@@ -74,7 +82,10 @@ export default function App() {
             : route.page === "recipe"
               ? catalog.preferenceDirty || catalog.busy
               : route.page === "settings"
-                ? daily.dirty || daily.saving
+                ? daily.dirty ||
+                  daily.saving ||
+                  advanced.dirty ||
+                  !!advanced.busy
                 : route.page === "favorites"
                   ? editor.dirty || editor.saving
                   : route.page === "library"
@@ -371,6 +382,17 @@ export default function App() {
           {page === "settings" && (
             <>
               <SettingsPage category={nav.route.category} navigate={navigate} />
+              {["calibration", "maintenance", "updates", "machine"].includes(
+                nav.route.category ?? ""
+              ) && (
+                <AdvancedPage
+                  key={nav.route.category}
+                  category={nav.route.category!}
+                  s={s}
+                  h={advanced}
+                  navigate={navigate}
+                />
+              )}
               {["connections", "brew", "machine", "display"].includes(
                 nav.route.category ?? ""
               ) && (

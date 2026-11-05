@@ -1,5 +1,49 @@
 # Focus release-candidate verification
 
+## Phase 7 — advanced operations, November 4, 2026
+
+- `npm run check` passes TypeScript, ESLint, **63 gateway tests** and the
+  production build. The JS bundle is about 625 kB / 197 kB gzip; Vite's existing
+  500 kB advisory remains. No dependencies or locked theme tokens changed.
+- Contract checks use the installed-target Decaid `14361a94` and Streamline
+  `65460d41` source. Coverage includes correction math and factory restoration,
+  capability/identity/freshness gates, palette preservation, bounded exports,
+  firmware stream verification, maintenance state transitions and interruption,
+  cancelled starts and explicit sync conflicts/section outcomes.
+- Targeted browser checks cover read-only category visits, sensor and flow
+  calibration, maintenance prerequisites and ordered cancellation, firmware
+  verification failure/cancellation/completion, load-cell results and accessory
+  writes, partial import/sync, and distinct app/skin installation. Missing
+  form-submit types found in cup warmer and skin installation were corrected,
+  including scheduled preheat. All seven advanced scenarios passed across
+  targeted runs, alongside the locked Focus regression. Repeat runs exposed
+  startup read/connection timing: advanced reads now wait for the connection,
+  identity recovery is explicit, and browser setup waits for initial network
+  loading like the existing Focus tests. Production request timeouts and
+  freshness/command gates were not relaxed. Calibration passed twice in the
+  repeat run; the final startup/calibration run passed **both scenarios**
+  (2.4 minutes). This is targeted coverage, not a full-suite claim.
+- The Home regression at 1340 × 800 has **zero changed RGB pixels** in the body
+  `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)` compared with
+  `artifacts/phase-2/home-before.png`. Focus layout, styles and theme tokens are
+  unchanged.
+- Manual in-app checks cover direct Calibration entry, shared frame, visible
+  controls of at least 44px, no document overflow and no new console errors after
+  a fresh reload. An effect-dependency warning during hot replacement cleared
+  on reload and did not recur.
+  Evidence: `artifacts/phase-7-preview.png` and `artifacts/phase-7/updates.png`.
+- The production archive is **584,592 bytes**, with 12 entries, root index and
+  manifest, relative entry assets, bundled font and artwork. Fixture origins,
+  test routes, source/dependency directories and environment files are excluded.
+
+All operations ran against the isolated API fixture. No real hardware command
+or discovery was performed. Actual calibration, thermal procedures, firmware,
+native app installation, skin reload and large file transfer still need
+supervised device acceptance. Browser export is bounded to 128 MiB; larger
+exports and unsupported legacy migrations use native Decaid data management.
+An acknowledged request, elapsed time or upload percentage is not proof of a
+completed hardware procedure.
+
 ## Phase 6 — shot history, November 4, 2026
 
 - `npm run check` passes TypeScript, ESLint, **50 gateway tests** and the

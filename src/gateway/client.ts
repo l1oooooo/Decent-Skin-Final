@@ -149,6 +149,104 @@ export class DecaidGateway {
       this.emit({ complete: false })
     }
   }
+  async transfer<T>(
+    path: string,
+    init: RequestInit,
+    consume: (response: Response) => Promise<T>,
+    timeoutMs = 120000,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const controller = new AbortController()
+    const parent = this.abort.signal
+    const abort = () => controller.abort()
+    parent.addEventListener("abort", abort, { once: true })
+    signal?.addEventListener("abort", abort, { once: true })
+    if (parent.aborted || signal?.aborted) controller.abort()
+    const timeout = setTimeout(abort, timeoutMs)
+    try {
+      return await consume(
+        await this.transport(`${this.origin}${path}`, {
+          ...init,
+          signal: controller.signal,
+        })
+      )
+    } finally {
+      clearTimeout(timeout)
+      parent.removeEventListener("abort", abort)
+      signal?.removeEventListener("abort", abort)
+    }
+  }
+  async appUpdateCommand(command: "check" | "install") {
+    return this.settingsOperation(async (verify) => {
+      const state = object(await this.request("/api/v1/update"))
+      if (command === "install" && state.installable !== true)
+        throw new Error("This platform cannot install the offered app update.")
+      verify()
+      return new Promise<void>((resolve, reject) => {
+        const socket = this.socketFactory(
+          `${this.origin.replace(/^http/, "ws")}/ws/v1/update`
+        )
+        const parent = this.abort.signal
+        let sent = false
+        const finish = (error?: Error) => {
+          clearTimeout(timer)
+          parent.removeEventListener("abort", abort)
+          socket.onclose = null
+          socket.close()
+          if (error) reject(error)
+          else resolve()
+        }
+        const abort = () =>
+          finish(
+            new Error("Connection changed; update request was not replayed.")
+          )
+        const timer = setTimeout(
+          () =>
+            finish(
+              new Error(
+                "Update response is unknown. Refresh app status before retrying."
+              )
+            ),
+          10000
+        )
+        parent.addEventListener("abort", abort, { once: true })
+        socket.onopen = () => {
+          try {
+            verify()
+            socket.send(JSON.stringify({ command }))
+            sent = true
+          } catch (error) {
+            finish(
+              error instanceof Error ? error : new Error("Update blocked.")
+            )
+          }
+        }
+        socket.onmessage = (event) => {
+          try {
+            const data = object(JSON.parse(String(event.data)))
+            if (data.error) finish(new Error(String(data.error)))
+            else if (
+              sent &&
+              (command === "check"
+                ? data.phase === "checking" || data.phase === "available"
+                : data.phase === "downloading" || data.phase === "installing")
+            )
+              finish()
+          } catch {
+            finish(new Error("Invalid app update response."))
+          }
+        }
+        socket.onerror = () =>
+          finish(
+            new Error(
+              "App update connection failed. Refresh status before retrying."
+            )
+          )
+        socket.onclose = () =>
+          finish(new Error("App update connection closed. Outcome unknown."))
+      })
+    })
+  }
   async request(
     path: string,
     method = "GET",

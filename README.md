@@ -30,7 +30,7 @@ The library supports search, sorting, visible/hidden views, details/target previ
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–6 are implemented; phases 7–8 remain planned and phase 9 is device acceptance. See the verification record for fixture and device status.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–7 are implemented; phase 8 remains planned and phase 9 is device acceptance. See the verification record for fixture and device status.
 
 ## Tests and limits
 
@@ -117,3 +117,42 @@ it never starts extraction or changes utility settings. **Export saved shot**
 and **Export this page** download arrays of complete saved JSON records,
 excluding unsaved edits. Deletion requires confirmation and has no Undo.
 Routes are `?page=history` and `?page=shot&shot=<encoded ID>`.
+
+### Advanced operations
+
+Settings now includes **Calibration**, **Maintenance**, and **Updates and data**.
+Machine and power also includes advanced heater/voltage tuning, service reset,
+and capability-dependent cup warmer, scheduled mat preheat and lighting.
+Focus Home and brewing retain their locked design.
+
+Calibration keeps sensor corrections, flow estimation and integrated load-cell
+procedures separate. Record paired measured values, confirm once, then inspect
+the returned calibration. Sensor readings clear after an attempt because
+resending a correction can apply it twice. Steam temperature/flow stays under
+Brew and utilities; no separate steam-sensor API exists in the installed target.
+
+Maintenance starts only from fresh idle state after explicit preparation.
+Descaling requires the steam heater off and a measured boiler temperature of
+60 °C or below. There is no delayed automatic start after cooling. Stop waits
+for an outstanding start request to settle, then sends idle. Reconnect displays
+actual machine state; a missing stream or elapsed timeout never means success.
+Restore steam settings explicitly after descaling.
+
+Updates are separate tabs for machine firmware, the Decaid app and installed
+skins. Firmware installs only applicable bundled artifacts and requires the
+stream's verified `done` result. App installation may require native Android
+prompts. **Check and install skin updates** really installs updates; successful
+skin updates remain if another fails. The current serving URL is preserved.
+
+Full ZIP backup/import uses Decaid's archive API. Browser exports are bounded to
+128 MiB; larger exports use native Decaid data management. File imports support
+Decaid's 2 GiB request ceiling without decoding the archive in JavaScript.
+Choose skip/overwrite conflicts explicitly and inspect all section outcomes.
+Section selection is available for instance-to-instance sync; the installed
+HTTP ZIP handlers always export all sections and import those present. Two-way
+sync stops after an incomplete pull. Unsupported de1app/Tcl migration remains
+in the native data-management flow.
+
+Routes: `?page=settings&category=calibration`, `maintenance`, `machine`, or
+`updates`. Operation state and drafts live above page navigation. Hardware and
+Samsung WebView acceptance remain required before deployment.
