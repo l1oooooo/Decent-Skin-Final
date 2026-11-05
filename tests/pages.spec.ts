@@ -1,10 +1,10 @@
+import { fixtureOrigin as fixture } from "./fixture-origin.js"
 import {
   expect,
   test,
   type Page,
   type APIRequestContext,
 } from "@playwright/test"
-const fixture = process.env.FOCUS_TEST_API ?? "http://127.0.0.1:18081"
 const state = (request: APIRequestContext, data: Record<string, unknown>) =>
   request.post(`${fixture}/__test/state`, { data })
 const saved = async (request: APIRequestContext) =>
@@ -50,7 +50,9 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
     .getByRole("searchbox", { name: "Search settings" })
     .fill("brightness")
   await page.getByRole("button", { name: /Display and presence/ }).click()
-  await expect(page.getByRole("main")).toContainText("not available yet")
+  await expect(
+    page.getByLabel("Requested brightness", { exact: true })
+  ).toBeVisible()
   await page.goBack()
   await expect(page).toHaveURL(/page=settings$/)
   await page

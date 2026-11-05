@@ -9,10 +9,11 @@ Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Dec
 | 1 — Baseline and roadmap | Completed baseline/planning checkpoint | Existing baseline evidence retained |
 | 2 — Shared page system | Implemented: one persistent session, query routes, Settings entry/categories/search, shared page shell, draft protection and shot interruption | Fixture-verified; device acceptance pending |
 | 3 — Favorites and library | Implemented: five nullable positions, assignment/swaps/reorder/clear, acknowledged Save/Cancel, ID-safe selection, details/preview/sorting, hide/restore and import/export | Fixture-verified; device acceptance pending |
-| 4–8 | Planned; Settings category descriptions identify future scope | Not implemented or accepted |
+| 4 — Daily-use settings | Implemented: explicit connections, utility/policy drafts, machine power, display/presence, schedules, units and descriptor-gated grinder commands | Fixture-verified; device acceptance pending |
+| 5–8 | Planned; Settings category descriptions identify future scope | Not implemented or accepted |
 | 9 — Tablet acceptance | Pending | No hardware operations performed in phases 2–3 |
 
-The library now uses the shared full-page layout. Settings categories beyond profile/favorite management are informational, with no placeholder operational controls. Profile content editing remains disabled until phase 5. Favorite drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
+The library now uses the shared full-page layout. Daily-use Settings categories are operational where the installed API and returned capabilities support them. Later-phase categories remain informational. Profile content editing remains disabled until phase 5. Favorite drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
 
 ## 1. Deliverables, decisions, and evidence
 

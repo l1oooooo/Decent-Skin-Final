@@ -24,9 +24,9 @@ Decaid must own shot sequencing, stop-at-weight and history. Use **tracking** mo
 
 The five favorite positions use a nullable ID array in Decaid's `decent-skin-codex/favorites` KV value. Only a missing-key 404 suggests the first five visible profiles. Saved empty positions and unavailable IDs remain in place. Use **Browse profiles → Manage favorites** to replace, swap, reorder or clear positions, then Save. Loading a library profile changes the workflow independently. Failed saves retain both the last acknowledged rail and the editor draft.
 
-**Settings** sits beside History. Static query routes support direct entry, reload and browser Back: `?page=settings`, `?page=library`, `?page=favorites`, and `?page=profile&profile=<encoded ID>`. All pages share one session. A newly observed machine shot start returns to Focus, closes overlays and retains favorite drafts and staged imports; return to Manage favorites or Profile library to recover them. Ordinary navigation away from that editor prompts before discarding changes. Reload/unload prompts for unsaved changes where the browser supports it; drafts do not persist across a completed reload.
+**Settings** sits beside History. Static query routes support direct entry, reload and browser Back: `?page=settings`, `?page=library`, `?page=favorites`, and `?page=profile&profile=<encoded ID>`. All pages share one session. A newly observed machine shot start returns to Focus, closes overlays and retains settings and favorite drafts and staged imports; return to Manage favorites or Profile library to recover them. Ordinary navigation away from that editor prompts before discarding changes. Reload/unload prompts for unsaved changes where the browser supports it; drafts do not persist across a completed reload.
 
-The library supports search, sorting, visible/hidden views, read-only details/target preview, hide/restore and JSON profile-record import/export. Imports show imported, skipped and failed counts; existing IDs are skipped by Decaid. Profile content editing stays disabled until phase 5. Future Settings categories are identified by phase and expose no placeholder hardware controls. Artwork is decorative, bundled and independent of recipe data.
+The library supports search, sorting, visible/hidden views, read-only details/target preview, hide/restore and JSON profile-record import/export. Imports show imported, skipped and failed counts; existing IDs are skipped by Decaid. Profile content editing stays disabled until phase 5. Daily-use settings cover connections, utility recipes and stop policies, machine/power, display/presence, wake schedules and supported connected grinders. Each settings section has its own Save/Cancel and retains rejected changes. Unsupported capabilities are unavailable. Later-phase categories expose no placeholder hardware controls. Artwork is decorative, bundled and independent of recipe data.
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
@@ -45,3 +45,26 @@ Desktop validation does **not** establish Samsung WebView or machine acceptance.
 - `src/components/ui/`: existing Base UI / shadcn primitives.
 - `tests/`: isolated contract fixture and browser acceptance checks.
 - `docs/design/HISTORY.md`: historical exploration decisions. Retired screen source is available in Git history at `5f3ce07`.
+
+### Daily-use settings
+
+Open `?page=settings&category=connections`, `brew`, `machine` or `display`.
+Device discovery and all operational actions are explicit. Focus never scans on
+page load or sends grinder commands when a recipe changes. The optional recipe
+Send permission starts off on every Connections visit and device change; the
+Send button sends once. Runtime grinder IDs and recipe grind text remain separate.
+Temperature units change presentation only; Decaid continues to receive Celsius.
+Sleep shows a minimal wake view without altering the ready/brewing layout.
+
+Settings category navigation retains drafts. Save/Cancel applies to the current
+section; failed sections retain their edits independently. Shot interruption
+retains drafts in memory. Reload does not persist drafts.
+
+To run browser checks while another fixture preview is open, use separate ports:
+
+```sh
+FOCUS_FIXTURE_PORT=18082 FOCUS_TEST_PORT=4176 npm run test:e2e
+```
+
+Test API origins are always loopback and the runner starts the isolated fixture.
+No hardware validation is implied by these tests.

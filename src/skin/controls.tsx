@@ -181,7 +181,15 @@ export function RecipeControls({
             : []),
           ["Dose", s.dose, "g", 0.1, 8, 30, "dose"],
           ["Target yield", s.yieldTarget, "g", 0.5, 10, 120, "yield"],
-          ["Temperature", s.temperature, "°C", 0.5, 60, 98, "temperature"],
+          [
+            "Temperature",
+            s.displayTemperature(s.temperature),
+            `°${s.temperatureUnit}`,
+            s.temperatureUnit === "F" ? 0.9 : 0.5,
+            s.displayTemperature(60),
+            s.displayTemperature(98),
+            "temperature",
+          ],
         ] as const
       ).map(([label, value, unit, step, min, max, key]) => (
         <Stepper
@@ -190,7 +198,9 @@ export function RecipeControls({
           disabled={s.locked}
           text={key === "grind" ? s.grindText : undefined}
           onEdit={key === "grind" ? () => s.setModal("grind") : undefined}
-          onChange={(value) => s.change(key, value)}
+          onChange={(value) =>
+            s.change(key, key === "temperature" ? s.celsius(value) : value)
+          }
         />
       ))}
     </div>
@@ -250,13 +260,15 @@ export function UtilitySettings({ s }: { s: SkinSession }) {
         {water && (
           <Stepper
             label="Water temperature"
-            value={s.waterTemperature}
-            unit="°C"
-            step={1}
-            min={60}
-            max={98}
+            value={s.displayTemperature(s.waterTemperature)}
+            unit={`°${s.temperatureUnit}`}
+            step={s.temperatureUnit === "F" ? 1.8 : 1}
+            min={s.displayTemperature(60)}
+            max={s.displayTemperature(98)}
             disabled={s.profileLocked}
-            onChange={s.setWaterTemperature}
+            onChange={(value) =>
+              s.setWaterTemperature(Math.round(s.celsius(value)))
+            }
           />
         )}
         <Stepper

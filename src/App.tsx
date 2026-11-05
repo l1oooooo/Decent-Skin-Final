@@ -1,5 +1,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react"
 import { DecaidGateway, gatewayUrl } from "@/gateway/client"
+import { DailySettingsPage } from "@/skin/daily-settings"
+import { useDailySettings } from "@/skin/use-daily-settings"
+import { settingsCategories } from "@/skin/pages"
+import type { SettingsCategory } from "@/gateway/daily-settings"
 import FocusScreen from "@/skin/screen"
 import { ProfileDetail, ProfileLibrary } from "@/skin/profile-library"
 import { GrindEditor } from "@/skin/grind-editor"
@@ -20,12 +24,18 @@ import "@/skin/skin.css"
 export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
+  const daily = useDailySettings(gateway)
   const editor = useFavorites(gateway, s.snapshot)
   const transfer = useProfileTransfer(gateway, s.reloadLibrary)
-  const saving = editor.saving || transfer.operation === "import"
+  const saving =
+    editor.saving ||
+    transfer.operation === "import" ||
+    daily.saving ||
+    s.snapshot.pending
   const nav = useNavigation(
-    editor.dirty || saving || transfer.selection !== null,
+    editor.dirty || daily.dirty || saving || transfer.selection !== null,
     () => {
+      daily.cancel()
       editor.cancel()
       transfer.cancel()
     }
@@ -81,7 +91,8 @@ export default function App() {
   const page = nav.route.page
   const title =
     page === "settings"
-      ? "Settings"
+      ? (settingsCategories.find((c) => c.id === nav.route.category)?.title ??
+        "Settings")
       : page === "favorites"
         ? "Manage favorites"
         : page === "profile"
@@ -108,9 +119,87 @@ export default function App() {
       window.removeEventListener("pointerdown", pointer)
     }
   }, [])
+  const activity = useRef(0)
+  const onActivity = useEffectEvent((event: Event) => {
+    if (
+      !event.isTrusted ||
+      !s.snapshot.presenceEnabled ||
+      document.hidden ||
+      s.snapshot.connection !== "online" ||
+      s.snapshot.machine?.state.state !== "idle" ||
+      !s.snapshot.settings ||
+      !["tracking", "disabled"].includes(s.snapshot.settings.gatewayMode)
+    )
+      return
+    if (Date.now() - activity.current < 30000) return
+    activity.current = Date.now()
+    void gateway.request("/api/v1/machine/heartbeat", "POST").catch(() => {
+      /* Presence failure must not interrupt Stop or replay activity. */
+    })
+  })
+  const onShortcut = useEffectEvent((event: KeyboardEvent) => {
+    if (
+      !s.snapshot.preferences?.keyboardShortcuts ||
+      event.repeat ||
+      (event.target instanceof HTMLElement &&
+        (event.target.closest("input,textarea,select,[role=combobox],dialog") ||
+          event.target.isContentEditable))
+    )
+      return
+    if (event.altKey && event.key.toLowerCase() === "h") {
+      event.preventDefault()
+      navigate({ page: "home" })
+    }
+    if (event.altKey && event.key.toLowerCase() === "s") {
+      event.preventDefault()
+      navigate({ page: "settings" })
+    }
+    if (event.key === "Escape" && (s.active || s.operation)) {
+      event.preventDefault()
+      void s.stop()
+    }
+  })
+  useEffect(() => {
+    const activity = (event: Event) => onActivity(event)
+    const shortcut = (event: KeyboardEvent) => onShortcut(event)
+    document.addEventListener("pointerdown", activity)
+    document.addEventListener("keydown", activity)
+    document.addEventListener("keydown", shortcut)
+    return () => {
+      document.removeEventListener("pointerdown", activity)
+      document.removeEventListener("keydown", activity)
+      document.removeEventListener("keydown", shortcut)
+    }
+  }, [])
   return (
     <div className="skin-viewport">
-      {page === "home" ? (
+      {page === "home" && s.snapshot.machine?.state.state === "sleeping" ? (
+        <div className="flex h-full flex-col items-center justify-center gap-6 bg-background">
+          <h1 className="text-[30px] font-medium tracking-[-.045em]">
+            Sleeping
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            The machine is resting.
+          </p>
+          <Action
+            disabled={s.snapshot.pending || !s.connected}
+            onClick={() => void s.perform(() => gateway.daily.power(false))}
+          >
+            Wake machine
+          </Action>
+          <Action
+            variant="outline"
+            onClick={() => navigate({ page: "settings", category: "machine" })}
+          >
+            Machine settings
+          </Action>
+          {s.notice && (
+            <p role="alert" className="max-w-lg text-sm text-muted-foreground">
+              {s.notice}
+            </p>
+          )}
+        </div>
+      ) : page === "home" ? (
         <FocusScreen
           s={s}
           onSettings={() => navigate({ page: "settings" })}
@@ -124,8 +213,9 @@ export default function App() {
           navigate={navigate}
           title={title}
           description={
-            page === "settings" && (editor.dirty || transfer.selection)
-              ? "Your unsaved changes are retained. Return to Manage favorites or Profile library to continue."
+            page === "settings" &&
+            (editor.dirty || daily.dirty || transfer.selection)
+              ? "Your unsaved changes are retained. Return to their settings section, Manage favorites or Profile library to continue."
               : page === "favorites"
                 ? "Five stable positions on Home. Replace, reorder or leave a position empty."
                 : page === "library" && assignment !== null
@@ -174,7 +264,19 @@ export default function App() {
           }
         >
           {page === "settings" && (
-            <SettingsPage category={nav.route.category} navigate={navigate} />
+            <>
+              <SettingsPage category={nav.route.category} navigate={navigate} />
+              {["connections", "brew", "machine", "display"].includes(
+                nav.route.category ?? ""
+              ) && (
+                <DailySettingsPage
+                  key={nav.route.category}
+                  category={nav.route.category as SettingsCategory}
+                  s={s}
+                  editor={daily}
+                />
+              )}
+            </>
           )}
           {page === "favorites" && (
             <FavoritesPage s={s} editor={editor} assign={assign} />
@@ -206,7 +308,7 @@ export default function App() {
           stay={nav.stay}
           leave={nav.leave}
           saving={saving}
-          onStop={s.active ? s.stop : undefined}
+          onStop={s.active || s.operation ? s.stop : undefined}
         />
       )}
       {s.modal === "history" && <History s={s} />}

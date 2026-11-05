@@ -58,8 +58,13 @@ export function useNavigation(dirty: boolean, discard: () => void) {
       if (
         current.current.dirty &&
         (current.current.route.page === "favorites" ||
-          current.current.route.page === "library") &&
+          current.current.route.page === "library" ||
+          current.current.route.page === "settings") &&
         readRoute().page !== "favorites" &&
+        !(
+          current.current.route.page === "settings" &&
+          readRoute().page === "settings"
+        ) &&
         !bypass.current
       ) {
         setPending({ route: readRoute(), index: target })
@@ -97,8 +102,11 @@ export function useNavigation(dirty: boolean, discard: () => void) {
     if (routeUrl(next).href === location.href) return
     if (
       dirty &&
-      (route.page === "favorites" || route.page === "library") &&
+      (route.page === "favorites" ||
+        route.page === "library" ||
+        route.page === "settings") &&
       next.page !== "favorites" &&
+      !(route.page === "settings" && next.page === "settings") &&
       !preserve
     )
       setPending({ route: next })

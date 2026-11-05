@@ -1,4 +1,10 @@
 import {
+  DailySettingsGateway,
+  parsePreferences,
+  settingsBlock,
+  type FocusPreferences,
+} from "./daily-settings"
+import {
   commandBlock,
   finite,
   object,
@@ -38,6 +44,10 @@ export const initialSnapshot = (): GatewaySnapshot => ({
   water: null,
   settings: null,
   build: "",
+  preferences: null,
+  preferencesIssue: "",
+  refillKit: null,
+  presenceEnabled: false,
   samples: [],
   elapsedKnown: false,
   shotFrame: 0,
@@ -85,6 +95,10 @@ export class DecaidGateway {
   private deviceRevision = 0
   private workflowRevision = 0
   private libraryRevision = 0
+  private infoDevice: string | undefined
+  private settingsRevision = 0
+  private preferencesRevision = 0
+  readonly daily = new DailySettingsGateway(this)
   private favoritesRevision = 0
   private favoritesSaving = false
   private channels = new Set<string>()
@@ -198,6 +212,17 @@ export class DecaidGateway {
     ])
       this.open(channel)
     void this.sync()
+    void this.loadPreferences()
+    const generation = this.generation
+    void this.daily
+      .read("presence")
+      .then((value) => {
+        if (generation === this.generation) this.acceptPresence(value)
+      })
+      .catch(() => {
+        if (generation === this.generation)
+          this.emit({ presenceEnabled: false })
+      })
     this.interval = setInterval(() => {
       void this.sync()
     }, 5000)
@@ -227,6 +252,7 @@ export class DecaidGateway {
     if (!document.hidden) {
       this.emit({ machineReceived: 0 })
       void this.sync()
+      void this.loadPreferences()
     }
   }
   private open(channel: string, attempt = 0) {
@@ -286,6 +312,7 @@ export class DecaidGateway {
     const generation = this.generation
     const deviceRevision = this.deviceRevision
     const workflowRevision = this.workflowRevision
+    const settingsRevision = this.settingsRevision
     try {
       const [devices, workflow, settings, info] = await Promise.all([
         this.request("/api/v1/devices"),
@@ -309,10 +336,15 @@ export class DecaidGateway {
                 : {}),
             }
           : {}),
-        settings: {
-          gatewayMode: mode.gatewayMode,
-          blockOnNoScale: mode.blockOnNoScale === true,
-        },
+        ...(settingsRevision === this.settingsRevision && !this.snapshot.pending
+          ? {
+              settings: {
+                ...mode,
+                gatewayMode: mode.gatewayMode,
+                blockOnNoScale: mode.blockOnNoScale === true,
+              },
+            }
+          : {}),
         message: "",
         build: String(
           object(info).fullVersion ?? object(info).version ?? "Unknown version"
@@ -375,6 +407,23 @@ export class DecaidGateway {
         return d as unknown as Device
       })
       this.deviceRevision++
+      const currentMachineId = devices.find(
+        (d) => d.type === "machine" && d.state === "connected"
+      )?.id
+      if (currentMachineId !== this.infoDevice) {
+        this.infoDevice = currentMachineId
+        this.emit({ refillKit: null })
+        if (currentMachineId)
+          void this.request("/api/v1/machine/info")
+            .then((value) => {
+              if (this.infoDevice === currentMachineId)
+                this.acceptMachineInfo(object(value))
+            })
+            .catch(() => {
+              if (this.infoDevice === currentMachineId)
+                this.infoDevice = undefined
+            })
+      }
       const isConnected = devices.some(
         (d) => d.type === "machine" && d.state === "connected"
       )
@@ -392,6 +441,7 @@ export class DecaidGateway {
       this.emit({
         devices,
         scaleConnected,
+        ...(!isConnected ? { refillKit: null } : {}),
         ...(scaleConnected ? {} : { scale: null }),
         ...(status
           ? {
@@ -723,6 +773,90 @@ export class DecaidGateway {
     } finally {
       this.emit({ pending: false })
     }
+  }
+  async settingsOperation<T>(
+    action: (verify: () => void) => Promise<T>,
+    machine = false,
+    wake = false,
+    stop = false
+  ): Promise<T> {
+    const block = settingsBlock(this, machine, wake, stop)
+    if (block) throw new Error(block)
+    const generation = this.generation
+    const machineId = this.snapshot.devices.find(
+      (d) => d.type === "machine" && d.state === "connected"
+    )?.id
+    const verify = () => {
+      const reason = settingsBlock(this, machine, wake, stop, true)
+      if (
+        generation !== this.generation ||
+        machineId !==
+          this.snapshot.devices.find(
+            (d) => d.type === "machine" && d.state === "connected"
+          )?.id
+      )
+        throw new Error(
+          "Connection changed. Review the current device before retrying."
+        )
+      if (reason) throw new Error(reason)
+    }
+    if (stop) return action(verify)
+    this.settingsRevision++
+    this.emit({ pending: true })
+    try {
+      return await action(verify)
+    } finally {
+      this.settingsRevision++
+      this.emit({ pending: false })
+    }
+  }
+  acceptPresence(value: Record<string, unknown>) {
+    this.emit({ presenceEnabled: value.userPresenceEnabled === true })
+  }
+  acceptSettings(value: Record<string, unknown>) {
+    if (typeof value.gatewayMode !== "string")
+      throw new Error("Invalid Decaid settings")
+    this.settingsRevision++
+    this.emit({
+      settings: {
+        ...value,
+        gatewayMode: value.gatewayMode,
+        blockOnNoScale: value.blockOnNoScale === true,
+      },
+    })
+  }
+  acceptPreferences(value: FocusPreferences) {
+    this.preferencesRevision++
+    this.emit({ preferences: value, preferencesIssue: "" })
+  }
+  async loadPreferences() {
+    const generation = this.generation
+    const revision = this.preferencesRevision
+    try {
+      const value = parsePreferences(await this.daily.read("preferences"))
+      if (
+        generation === this.generation &&
+        revision === this.preferencesRevision
+      )
+        this.acceptPreferences(value)
+    } catch (error) {
+      if (generation !== this.generation) return
+      this.emit({
+        preferencesIssue:
+          error instanceof Error
+            ? error.message
+            : "Could not read Focus preferences",
+      })
+    }
+  }
+  acceptMachineInfo(value: Record<string, unknown>) {
+    const extra =
+      value.extra && typeof value.extra === "object"
+        ? (value.extra as Record<string, unknown>)
+        : {}
+    this.emit({
+      refillKit: typeof extra.refillKit === "boolean" ? extra.refillKit : null,
+    })
   }
   async history(offset = 0): Promise<{ items: ShotRecord[]; total: number }> {
     const data = object(

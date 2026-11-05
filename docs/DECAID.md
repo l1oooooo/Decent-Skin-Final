@@ -80,3 +80,50 @@ Favorites are normalized to five nullable positions in memory. Duplicate IDs kee
 Active profile identity uses an unambiguous comparison of the entire workflow profile with record contents, independent of object-key order. A title match alone is never enough. An adjusted or otherwise unmatched active recipe remains displayed without claiming a library ID. Content editing and ID remapping remain phase 5 work.
 
 Import uses Decaid's profile-record format, not arbitrary legacy `.shot` files. The UI limits a selected JSON export to 10 MB, requests explicit confirmation, preserves unknown fields and displays partial results. Default profiles can be hidden/restored; their executable content cannot be edited here. File pickers and downloads still need Samsung WebView acceptance.
+
+## Daily-use settings (phase 4)
+
+Rechecked against the local Decaid source at installed-target commit
+`14361a94b32888f6a81182e9e239f513d39d060c`: REST schema, settings, devices,
+workflow, display, presence, grinder and DE1 handlers, plus workflow/native form
+bounds. No live tablet or hardware operation was used for this work.
+
+| Area | Owning API and behavior |
+| --- | --- |
+| Device inventory | Existing session inventory/socket; explicit GET `devices/scan?connect=false&quick=true`, PUT connect/disconnect/forget with JSON deviceId; connection outcome is checked |
+| Wi-Fi scales | GET/POST/DELETE `devices/wifi`, explicit host registration/removal |
+| Device preferences | POST `settings`, nullable preferredMachineId/preferredScaleId/preferredGrinderDeviceId |
+| Diagnostics/tare | Explicit GET `diagnostics/ble`; idle-gated PUT `scale/tare` |
+| Stop/scale policies | POST `settings`, changed fields only; authoritative reread updates the session |
+| Utilities | Existing serialized PUT `workflow`, nested owned-field patches for steam, water and flush; no duplicate machine-setting owner |
+| Machine/power | GET `machine/info`; POST `machine/settings` for tank/fan, POST advanced for refillKitSetting; explicit idle-gated sleep/wake; charging/night fields in settings |
+| Display | GET `display`, PUT brightness; requested and applied values are distinct; platformSupported gates controls; explicit POST/DELETE wakelock override |
+| Presence | GET/POST `presence/settings`; GET/POST/PUT/DELETE schedules with local time, weekday and duration validation |
+| Focus preferences | GET/POST `store/decent-skin-codex/preferences`, preserves unknown keys; only 404 supplies defaults; Celsius/Fahrenheit, refill warning mm and optional shortcuts |
+| Grinder | GET info/state on Connections only; capability and writable descriptor gates; PUT setting/rpm/grinding/idle; identity and a newly fetched idle state checked before commands |
+
+Steam is 0 (disabled), 135–160 °C on DE1, or through 165 °C on Bengle.
+The installed milk-temperature stop remains unavailable. Fan/tank use the
+reference's conservative DE1 bounds (0–50 / 10–40 °C); unsupported returned
+fields are not writable. Other utility ranges follow the installed native forms.
+The refill warning is Focus-only and requires explicit preference plus confirmed
+`machine/info.extra.refillKit=false`; water remains mm.
+
+Drafts live above routes, keep newer edits during saves, fence late reads, and
+cannot be saved to a different machine identity. Each owner is saved separately;
+failures retain drafts and reread state without automatic retries. Acknowledged
+writes whose verification fails are reported as uncertain. This provides no
+cross-client transaction or rollback guarantee.
+
+Activity heartbeats are sent only after real pointer/keyboard activity while
+presence is enabled and the machine is idle, at most once per 30 seconds. There
+is no idle heartbeat timer, page-load heartbeat, automatic wake or reconnect
+command replay. Display wake-lock override is explicit and must be released.
+Grinder recipe Send is an opt-in, one-shot action; there is no automatic Follow
+loop. Native permission and transport controls remain in Decaid.
+
+Grinder snapshots are event publications, not a guaranteed periodic heartbeat.
+Commands reread the current info/state and recheck the selected connected device;
+a stable idle publication is not rejected solely for its old timestamp. Numeric
+and enumerated descriptors are validated before use. Presence idle timeout uses
+the installed 0–240 minute range; schedule hold duration uses 0–720 minutes.

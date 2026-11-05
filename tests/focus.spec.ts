@@ -1,5 +1,5 @@
+import { fixtureOrigin as fixture } from "./fixture-origin.js"
 import { expect, test, type APIRequestContext } from "@playwright/test"
-const fixture = "http://127.0.0.1:18081"
 const state = (request: APIRequestContext, data: Record<string, unknown>) =>
   request.post(`${fixture}/__test/state`, { data })
 test.beforeEach(async ({ request }) => {

@@ -62,8 +62,17 @@ technical decisions, and the design history for previous iterations.
 ## Design and code conventions
 
 - Shared pages use query routes and the single App-owned gateway/session. Keep
-  favorite drafts and staged imports above page navigation. Only a newly
+  settings/favorite drafts and staged imports above page navigation. Only a newly
   observed shot start interrupts navigation; never infer one from replay data.
+- Daily-use settings keep separate owners for workflow, Decaid preferences,
+  machine settings, display/presence and Focus KV preferences. Save only the
+  current section's changed fields; retain failed/newer edits and reject drafts
+  for a replaced machine. No write is retried automatically.
+- Device discovery is explicit and uses `connect=false`. Grinder setting/RPM
+  commands require the current device's writable descriptors; recipe Send is
+  opt-in and one-shot. Presence heartbeats require real activity, never a timer.
+- Temperature preferences affect display only; all wire values remain Celsius.
+  Focus refill warnings require a confirmed non-refill-kit machine and use mm.
 - Favorites are five nullable IDs. Only missing-key 404 permits suggestions;
   malformed, empty and unavailable assignments must not silently fall back.
   Update the rail only after an acknowledged explicit Save. Workflow loading

@@ -1,5 +1,41 @@
 # Focus release-candidate verification
 
+## Phase 4 — daily-use settings, November 4, 2026
+
+- `npm run check` passes TypeScript, ESLint, **34 gateway tests**, and the
+  production build. The main bundle is about 520 kB / 168 kB gzip; Vite reports
+  its standard 500 kB chunk advisory. No dependency or theme-token changes.
+- Locked Home workflow/layout and shared-page navigation regressions passed.
+  At 1340 × 800, pixel comparison of `artifacts/fidelity/test-ready.png` against
+  `artifacts/phase-2/home-before.png` found **zero difference** in body
+  `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)` regions. Header still has
+  the previously approved Settings entry.
+- All four daily-use category visits were verified to send no operational
+  requests. The explicit scan uses discovery only (`connect=false`).
+- Eight distinct targeted browser scenarios passed across regression runs:
+  locked Home, shared-page navigation, empty favorites/Cancel, Back cancellation,
+  read-only category visits/explicit scan, utility drafts/failed saves/shot
+  interruption, brightness caps/newer edits/unit persistence, and schedules/
+  sleep/wake/unsupported grinder. The final six-scenario run passed five; its
+  display assertion included the select's decorative arrow. After targeting the
+  value text, the display rerun passed. This was targeted coverage, not a single
+  complete-suite run. Earlier runs were interrupted while refining test labels.
+- `node scripts/package-skin.mjs` produced the ignored 555,410-byte skin archive. Inspection
+  confirms root index/manifest, relative assets, bundled Geist/artwork and no
+  fixture origin, test routes or test implementation in `dist/`.
+- Manual in-app preview reviewed grouped rows, 48px fields/switches/selects,
+  clear disabled states, shared page framing and section actions. The display
+  page has no document overflow or controls below 44px at 1340 × 800. Fahrenheit
+  hot-water adjustment round-tripped 194.0 → 195.8 → 194.0°F while retaining
+  integer Celsius wire values; the preview was restored to Celsius. Captures are
+  under ignored `artifacts/phase-4/` and `artifacts/phase-4-preview.jpg`.
+
+No machine was discovered or operated. All automated mutations used isolated
+fixtures. Installed tablet/WebView, physical devices, charging/brightness,
+wake schedules and grinder hardware acceptance remain pending. The upstream
+contract was source-checked at the installed-target commit, not live queried.
+
+
 **Not yet accepted for hardware release.** The Focus implementation is complete, but Samsung WebView installation and supervised machine acceptance remain unverified. The locked stop-button color also remains below the normal-text WCAG AA contrast threshold.
 
 Validated on November 4, 2026 with Node 25.8.0, npm 11.21.0 and installed desktop Google Chrome. The installed Decaid target is 0.9.1+3027 (`14361a94`). All automated and manual commands in this validation used isolated local fixtures; no hardware command was sent.

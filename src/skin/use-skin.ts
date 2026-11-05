@@ -71,6 +71,11 @@ export function useSkin(gateway: DecaidGateway) {
       return false
     }
   }
+  const temperatureUnit = snapshot.preferences?.temperatureUnit ?? "C"
+  const displayTemperature = (value: number | null | undefined) =>
+    value == null ? NaN : temperatureUnit === "F" ? (value * 9) / 5 + 32 : value
+  const celsius = (value: number) =>
+    temperatureUnit === "F" ? ((value - 32) * 5) / 9 : value
   const workflow = snapshot.workflow
   const rawProfile = workflow?.profile ?? null
   const matchedProfileId = useMemo(
@@ -235,6 +240,9 @@ export function useSkin(gateway: DecaidGateway) {
   return {
     gateway,
     snapshot,
+    temperatureUnit,
+    displayTemperature,
+    celsius,
     workflow,
     profile,
     profiles,
@@ -279,6 +287,12 @@ export function useSkin(gateway: DecaidGateway) {
     reloadLibrary,
     notice:
       notice ||
+      (snapshot.refillKit === false &&
+      snapshot.water !== null &&
+      snapshot.preferences?.refillWarningMm &&
+      snapshot.water < snapshot.preferences.refillWarningMm
+        ? `Low water · ${snapshot.water.toFixed(0)} mm. Refill the tank.`
+        : "") ||
       snapshot.message ||
       snapshot.deviceError ||
       (snapshot.scaleLost

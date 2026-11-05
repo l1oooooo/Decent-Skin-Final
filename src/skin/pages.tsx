@@ -157,7 +157,11 @@ export function PageShell({
         </Action>
         <div className="ml-auto flex min-w-0 items-center gap-3">
           {actions}
-          {s.active && <Action onClick={s.stop}>Stop extraction</Action>}
+          {(s.active || s.operation) && (
+            <Action onClick={s.stop}>
+              {s.active ? "Stop extraction" : "Stop operation"}
+            </Action>
+          )}
         </div>
       </footer>
     </div>
@@ -227,7 +231,7 @@ export function SettingsPage({
         >
           All settings
         </Action>
-        <h2 className="mt-6 text-xl font-medium">{selected.title}</h2>
+
         <p className="mt-3 text-sm text-muted-foreground">
           {selected.description}
         </p>
@@ -243,11 +247,11 @@ export function SettingsPage({
               Manage favorites
             </Action>
           </div>
-        ) : (
+        ) : selected.phase !== 4 ? (
           <PageMessage>
             These controls are not available yet. Manage them in Decaid for now.
           </PageMessage>
-        )}
+        ) : null}
       </>
     )
   const items = settingsCategories.filter((c) =>
@@ -272,7 +276,7 @@ export function SettingsPage({
               </p>
             </div>
             <span className="text-[12px] text-muted-foreground">
-              {c.phase === 3 ? "Available" : "Planned"}
+              {c.phase <= 4 ? "Available" : "Planned"}
             </span>
             <ChevronRight size={18} aria-hidden="true" />
           </button>
@@ -417,7 +421,7 @@ export function ConfirmNavigation({
       <p className="mt-3 text-sm text-muted-foreground">
         {saving
           ? "Wait for the saved result before leaving. You can keep editing your draft."
-          : "Your saved favorites and library profiles will stay as they are."}
+          : "Acknowledged settings, favorites and library profiles will stay as they are."}
       </p>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         {onStop && (

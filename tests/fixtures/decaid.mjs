@@ -85,7 +85,7 @@ let workflow,
   started,
   commandLog,
   library,
-  favorites
+  favorites, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
 function reset() {
   workflow = structuredClone(baseWorkflow)
   state = "idle"
@@ -100,6 +100,22 @@ function reset() {
   commandLog = []
   library = structuredClone(profiles)
   favorites = undefined
+  preferences = undefined
+  wifi = []
+  schedules = []
+  grinderConnected = false
+  grinderSetting = "1.8"
+  grinderRpm = 800
+  grinderRunning = false
+  failPath = null
+  daily = {
+    settings: { blockOnNoScale:true,blockTareDuringShot:true,stopHotWaterAtWeight:true,scalePowerMode:"disabled",weightFlowMultiplier:1,volumeFlowMultiplier:0.3,hotWaterFlowMultiplier:0.3,preferredMachineId:null,preferredScaleId:null,preferredGrinderDeviceId:null,chargingMode:"balanced",nightModeEnabled:false,nightModeSleepTime:1320,nightModeMorningTime:420,keepAwake:true,lowBatteryBrightnessLimit:true },
+    machine: { fan:40,tankTemp:25 }, advanced:{refillKitSetting:2},
+    display:{brightness:70,requestedBrightness:70,wakeLockEnabled:true,wakeLockOverride:false,platformSupported:{brightness:true,wakeLock:true},lowBatteryBrightnessActive:false},
+    presence:{userPresenceEnabled:false,sleepTimeoutMinutes:30},
+    info:{model:"DE1",serialNumber:"fixture-only",firmwareVersion:"fixture",extra:{refillKit:false}},
+    grinderInfo:{deviceId:"grinder-fixture",capabilities:["grindSetting","rpmControl","startStop"],controls:{grindSetting:{kind:"numeric",min:0,max:10,step:0.1},rpmControl:{kind:"numeric",min:300,max:1500,step:10}}}
+  }
 }
 reset()
 const sockets = new Map()
@@ -131,6 +147,7 @@ function machine() {
 }
 function devices() {
   return [
+    ...(grinderConnected ? [{id:"grinder-fixture",name:"Grinder fixture",type:"grinder",state:"connected"}] : []),
     {
       id: "machine-fixture",
       name: "DE1 fixture",
@@ -186,7 +203,7 @@ function merge(a, b) {
 }
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "GET,PUT,POST,OPTIONS")
+  res.setHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "Content-Type")
   if (req.method === "OPTIONS") {
     res.writeHead(204).end()
@@ -212,6 +229,10 @@ const server = createServer(async (req, res) => {
     connected = data.connected ?? connected
     scale = data.scale ?? scale
     mode = data.mode ?? mode
+    if ("preferences" in data) preferences = data.preferences
+    if (data.daily) daily = merge(daily,data.daily)
+    if ("grinder" in data) grinderConnected = data.grinder
+    if ("failPath" in data) failPath = data.failPath
     error = data.error ?? null
     if ("favorites" in data) favorites = data.favorites
     if (data.profiles) library = data.profiles
@@ -228,12 +249,56 @@ const server = createServer(async (req, res) => {
     return reply({ ok: true })
   }
   if (url.pathname === "/__test/requests") return reply(commandLog)
-  if (req.method !== "GET")
+  if (req.method !== "GET" || url.pathname === "/api/v1/devices/scan")
     commandLog.push({ path: url.pathname, method: req.method, body: data })
-  if (error && req.method !== "GET") return reply({ error }, 500)
+  if ((error || failPath === url.pathname) && req.method !== "GET") return reply({ error: error || "Section write rejected" }, 500)
   if (url.pathname === "/api/v1/devices") return reply(devices())
-  if (url.pathname === "/api/v1/settings")
-    return reply({ gatewayMode: mode, blockOnNoScale: true })
+  if (url.pathname === "/api/v1/settings") {
+    if(req.method === "POST") Object.assign(daily.settings,data)
+    return reply({ ...daily.settings,gatewayMode:mode })
+  }
+  if (url.pathname === "/api/v1/store/decent-skin-codex/preferences") {
+    if(req.method === "POST") { preferences=data;return reply(null,204) }
+    return preferences === undefined ? reply({error:"Not found"},404) : reply(preferences)
+  }
+  const dailyPaths={"/api/v1/machine/settings":"machine","/api/v1/machine/settings/advanced":"advanced","/api/v1/display":"display","/api/v1/presence/settings":"presence","/api/v1/machine/info":"info"}
+  if(dailyPaths[url.pathname]) {
+    const key=dailyPaths[url.pathname]
+    if(req.method === "POST") Object.assign(daily[key],data)
+    return reply(daily[key])
+  }
+  if(url.pathname === "/api/v1/machine/capabilities") return reply({capabilities:[]})
+  if(url.pathname === "/api/v1/display/brightness") { daily.display.requestedBrightness=data.brightness;daily.display.brightness=daily.display.lowBatteryBrightnessActive?Math.min(20,data.brightness):data.brightness;return reply(daily.display) }
+  if(url.pathname === "/api/v1/display/wakelock") { daily.display.wakeLockOverride=req.method === "POST";return reply(daily.display) }
+  if(url.pathname === "/api/v1/machine/heartbeat") return reply({timeout:1800})
+  if(url.pathname === "/api/v1/presence/schedules") {
+    if(req.method === "POST") {const schedule={...data,id:`schedule-${Date.now()}`};schedules.push(schedule);return reply(schedule,201)}
+    return reply(schedules)
+  }
+  if(url.pathname.startsWith("/api/v1/presence/schedules/")) {
+    const id=decodeURIComponent(url.pathname.split("/").at(-1));const found=schedules.find(s=>s.id===id)
+    if(!found)return reply({error:"Not found"},404)
+    if(req.method === "DELETE") {schedules=schedules.filter(s=>s.id!==id);return reply({deleted:id})}
+    Object.assign(found,data);return reply(found)
+  }
+  if(url.pathname === "/api/v1/devices/wifi") {
+    if(req.method === "POST"&&!wifi.includes(data.host))wifi.push(data.host)
+    if(req.method === "DELETE")wifi=wifi.filter(h=>h!==data.host)
+    return reply({endpoints:wifi})
+  }
+  if(url.pathname === "/api/v1/devices/scan") {if(url.searchParams.get("connect")!=="false")return reply({error:"Fixture requires discovery only"},400);return reply([])}
+  if(url.pathname === "/api/v1/devices/disconnect") {if(data.deviceId==="scale-fixture")scale=false;if(data.deviceId==="machine-fixture")connected=false;if(data.deviceId==="grinder-fixture")grinderConnected=false;emit();return reply(null)}
+  if(url.pathname === "/api/v1/devices/forget"||url.pathname === "/api/v1/scale/tare")return reply(null)
+  if(url.pathname === "/api/v1/diagnostics/ble")return reply({available:true,scanning:false,transport:"isolated fixture"})
+  if(url.pathname.startsWith("/api/v1/grinder/")) {
+    if(!grinderConnected)return reply({error:"No grinder connected"},503)
+    if(url.pathname.endsWith("/info"))return reply(daily.grinderInfo)
+    if(url.pathname.endsWith("/setting"))grinderSetting=data.setting
+    if(url.pathname.endsWith("/rpm"))grinderRpm=data.rpm
+    if(url.pathname.endsWith("/grinding"))grinderRunning=true
+    if(url.pathname.endsWith("/idle"))grinderRunning=false
+    return reply({timestamp:new Date().toISOString(),state:grinderRunning?"grinding":"idle",setting:grinderSetting,rpm:grinderRpm})
+  }
   if (url.pathname === "/api/v1/info")
     return reply({ fullVersion: "contract-fixture c9e2650" })
   if (url.pathname === "/api/v1/workflow") {

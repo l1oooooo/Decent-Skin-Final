@@ -1,3 +1,4 @@
+import type { FocusPreferences } from "./daily-settings"
 export interface ProfileStep {
   name: string
   pump: "pressure" | "flow"
@@ -69,6 +70,8 @@ export interface Device {
   name: string
   type: string
   state: string
+  available?: boolean
+  connectionRole?: "primary" | "auxiliary"
 }
 export interface ShotSample {
   elapsed: number
@@ -114,7 +117,15 @@ export interface GatewaySnapshot {
   scale: { weight: number; timestamp: string } | null
   scaleConnected: boolean
   water: number | null
-  settings: { gatewayMode: string; blockOnNoScale?: boolean } | null
+  settings: {
+    gatewayMode: string
+    blockOnNoScale?: boolean
+    [key: string]: unknown
+  } | null
+  preferences: FocusPreferences | null
+  preferencesIssue: string
+  refillKit: boolean | null
+  presenceEnabled: boolean
   build: string
   samples: ShotSample[]
   elapsedKnown: boolean

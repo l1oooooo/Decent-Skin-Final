@@ -417,7 +417,9 @@ export function ProfileDetail({
             <span className="w-6 text-muted-foreground">{i + 1}</span>
             <span className="min-w-0 flex-1 break-words">{step.name}</span>
             <span className="text-muted-foreground tabular-nums">
-              {format(step.seconds)}s max · {format(step.temperature)}°C ·{" "}
+              {format(step.seconds)}s max ·{" "}
+              {format(s.displayTemperature(step.temperature))}°
+              {s.temperatureUnit} ·{" "}
               {step.pump === "flow"
                 ? `${format(step.flow)} ml/s`
                 : `${format(step.pressure)} bar`}

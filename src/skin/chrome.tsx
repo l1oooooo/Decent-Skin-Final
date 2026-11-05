@@ -49,7 +49,9 @@ export function RevisionHeader({
         <TabletStatus s={s} />
         <span className="inline-flex items-center gap-2 text-[12px] text-muted-foreground tabular-nums">
           <Thermometer size={14} aria-hidden="true" />
-          {s.connected ? `${format(s.shot.temperature)}°C` : "—°C"}
+          {s.connected
+            ? `${format(s.displayTemperature(s.shot.temperature))}°${s.temperatureUnit}`
+            : `—°${s.temperatureUnit}`}
         </span>
         <span
           aria-label="Water level"

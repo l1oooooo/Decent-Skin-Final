@@ -76,7 +76,7 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
           <span className={showTemperature ? "" : "text-muted-foreground"}>
             Temperature
           </span>
-          <span className="text-muted-foreground">°C</span>
+          <span className="text-muted-foreground">°{s.temperatureUnit}</span>
         </button>
         {(s.active || s.complete) && (
           <span className="ml-auto text-muted-foreground">
@@ -90,7 +90,7 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
         role="img"
-        aria-label="Pressure, flow and temperature curves. Temperature uses the right axis, 60 to 100 degrees Celsius."
+        aria-label={`Pressure, flow and temperature curves. Temperature uses the right axis, ${s.displayTemperature(60)} to ${s.displayTemperature(100)} degrees ${s.temperatureUnit === "F" ? "Fahrenheit" : "Celsius"}.`}
       >
         {[0, 3, 6, 9, 12].map((n) => (
           <g key={n}>
@@ -121,7 +121,7 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
             fill="var(--signal-temperature)"
             fontSize="12"
           >
-            {n}°
+            {Math.round(s.displayTemperature(n))}°
           </text>
         ))}
         {[0, duration / 3, (duration * 2) / 3, duration].map((n) => (
