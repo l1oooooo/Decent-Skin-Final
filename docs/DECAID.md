@@ -127,3 +127,61 @@ Commands reread the current info/state and recheck the selected connected device
 a stable idle publication is not rejected solely for its old timestamp. Numeric
 and enumerated descriptors are validated before use. Presence idle timeout uses
 the installed 0–240 minute range; schedule hold duration uses 0–720 minutes.
+
+## Recipes, coffee and equipment (phase 5)
+
+Source checked at installed-target commit `14361a94`: `profile_handler.dart`,
+`profile_controller.dart`, `profile_hash.dart`, `profile.dart`,
+`beans_handler.dart`, `grinders_handler.dart`, `workflow_context.dart` and
+`kv_store_handler.dart`. These are repository checks, not live device calls.
+
+| Surface | Contract and ownership |
+| --- | --- |
+| Create/fork | POST `profiles` with complete `profile`, optional `parentId`, preserved `metadata` |
+| Update user profile | PUT `profiles/{id}` with complete profile/metadata; use returned ID |
+| Lineage | GET `profiles/{id}/lineage`; restore a version into a draft, then Save explicitly |
+| Unknown profile fields | `metadata.focusExtensions`; hydrate only unknown keys, never overwrite returned executable values |
+| Previous user version | `metadata.focusPrevious` holds the previous ID/profile; restoration is a reviewed edit |
+| Save recovery | GET/POST/DELETE `store/decent-skin-codex/profile-save` |
+| Recipe preferences | GET/POST `store/decent-skin-codex/recipes`, keyed by actual profile ID |
+| Beans | GET/POST `beans`; GET/PUT `beans/{id}` |
+| Roast batches | GET `bean-batches?includeArchived=true`; POST `beans/{id}/batches`; GET/PUT `bean-batches/{id}` |
+| Equipment | GET/POST `grinders`; GET/PUT `grinders/{id}` |
+| Archive/restore | PUT the inventory record with `archived: true/false`; no deletion of inventory or shot records |
+| Workflow selection | PUT `workflow.context`: batch ID plus coffee name/roaster, or equipment ID plus model/burrs |
+
+Decaid's profile hash excludes title, author and notes. Create can return an
+existing recipe rather than a new record; Focus checks for identical executable
+content before offering a copy. A default fork must change executable content.
+User edits that change IDs journal the intent before writing, then remap current
+favorites and recipe preferences. Each request is independent: partial outcomes
+remain visible, malformed favorites block remapping, and explicit retry checks
+for the operation marker or returned ID before writing content again. The
+journal survives reload. Cancel of an unacknowledged save is allowed only if no
+saved record is found; it cannot undo a timed-out write. No save is automatically
+retried on reconnect. These APIs do not provide cross-client transactions.
+
+The installed model serializes known executable keys only. Focus preserves
+unknown profile, step, exit and limiter keys in its metadata sidecar, including
+through stage reordering and JSON editing. This preserves data; it does not make
+an unknown field executable by Decaid. Other metadata is retained. Editor
+validation rejects non-finite or out-of-range values, invalid exits/transitions,
+invalid volume-counting indices and empty profiles. The editor uses conservative
+limits (20 stages, 127 seconds per stage, 12 bar, 10 ml/s and 0–100°C); device
+acceptance remains required.
+
+Recipe preference loads use a fresh KV read and patch the current workflow,
+preserving coffee/equipment and unrelated context. Only explicitly saved
+adjustments are restored. Temperature offsets apply equally to all stages.
+`context.extras.focusProfileId` records the explicit loaded ID; highlighting
+still checks executable content with its temperature offset instead of guessing
+by title. An edited library record never silently replaces an active recipe.
+No recipe preference sends a connected-grinder command.
+
+Inventory updates send only changed fields, preserving extras and untouched
+metadata. Batch creation initializes remaining weight from initial weight;
+remaining weight is separately editable on existing batches. Selecting a batch
+snapshots coffee labels into workflow context; selecting a grinder records its
+equipment ID/model/burrs. Archiving leaves active and historical context intact,
+and archived items cannot be newly selected until restored. A batch belonging
+to an archived bean is also blocked from selection.

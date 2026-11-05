@@ -1,3 +1,4 @@
+import { executableKey, restoreExtensions } from "./profile-data"
 import type {
   FavoriteSlots,
   ProfileRecord,
@@ -133,7 +134,10 @@ export function parseProfileRecord(value: unknown): ProfileRecord {
   return {
     ...record,
     id: record.id,
-    profile: parseProfile(record.profile),
+    profile: restoreExtensions(
+      parseProfile(record.profile),
+      (record.metadata as Record<string, unknown> | null)?.focusExtensions
+    ),
   } as ProfileRecord
 }
 
@@ -193,9 +197,29 @@ export function profileFingerprint(value: unknown): string {
 
 export function activeProfileId(
   profile: Profile | null,
-  records: ProfileRecord[]
+  records: ProfileRecord[],
+  explicitId?: unknown
 ): string | null {
   if (!profile) return null
+  if (typeof explicitId === "string") {
+    const record = records.find((p) => p.id === explicitId)
+    if (
+      record &&
+      record.profile.title === profile.title &&
+      profile.steps.length === record.profile.steps.length
+    ) {
+      const offset =
+        profile.steps[0].temperature - record.profile.steps[0].temperature
+      const adjusted = {
+        ...record.profile,
+        steps: record.profile.steps.map((step) => ({
+          ...step,
+          temperature: step.temperature + offset,
+        })),
+      }
+      if (executableKey(adjusted) === executableKey(profile)) return record.id
+    }
+  }
   const fingerprint = profileFingerprint(profile)
   const matches = records.filter(
     (record) => profileFingerprint(record.profile) === fingerprint

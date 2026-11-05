@@ -85,7 +85,7 @@ let workflow,
   started,
   commandLog,
   library,
-  favorites, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
+  favorites, recipeStore, inventory, daily, wifi, schedules, preferences, grinderConnected, grinderSetting, grinderRpm, grinderRunning, failPath
 function reset() {
   workflow = structuredClone(baseWorkflow)
   state = "idle"
@@ -99,6 +99,8 @@ function reset() {
   started = false
   commandLog = []
   library = structuredClone(profiles)
+  recipeStore = {}
+  inventory = {beans:[],"bean-batches":[],grinders:[]}
   favorites = undefined
   preferences = undefined
   wifi = []
@@ -236,6 +238,8 @@ const server = createServer(async (req, res) => {
     error = data.error ?? null
     if ("favorites" in data) favorites = data.favorites
     if (data.profiles) library = data.profiles
+    if (data.recipeStore) recipeStore = data.recipeStore
+    if (data.inventory) inventory = data.inventory
     if (state === "espresso") {
       started = true
       shotId ||= "fixture-shot"
@@ -305,7 +309,44 @@ const server = createServer(async (req, res) => {
     if (req.method === "PUT") workflow = merge(workflow, data)
     return reply(workflow)
   }
-  if (url.pathname === "/api/v1/profiles") return reply(library)
+  const inventoryMatch = url.pathname.match(/^\/api\/v1\/(beans|bean-batches|grinders)(?:\/([^/]+))?(?:\/(batches))?$/)
+  if(inventoryMatch) {
+    let [,kind,id,batches] = inventoryMatch
+    id = id ? decodeURIComponent(id) : undefined
+    const beanId=batches?id:undefined
+    if(batches) {kind="bean-batches";id=undefined}
+    if(req.method === "GET") return id ? (inventory[kind].find(r=>r.id===id) ? reply(inventory[kind].find(r=>r.id===id)) : reply({error:"Not found"},404)) : reply(inventory[kind].filter(r=>!beanId || r.beanId===beanId))
+    if(req.method === "POST") {
+      const record={...data,id:crypto.randomUUID(),archived:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),...(beanId?{beanId,weightRemaining:data.weight}: {})}
+      inventory[kind].push(record);return reply(record,201)
+    }
+    const record=inventory[kind].find(r=>r.id===id)
+    if(!record)return reply({error:"Not found"},404)
+    Object.assign(record,data,{id,updatedAt:new Date().toISOString()});return reply(record)
+  }
+  const profilePath=url.pathname.match(/^\/api\/v1\/profiles(?:\/([^/]+))?(?:\/(lineage))?$/)
+  if(profilePath && !["export","import"].includes(profilePath[1])) {
+    const id=profilePath[1]?decodeURIComponent(profilePath[1]):null
+    const existing=library.find(p=>p.id===id)
+    if(req.method === "GET") {
+      if(!id)return reply(library)
+      if(!existing)return reply({error:"Not found"},404)
+      if(profilePath[2]) { const lineage=[existing];let p=existing;const seen=new Set([p.id]);while(p.parentId){p=library.find(r=>r.id===p.parentId);if(!p||seen.has(p.id))break;seen.add(p.id);lineage.unshift(p)}return reply(lineage) }
+      return reply(existing)
+    }
+    if(req.method === "PUT" && (!existing || existing.isDefault))return reply({error:"Cannot edit this profile"},400)
+    const cleanProfile=JSON.parse(JSON.stringify(data.profile))
+    const pkeys="version title notes author beverage_type steps target_volume target_weight target_volume_count_start tank_temperature".split(" ")
+    const skeys="name pump transition exit volume seconds weight temperature sensor pressure flow limiter".split(" ")
+    for(const key of Object.keys(cleanProfile))if(!pkeys.includes(key))delete cleanProfile[key]
+    cleanProfile.steps=cleanProfile.steps.map(step=>{for(const key of Object.keys(step))if(!skeys.includes(key))delete step[key];for(const key of ["exit","limiter"])if(step[key])for(const field of Object.keys(step[key]))if(!(key === "exit"?["type","condition","value"]:["value","range"]).includes(field))delete step[key][field];return step})
+    const executable={...cleanProfile};delete executable.title;delete executable.author;delete executable.notes
+    const nextId="profile:"+createHash("sha256").update(JSON.stringify(executable)).digest("hex").slice(0,20)
+    const duplicate=library.find(r=>r.id===nextId)
+    if(req.method === "POST" && duplicate)return reply(duplicate)
+    const record={...existing,id:nextId,profile:cleanProfile,metadata:data.metadata??existing?.metadata??null,isDefault:false,visibility:existing?.visibility??"visible",parentId:req.method === "PUT" ? existing?.parentId??null : data.parentId??null,updatedAt:new Date().toISOString()}
+    library=library.filter(p=>p.id!==nextId && (req.method!=="PUT"||p.id!==id));library.push(record);return reply(record,req.method === "POST"?201:200)
+  }
   if (url.pathname === "/api/v1/profiles/export") return reply(library)
   if (url.pathname === "/api/v1/profiles/import") {
     let imported = 0, skipped = 0, failed = 0
@@ -323,6 +364,12 @@ const server = createServer(async (req, res) => {
     if (!record) return reply({ error: "Not found" }, 404)
     record.visibility = data.visibility
     return reply(record)
+  }
+  if (url.pathname.startsWith("/api/v1/store/") && !url.pathname.endsWith("/favorites")) {
+    const key=url.pathname.split("/").at(-1)
+    if(req.method === "POST") {recipeStore[key]=data;return reply({})}
+    if(req.method === "DELETE") {delete recipeStore[key];return reply({})}
+    return key in recipeStore ? reply(recipeStore[key]) : reply({error:"Not found"},404)
   }
   if (url.pathname.startsWith("/api/v1/store/")) {
     if (req.method === "POST") { favorites = data; res.writeHead(204).end(); return }

@@ -1,3 +1,5 @@
+import { RecipeGateway } from "./recipes"
+import type { ProfileRecord } from "./types"
 import {
   DailySettingsGateway,
   parsePreferences,
@@ -668,6 +670,18 @@ export class DecaidGateway {
             error instanceof Error ? error.message : "Could not read favorites",
         })
     }
+  }
+  readonly recipes = new RecipeGateway(this)
+  acceptProfile(record: ProfileRecord, previous: string | null) {
+    this.libraryRevision++
+    this.emit({
+      profiles: [
+        ...this.snapshot.profiles.filter(
+          (p) => p.id !== record.id && p.id !== previous
+        ),
+        record,
+      ],
+    })
   }
   async saveFavorites(slots: FavoriteSlots) {
     const normalized = normalizeFavorites(slots)

@@ -1,3 +1,7 @@
+import { useRecipeEditor } from "@/skin/use-recipe-editor"
+import { ProfileEditor, ProfileEditorActions } from "@/skin/profile-editor"
+import { useCatalog } from "@/skin/use-catalog"
+import { InventoryPage, RecipePreferences } from "@/skin/inventory"
 import { useEffect, useEffectEvent, useRef, useState } from "react"
 import { DecaidGateway, gatewayUrl } from "@/gateway/client"
 import { DailySettingsPage } from "@/skin/daily-settings"
@@ -25,21 +29,87 @@ export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
   const daily = useDailySettings(gateway)
+  const recipes = useRecipeEditor(gateway)
+  const catalog = useCatalog(gateway)
   const editor = useFavorites(gateway, s.snapshot)
   const transfer = useProfileTransfer(gateway, s.reloadLibrary)
   const saving =
+    recipes.busy ||
+    catalog.busy ||
     editor.saving ||
     transfer.operation === "import" ||
     daily.saving ||
     s.snapshot.pending
   const nav = useNavigation(
-    editor.dirty || daily.dirty || saving || transfer.selection !== null,
-    () => {
-      daily.cancel()
-      editor.cancel()
-      transfer.cancel()
-    }
+    editor.dirty ||
+      daily.dirty ||
+      recipes.dirty ||
+      catalog.dirty ||
+      catalog.preferenceDirty ||
+      saving ||
+      transfer.selection !== null,
+    (route) => {
+      if (route.page === "edit") recipes.cancel()
+      if (route.page === "inventory") catalog.cancelInventory()
+      if (route.page === "recipe") catalog.cancelPreference()
+      if (route.page === "settings") daily.cancel()
+      if (route.page === "favorites" || route.page === "library") {
+        editor.cancel()
+        transfer.cancel()
+      }
+    },
+    (route) =>
+      route.page === "edit"
+        ? recipes.dirty || recipes.busy
+        : route.page === "inventory"
+          ? catalog.dirty || catalog.busy
+          : route.page === "recipe"
+            ? catalog.preferenceDirty || catalog.busy
+            : route.page === "settings"
+              ? daily.dirty || daily.saving
+              : route.page === "favorites"
+                ? editor.dirty || editor.saving
+                : route.page === "library"
+                  ? transfer.selection !== null ||
+                    transfer.operation === "import" ||
+                    (route.slot !== undefined && editor.dirty)
+                  : false
   )
+  const openPage = useEffectEvent(() => {
+    const record = s.snapshot.profiles.find((p) => p.id === nav.route.id)
+    if (nav.route.page === "edit" && (!nav.route.id || record))
+      recipes.open(record ?? null)
+    else if (nav.route.page === "edit" && !recipes.draft) void recipes.recover()
+    if (nav.route.page === "recipe" && record)
+      void catalog.openPreference(record)
+    if (nav.route.page === "inventory" && !catalog.data) void catalog.refresh()
+  })
+  const initializedPage = useRef("")
+  useEffect(() => {
+    const key = `${nav.route.page}:${nav.route.id ?? "new"}`
+    if (initializedPage.current === key) return
+    if (
+      ["edit", "recipe"].includes(nav.route.page) &&
+      nav.route.id &&
+      !s.snapshot.profiles.some((p) => p.id === nav.route.id) &&
+      s.libraryLoading
+    )
+      return
+    initializedPage.current = key
+    openPage()
+  }, [nav.route.page, nav.route.id, s.snapshot.profiles, s.libraryLoading])
+  const syncEditorRoute = useEffectEvent(() => {
+    if (
+      nav.route.page === "edit" &&
+      recipes.source &&
+      !recipes.pending &&
+      recipes.source.id !== nav.route.id
+    )
+      nav.navigate({ page: "edit", id: recipes.source.id }, true)
+  })
+  useEffect(() => {
+    syncEditorRoute()
+  }, [recipes.source, recipes.pending])
   const assignment =
     nav.route.page === "library" ? (nav.route.slot ?? null) : null
   const observedShot = useRef(0)
@@ -90,17 +160,23 @@ export default function App() {
   }
   const page = nav.route.page
   const title =
-    page === "settings"
-      ? (settingsCategories.find((c) => c.id === nav.route.category)?.title ??
-        "Settings")
-      : page === "favorites"
-        ? "Manage favorites"
-        : page === "profile"
-          ? (s.allProfiles.find((p) => p.id === nav.route.id)?.name ??
-            "Profile details")
-          : assignment === null
-            ? "Profile library"
-            : `Choose favorite ${assignment + 1}`
+    page === "edit"
+      ? "Profile editor"
+      : page === "recipe"
+        ? "Recipe preferences"
+        : page === "inventory"
+          ? "Coffee and equipment"
+          : page === "settings"
+            ? (settingsCategories.find((c) => c.id === nav.route.category)
+                ?.title ?? "Settings")
+            : page === "favorites"
+              ? "Manage favorites"
+              : page === "profile"
+                ? (s.allProfiles.find((p) => p.id === nav.route.id)?.name ??
+                  "Profile details")
+                : assignment === null
+                  ? "Profile library"
+                  : `Choose favorite ${assignment + 1}`
   function browse() {
     navigate({ page: "library" })
   }
@@ -223,7 +299,9 @@ export default function App() {
                   : undefined
           }
           actions={
-            page === "favorites" ? (
+            page === "edit" ? (
+              <ProfileEditorActions editor={recipes} />
+            ) : page === "favorites" ? (
               <>
                 {(editor.error || editor.message) && (
                   <p
@@ -293,6 +371,9 @@ export default function App() {
               }}
             />
           )}
+          {page === "edit" && <ProfileEditor s={s} editor={recipes} />}
+          {page === "recipe" && <RecipePreferences catalog={catalog} />}
+          {page === "inventory" && <InventoryPage s={s} catalog={catalog} />}
           {page === "profile" && (
             <ProfileDetail
               key={nav.route.id}

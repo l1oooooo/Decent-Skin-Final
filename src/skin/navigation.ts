@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 
-export type Page = "home" | "settings" | "library" | "favorites" | "profile"
+export type Page =
+  | "home"
+  | "settings"
+  | "library"
+  | "favorites"
+  | "profile"
+  | "edit"
+  | "recipe"
+  | "inventory"
 export interface Route {
   page: Page
   id?: string
@@ -10,7 +18,17 @@ export interface Route {
 function readRoute(): Route {
   const query = new URLSearchParams(location.search)
   const page = query.get("page")
-  if (!["settings", "library", "favorites", "profile"].includes(page ?? ""))
+  if (
+    ![
+      "settings",
+      "library",
+      "favorites",
+      "profile",
+      "edit",
+      "recipe",
+      "inventory",
+    ].includes(page ?? "")
+  )
     return { page: "home" }
   return {
     page: page as Page,
@@ -33,7 +51,11 @@ function routeUrl(route: Route) {
     url.searchParams.set("slot", String(route.slot))
   return url
 }
-export function useNavigation(dirty: boolean, discard: () => void) {
+export function useNavigation(
+  dirty: boolean,
+  discard: (route: Route) => void,
+  routeDirty?: (route: Route) => boolean
+) {
   const [route, setRoute] = useState(readRoute)
   const [pending, setPending] = useState<{
     route: Route
@@ -41,10 +63,14 @@ export function useNavigation(dirty: boolean, discard: () => void) {
   } | null>(null)
   const index = useRef(0)
   const bypass = useRef(false)
-  const current = useRef({ dirty, route })
+  const current = useRef({
+    dirty,
+    route,
+    guarded: routeDirty?.(route) ?? dirty,
+  })
   useEffect(() => {
-    current.current = { dirty, route }
-  }, [dirty, route])
+    current.current = { dirty, route, guarded: routeDirty?.(route) ?? dirty }
+  }, [dirty, route, routeDirty])
   useEffect(() => {
     index.current = history.state?.focusIndex ?? 0
     history.replaceState(
@@ -56,11 +82,17 @@ export function useNavigation(dirty: boolean, discard: () => void) {
       const target = history.state?.focusIndex ?? 0
       if (target === index.current) return
       if (
-        current.current.dirty &&
+        current.current.guarded &&
         (current.current.route.page === "favorites" ||
           current.current.route.page === "library" ||
-          current.current.route.page === "settings") &&
-        readRoute().page !== "favorites" &&
+          current.current.route.page === "settings" ||
+          ["edit", "recipe", "inventory"].includes(
+            current.current.route.page
+          )) &&
+        !(
+          current.current.route.page === "library" &&
+          readRoute().page === "favorites"
+        ) &&
         !(
           current.current.route.page === "settings" &&
           readRoute().page === "settings"
@@ -101,11 +133,12 @@ export function useNavigation(dirty: boolean, discard: () => void) {
   function navigate(next: Route, preserve = false) {
     if (routeUrl(next).href === location.href) return
     if (
-      dirty &&
+      (routeDirty?.(route) ?? dirty) &&
       (route.page === "favorites" ||
         route.page === "library" ||
-        route.page === "settings") &&
-      next.page !== "favorites" &&
+        route.page === "settings" ||
+        ["edit", "recipe", "inventory"].includes(route.page)) &&
+      !(route.page === "library" && next.page === "favorites") &&
       !(route.page === "settings" && next.page === "settings") &&
       !preserve
     )
@@ -120,7 +153,7 @@ export function useNavigation(dirty: boolean, discard: () => void) {
     stay: () => setPending(null),
     leave: () => {
       if (!pending) return
-      discard()
+      discard(route)
       if (pending.index !== undefined) {
         bypass.current = true
         history.go(pending.index - index.current)

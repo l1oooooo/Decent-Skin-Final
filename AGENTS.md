@@ -77,6 +77,15 @@ technical decisions, and the design history for previous iterations.
   malformed, empty and unavailable assignments must not silently fall back.
   Update the rail only after an acknowledged explicit Save. Workflow loading
   is independent; never identify a profile by title alone.
+- Profile IDs derive from executable content; titles alone cannot create forks.
+  Keep unknown profile/stage fields in `metadata.focusExtensions` because the
+  installed model drops them. Returned executable fields remain authoritative.
+  Journal profile saves in Focus KV before writing; retry reference remaps only
+  on explicit action and clear the journal with DELETE (POST null stores text
+  in the installed KV handler). Save-as-new never remaps source favorites.
+- Recipe preferences are Focus-owned KV, separate from executable definitions
+  and workflow context. Inventory updates are field patches; archive instead of
+  deleting records and preserve historical context. Equipment IDs are not device IDs.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   layout and typography. Retired variants and appearance controls are removed;

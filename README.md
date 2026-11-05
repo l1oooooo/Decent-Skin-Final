@@ -26,11 +26,11 @@ The five favorite positions use a nullable ID array in Decaid's `decent-skin-cod
 
 **Settings** sits beside History. Static query routes support direct entry, reload and browser Back: `?page=settings`, `?page=library`, `?page=favorites`, and `?page=profile&profile=<encoded ID>`. All pages share one session. A newly observed machine shot start returns to Focus, closes overlays and retains settings and favorite drafts and staged imports; return to Manage favorites or Profile library to recover them. Ordinary navigation away from that editor prompts before discarding changes. Reload/unload prompts for unsaved changes where the browser supports it; drafts do not persist across a completed reload.
 
-The library supports search, sorting, visible/hidden views, read-only details/target preview, hide/restore and JSON profile-record import/export. Imports show imported, skipped and failed counts; existing IDs are skipped by Decaid. Profile content editing stays disabled until phase 5. Daily-use settings cover connections, utility recipes and stop policies, machine/power, display/presence, wake schedules and supported connected grinders. Each settings section has its own Save/Cancel and retains rejected changes. Unsupported capabilities are unavailable. Later-phase categories expose no placeholder hardware controls. Artwork is decorative, bundled and independent of recipe data.
+The library supports search, sorting, visible/hidden views, details/target preview, hide/restore and JSON profile-record import/export. Imports show imported, skipped and failed counts; existing IDs are skipped by Decaid. Profile editing includes stage forms, JSON, draft previews, default forks, version restoration and recoverable ID remapping. Daily-use settings cover connections, utility recipes and stop policies, machine/power, display/presence, wake schedules and supported connected grinders. Each settings section has its own Save/Cancel and retains rejected changes. Unsupported capabilities are unavailable. Later-phase categories expose no placeholder hardware controls. Artwork is decorative, bundled and independent of recipe data.
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2 and 3 are implemented in this working tree; later controls remain planned. See the verification record for fixture and device status.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–5 are implemented; phases 6–8 remain planned and phase 9 is device acceptance. See the verification record for fixture and device status.
 
 ## Tests and limits
 
@@ -68,3 +68,31 @@ FOCUS_FIXTURE_PORT=18082 FOCUS_TEST_PORT=4176 npm run test:e2e
 
 Test API origins are always loopback and the runner starts the isolated fixture.
 No hardware validation is implied by these tests.
+
+### Recipes, coffee and equipment
+
+Open a profile's **Details → Edit profile** for metadata, ordered stages,
+transitions, limits and exit conditions. Save updates a user profile; **Save as
+new** forks a default or user profile. Decaid deduplicates executable content:
+changing only a title cannot create a separate copy. Edits never start a shot or
+replace the loaded workflow. Load the saved record explicitly when ready.
+**Lineage and revert** restores a version into the draft for review before Save.
+The editor's temperature fields explicitly use Celsius; Home follows the unit preference.
+
+**Recipe preferences** saves dose, yield, grind text and first-stage temperature
+in Focus-owned storage. Loading that profile restores those adjustments while
+preserving coffee/equipment context and relative stage temperatures. Adjusting
+Home still changes the current workflow; it does not silently overwrite saved
+per-profile preferences or move a grinder.
+
+**Coffee & equipment** manages beans, roast batches (including remaining weight)
+and grinder records. Use a batch or equipment record in the active recipe,
+archive/restore records, and edit their descriptive fields. Connected grinder
+controls remain under Connections; equipment IDs are not device IDs.
+
+Routes are `?page=edit&profile=<ID>`, `?page=edit` for a new recipe,
+`?page=recipe&profile=<ID>` and `?page=inventory`. Editor drafts are held above page
+navigation and survive shot interruption in memory. Confirming discard or completing a
+reload loses unsaved edits. A pending profile save has a separate durable
+recovery record: **Retry pending save** finds an already saved profile and
+finishes outstanding reference updates without blindly resubmitting content.

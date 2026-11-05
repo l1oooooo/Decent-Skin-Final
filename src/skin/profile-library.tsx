@@ -77,6 +77,9 @@ export function ProfileLibrary({
           <Action onClick={() => navigate({ page: "favorites" })}>
             Manage favorites
           </Action>
+          <Action variant="outline" onClick={() => navigate({ page: "edit" })}>
+            New profile
+          </Action>
           <Action
             variant="outline"
             disabled={busy}
@@ -336,7 +339,7 @@ export function ProfileDetail({
   const hidden = p.record.visibility === "hidden"
   return (
     <>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Action variant="outline" onClick={() => navigate({ page: "library" })}>
           Back to library
         </Action>
@@ -374,10 +377,15 @@ export function ProfileDetail({
         </Action>
         <Action
           variant="outline"
-          disabled
-          title="Profile editing is not available yet"
+          onClick={() => navigate({ page: "edit", id: p.id })}
         >
           Edit profile
+        </Action>
+        <Action
+          variant="outline"
+          onClick={() => navigate({ page: "recipe", id: p.id })}
+        >
+          Recipe preferences
         </Action>
       </div>
       {(error || s.notice) && (

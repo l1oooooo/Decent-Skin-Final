@@ -7,6 +7,7 @@ import {
   Library,
   Settings,
   Star,
+  Coffee,
 } from "lucide-react"
 import { RevisionHeader } from "./chrome"
 import { Action } from "./primitives"
@@ -21,6 +22,12 @@ export const settingsCategories = [
     description:
       "Browse recipes, import and export, and arrange the five Home favorites.",
     phase: 3,
+  },
+  {
+    id: "inventory",
+    title: "Coffee and equipment",
+    description: "Beans, roast batches, inventory and grinder records.",
+    phase: 5,
   },
   {
     id: "connections",
@@ -119,6 +126,7 @@ export function PageShell({
               ["settings", "Settings", Settings],
               ["library", "Profile library", Library],
               ["favorites", "Manage favorites", Star],
+              ["inventory", "Coffee & equipment", Coffee],
             ] as const
           ).map(([page, label, Icon]) => (
             <Action
@@ -247,6 +255,13 @@ export function SettingsPage({
               Manage favorites
             </Action>
           </div>
+        ) : selected.id === "inventory" ? (
+          <Action
+            className="mt-5"
+            onClick={() => navigate({ page: "inventory" })}
+          >
+            Open coffee and equipment
+          </Action>
         ) : selected.phase !== 4 ? (
           <PageMessage>
             These controls are not available yet. Manage them in Decaid for now.
@@ -276,7 +291,7 @@ export function SettingsPage({
               </p>
             </div>
             <span className="text-[12px] text-muted-foreground">
-              {c.phase <= 4 ? "Available" : "Planned"}
+              {c.phase <= 5 ? "Available" : "Planned"}
             </span>
             <ChevronRight size={18} aria-hidden="true" />
           </button>

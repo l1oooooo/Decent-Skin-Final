@@ -1,5 +1,37 @@
 # Focus release-candidate verification
 
+## Phase 5 — recipes, coffee and equipment, November 4, 2026
+
+- `npm run check` passes TypeScript, ESLint, **42 gateway tests** and the
+  production build. The JS bundle is about 558 kB / 178 kB gzip; the existing
+  Vite 500 kB advisory remains. No dependencies or locked theme tokens changed.
+- Initial browser coverage passed all three scenarios: default fork and stage
+  reordering with unknown fields after reload; changed-ID recovery after a
+  rejected favorites write; and recipe preferences with inventory selection and
+  archival. The expanded final run passed **all seven targeted scenarios**:
+  locked Home, shared navigation, default forks/unknown fields, changed-ID
+  recovery after reload, preferences/inventory selection, inventory draft
+  interruption and create/edit/archive/restore, and profile validation/navigation/
+  shot interruption/Cancel. After the final editor-specific Cancel and lineage
+  refresh cleanup, all three affected browser scenarios passed again. This is
+  targeted phase 5 coverage, not the full suite.
+- The final Home regression passed at 1340 × 800. RGB comparison against
+  `artifacts/phase-2/home-before.png` found **zero changed pixels** in the body
+  `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)`.
+- Manual in-app review at 1340 × 800 confirms no document overflow, fixed shared
+  footer Save/Cancel, and no interactive controls below 44px. Base UI's hidden
+  1px form inputs are excluded from touch-target measurement. Preview evidence:
+  `artifacts/phase-5-preview.png`; browser captures: `artifacts/phase-5/`.
+- `node scripts/package-skin.mjs` produced a **566,004-byte** archive with 12
+  entries, root index/manifest and relative bundled assets. No fixture origin,
+  test route, source/dependency directory or environment file is packaged.
+
+The tests use loopback fixtures only. No machine discovery, device connection,
+grinder command or physical operation was performed against real hardware.
+Samsung WebView installation, keyboard/touch behavior on the actual tablet,
+background/resume and actual device acceptance remain pending. Profile limits
+and unknown-field sidecars are not claims of support for new machine features.
+
 ## Phase 4 — daily-use settings, November 4, 2026
 
 - `npm run check` passes TypeScript, ESLint, **34 gateway tests**, and the

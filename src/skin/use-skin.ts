@@ -79,8 +79,14 @@ export function useSkin(gateway: DecaidGateway) {
   const workflow = snapshot.workflow
   const rawProfile = workflow?.profile ?? null
   const matchedProfileId = useMemo(
-    () => activeProfileId(rawProfile, snapshot.profiles),
-    [rawProfile, snapshot.profiles]
+    () =>
+      activeProfileId(
+        rawProfile,
+        snapshot.profiles,
+        (workflow?.context?.extras as Record<string, unknown> | undefined)
+          ?.focusProfileId
+      ),
+    [rawProfile, snapshot.profiles, workflow?.context?.extras]
   )
   const machine = snapshot.machine
   const active = machine?.state.state === "espresso" && !snapshot.complete
@@ -200,15 +206,7 @@ export function useSkin(gateway: DecaidGateway) {
   async function selectProfile(id: string) {
     const selected = snapshot.profiles.find((p) => p.id === id)
     if (!selected) return
-    const ok = await perform(() =>
-      gateway.updateWorkflow({
-        profile: selected.profile,
-        ...(finite(selected.profile.target_weight) &&
-        selected.profile.target_weight > 0
-          ? { context: { targetYield: selected.profile.target_weight } }
-          : {}),
-      })
-    )
+    const ok = await perform(() => gateway.recipes.load(id))
     return ok
   }
   async function reloadLibrary() {
