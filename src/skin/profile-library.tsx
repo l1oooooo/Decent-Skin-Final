@@ -1,4 +1,12 @@
 import { useRef, useState } from "react"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { previewSamples } from "@/gateway/model"
 import type { ProfileTransfer } from "./use-profile-transfer"
 import { Action } from "./primitives"
@@ -6,6 +14,22 @@ import { format, type SkinSession } from "./use-skin"
 import { PageMessage, SearchField } from "./pages"
 import { Extraction } from "./trace"
 import type { Route } from "./navigation"
+
+const visibilityOptions = [
+  { label: "Visible", value: "visible" },
+  { label: "Hidden", value: "hidden" },
+]
+const sortOptions = [
+  { label: "Name", value: "name" },
+  { label: "Author", value: "author" },
+  { label: "Recently updated", value: "updated" },
+]
+const filterTriggerClass =
+  "min-h-12 w-full rounded-[var(--control-radius)] bg-card px-3 text-[16px] text-foreground duration-150 dark:bg-card dark:hover:bg-muted motion-reduce:transition-none"
+const filterContentClass =
+  "rounded-[var(--control-radius)] bg-card text-foreground ring-border duration-150 motion-reduce:animate-none"
+const filterItemClass =
+  "min-h-12 rounded-[var(--control-radius)] pl-3 pr-9 text-[14px] focus:bg-muted data-highlighted:bg-muted"
 
 export function ProfileLibrary({
   s,
@@ -122,32 +146,77 @@ export function ProfileLibrary({
           onChange={setQuery}
         />
         {assignment === null && (
-          <label className="flex flex-col gap-2 text-[13px] text-muted-foreground">
-            Visibility
-            <select
-              aria-label="Profile visibility"
+          <div className="flex w-[120px] shrink-0 flex-col gap-2 text-[13px] text-muted-foreground">
+            <label htmlFor="profile-visibility">Visibility</label>
+            <Select
+              items={visibilityOptions}
               value={view}
-              onChange={(e) => setView(e.target.value)}
-              className="h-12 rounded-lg border border-input bg-card px-3 text-[16px] text-foreground"
+              onValueChange={(value) => {
+                if (value !== null) setView(value)
+              }}
             >
-              <option value="visible">Visible</option>
-              <option value="hidden">Hidden</option>
-            </select>
-          </label>
+              <SelectTrigger
+                id="profile-visibility"
+                aria-label="Profile visibility"
+                className={filterTriggerClass}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                align="start"
+                alignItemWithTrigger={false}
+                className={filterContentClass}
+              >
+                <SelectGroup>
+                  {visibilityOptions.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      className={filterItemClass}
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         )}
-        <label className="flex flex-col gap-2 text-[13px] text-muted-foreground">
-          Sort
-          <select
-            aria-label="Sort profiles"
+        <div className="flex w-[192px] shrink-0 flex-col gap-2 text-[13px] text-muted-foreground">
+          <label htmlFor="profile-sort">Sort</label>
+          <Select
+            items={sortOptions}
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="h-12 rounded-lg border border-input bg-card px-3 text-[16px] text-foreground"
+            onValueChange={(value) => {
+              if (value !== null) setSort(value)
+            }}
           >
-            <option value="name">Name</option>
-            <option value="author">Author</option>
-            <option value="updated">Recently updated</option>
-          </select>
-        </label>
+            <SelectTrigger
+              id="profile-sort"
+              aria-label="Sort profiles"
+              className={filterTriggerClass}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent
+              align="start"
+              alignItemWithTrigger={false}
+              className={filterContentClass}
+            >
+              <SelectGroup>
+                {sortOptions.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className={filterItemClass}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <Action
           variant="outline"
           aria-pressed={favoritesOnly}

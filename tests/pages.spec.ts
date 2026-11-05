@@ -4,7 +4,7 @@ import {
   type Page,
   type APIRequestContext,
 } from "@playwright/test"
-const fixture = "http://127.0.0.1:18081"
+const fixture = process.env.FOCUS_TEST_API ?? "http://127.0.0.1:18081"
 const state = (request: APIRequestContext, data: Record<string, unknown>) =>
   request.post(`${fixture}/__test/state`, { data })
 const saved = async (request: APIRequestContext) =>
@@ -68,7 +68,7 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
     }))
   ).toEqual({ width: 1340, height: 800 })
   const smallControls = await page
-    .locator("button, select, input:not([type=file])")
+    .locator('button, select, input:not([type=file]):not([aria-hidden="true"])')
     .evaluateAll((elements) =>
       elements
         .filter((element) => {
@@ -330,7 +330,8 @@ test("details, preview, hide/restore and import/export use profile APIs without 
     page.getByRole("button", { name: "Unavailable favorite 1" })
   ).toBeVisible()
   await page.getByRole("button", { name: "Browse profiles" }).click()
-  await page.getByLabel("Profile visibility").selectOption("hidden")
+  await page.getByRole("combobox", { name: "Profile visibility" }).click()
+  await page.getByRole("option", { name: "Hidden", exact: true }).click()
   await page
     .getByRole("button", { name: "Details D-Flow / default", exact: true })
     .click()
