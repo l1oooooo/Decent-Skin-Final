@@ -392,7 +392,7 @@ export default function App() {
               <SettingsPage category={nav.route.category} navigate={navigate} />
               {["extensions", "help"].includes(nav.route.category ?? "") && (
                 <ExtensionsPage
-                  key={nav.route.category}
+                  key={`extensions:${nav.route.category}`}
                   s={s}
                   h={extensions}
                   route={nav.route}
@@ -403,7 +403,7 @@ export default function App() {
                 nav.route.category ?? ""
               ) && (
                 <AdvancedPage
-                  key={nav.route.category}
+                  key={`advanced:${nav.route.category}`}
                   category={nav.route.category!}
                   s={s}
                   h={advanced}
@@ -414,7 +414,7 @@ export default function App() {
                 nav.route.category ?? ""
               ) && (
                 <DailySettingsPage
-                  key={nav.route.category}
+                  key={`daily:${nav.route.category}`}
                   category={nav.route.category as SettingsCategory}
                   s={s}
                   editor={daily}

@@ -89,10 +89,12 @@ test("profile ID remapping recovers after a failed write and reload without resa
       failPath: "/api/v1/store/decent-skin-codex/favorites",
     },
   })
-  await page.goto("/?page=edit&profile=profile%3A1")
+  await page.goto("/?page=edit&profile=profile%3A1", {
+    waitUntil: "networkidle",
+  })
   await expect(
     page.getByLabel("Stage 1 maximum time (s)", { exact: true })
-  ).toHaveValue("7")
+  ).toHaveValue("7", { timeout: 90000 })
   await page.getByLabel("Stage 1 maximum time (s)", { exact: true }).fill("9")
   await page.getByRole("button", { name: "Save profile", exact: true }).click()
   await expect(
@@ -301,9 +303,12 @@ test("profile drafts guard navigation, validate exits and retain edits after a p
   page,
   request,
 }) => {
-  await page.goto("/?page=edit&profile=profile%3A1")
+  await page.goto("/?page=edit&profile=profile%3A1", {
+    waitUntil: "networkidle",
+  })
   await expect(page.getByLabel("Profile name", { exact: true })).toHaveValue(
-    "80's Espresso"
+    "80's Espresso",
+    { timeout: 90000 }
   )
   await page.getByLabel("Stage 1 maximum time (s)", { exact: true }).fill("-1")
   await page.getByRole("button", { name: "Save profile", exact: true }).click()

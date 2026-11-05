@@ -11,6 +11,12 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
   await page.goto("/?page=settings&category=extensions&plugin=fixture.tools", {
     waitUntil: "networkidle",
   })
+  await expect(page.getByText("Ready to brew", { exact: true })).toBeVisible({
+    timeout: 90000,
+  })
+  await page
+    .getByRole("button", { name: "Refresh extensions", exact: true })
+    .click()
   await expect(
     page.getByRole("button", { name: "Save plugin settings", exact: true })
   ).toBeVisible()

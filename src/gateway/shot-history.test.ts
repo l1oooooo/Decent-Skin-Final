@@ -94,6 +94,27 @@ function setup(
   return { gateway, calls, state }
 }
 describe("recorded shot history", () => {
+  it.each([false, true])(
+    "repeat compares workflow contents across reads (changed=%s)",
+    async (changed) => {
+      const s = setup()
+      const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+      vi.spyOn(s.gateway.shots, "get").mockImplementation(async () => {
+        if (changed)
+          s.state.workflow!.context!.coffeeName = "Changed during read"
+        else s.state.workflow = structuredClone(s.state.workflow)
+        return shot()
+      })
+      const result = s.gateway.shots.repeat("shot:a/b")
+      if (changed) {
+        await expect(result).rejects.toThrow(/changed/)
+        expect(update).not.toHaveBeenCalled()
+      } else {
+        await result
+        expect(update).toHaveBeenCalledOnce()
+      }
+    }
+  )
   it("uses canonical notes and sends only changed annotations, including explicit clears", () => {
     const record = shot()
     record.shotNotes = "Old alias"

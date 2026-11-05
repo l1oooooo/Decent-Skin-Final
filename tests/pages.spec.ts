@@ -286,10 +286,10 @@ test("unavailable, duplicate and malformed assignments remain explicit and recov
   await state(request, {
     favorites: ["missing-id", "profile:1", "profile:1", null],
   })
-  await page.goto("/")
+  await page.goto("/", { waitUntil: "networkidle" })
   await expect(
     page.getByRole("button", { name: "Unavailable favorite 1" })
-  ).toBeEnabled()
+  ).toBeEnabled({ timeout: 90000 })
   await page.getByRole("button", { name: "Unavailable favorite 1" }).click()
   await page.getByRole("button", { name: "Cancel assignment" }).click()
   await expect(page.getByRole("alert")).toContainText("Duplicate assignments")

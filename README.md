@@ -12,7 +12,7 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` creates `artifacts/decent-skin-codex-0.2.0.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. Install that archive through Decaid's skin management. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.0.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
@@ -30,11 +30,11 @@ The library supports search, sorting, visible/hidden views, details/target previ
 
 See [integration contract](docs/DECAID.md), [locked design](docs/design/FOCUS.md), and [verification and device acceptance](docs/VERIFICATION.md).
 
-The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–8 are implemented; phase 9 is device acceptance. See the verification record for fixture and device status.
+The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens, settings inventory, Decaid API ownership, and implementation phases. Phases 2–8 are implemented. Phase 9 local release checks and packaging are available; supervised tablet acceptance remains pending. Follow the [tablet acceptance checklist](docs/TABLET-ACCEPTANCE.md). See the verification record for fixture and device status.
 
 ## Tests and limits
 
-Gateway unit tests cover command gating, malformed data, workflow preservation, failed writes, sequencing, scale loss and stale samples. Browser tests build the same app against an isolated local API fixture on port 18081. The fixture does not forward requests and is not packaged in the skin.
+Gateway unit tests cover command gating, malformed data, workflow preservation, failed writes, sequencing, scale loss and stale samples. Browser tests build the same app against an isolated local API fixture on port 18081. The fixture does not forward requests and is not packaged in the skin. Run `npm run check` or `npm run build` before the browser suite: its release smoke test also reads `dist/`, serves it under a nested skin path, and blocks all API/WebSocket traffic before loading it.
 
 Desktop validation does **not** establish Samsung WebView or machine acceptance. The tablet reported gateway `http://192.168.50.13:8080`, but it was unreachable from the development computer. Installation, actual CSS viewport, background/resume, physical group-head operation, stop-at-weight and device behavior still need on-tablet verification. Do not describe this release candidate as hardware verified.
 

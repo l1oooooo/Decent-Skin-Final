@@ -118,8 +118,9 @@ export class RecipeGateway {
     const block = commandBlock(this.gateway.getSnapshot())
     if (block) throw new Error(block)
     const before = this.gateway.getSnapshot().workflow
+    const beforeKey = profileFingerprint(before)
     const p = (await this.preferences())[id]
-    if (this.gateway.getSnapshot().workflow !== before)
+    if (profileFingerprint(this.gateway.getSnapshot().workflow) !== beforeKey)
       throw new Error(
         "The recipe changed while loading preferences. Try again."
       )
@@ -396,6 +397,7 @@ export class RecipeGateway {
   }
   async assignInventory(kind: "bean-batches" | "grinders", id: string | null) {
     const before = this.gateway.getSnapshot().workflow
+    const beforeKey = profileFingerprint(before)
     let context: Workflow["context"]
     if (id === null)
       context =
@@ -428,7 +430,7 @@ export class RecipeGateway {
           grinderBurrs: record.burrs ?? null,
         }
     }
-    if (this.gateway.getSnapshot().workflow !== before)
+    if (profileFingerprint(this.gateway.getSnapshot().workflow) !== beforeKey)
       throw new Error(
         "The active recipe changed. Review it before selecting this record."
       )

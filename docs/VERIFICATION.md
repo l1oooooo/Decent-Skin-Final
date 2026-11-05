@@ -1,5 +1,77 @@
 # Focus release-candidate verification
 
+## Phase 9 — local release preparation, November 5, 2026
+
+Device status: **not accepted**. No tablet, machine, account or external service
+was contacted for this phase. The actionable device checklist and evidence
+record are in [TABLET-ACCEPTANCE.md](TABLET-ACCEPTANCE.md).
+
+- `npm run check` passes TypeScript, ESLint, **80 gateway tests**, and the static
+  production build. `npm ls --depth=0` reports a valid installed dependency tree.
+  The JS bundle remains about 653 kB / 205 kB gzip, with the existing 500 kB
+  advisory. No dependencies, Focus layout, CSS tokens or typography changed.
+- The broad navigation check caught duplicate React keys between the daily and
+  advanced Machine sections. Section-specific keys correct the reconciliation;
+  the read-only category/navigation regression now passes without duplicate
+  controls.
+- A library-load scenario exposed an object-identity race: an unchanged workflow
+  returned by periodic sync was treated as a concurrent recipe edit. Profile
+  loading, inventory assignment and shot repeat now compare a captured canonical
+  workflow value across their reads. Six unit regressions verify that equivalent
+  refreshes succeed and genuine changes (including in-place edits) still block
+  the write. Freshness, sequencing and operation guards remain unchanged.
+- The complete **40-scenario** browser sweep finished with **35 passed and
+  5 failed** (47.5 minutes). The five failures were the workflow-read race above
+  and initial-load timeouts in extension, malformed-favorite and two profile
+  editor scenarios. Startup assertions now wait for the initial gateway/editor
+  state (and explicit Refresh where appropriate); production timeouts and
+  guards are unchanged. All five failed scenarios subsequently passed in
+  focused runs. A four-case run also rechecked shot repeat and inventory/recipe
+  selection against the workflow guard fix (**4 passed**, 6.1 minutes); separate
+  favorite, ID-recovery and profile-draft runs passed in 1.4, 1.9 and 1.8 minutes.
+  Thus all 40 scenarios have passing evidence across the sweep and reruns;
+  this is not a claim of a single clean 40-test run. Evidence for reruns is in
+  `artifacts/phase-9-regressions`, `phase-9-favorites-recovery`,
+  `phase-9-profile-recovery` and `phase-9-profile-drafts`.
+- The final-build locked Focus rerun passes (**1 passed**, 1.5 minutes) after
+  waiting for initial brewing readiness and all five favorites. This extra run
+  also encountered a startup timeout before those explicit waits were added;
+  no production guard or timeout changed. At 1340 × 800, comparison against
+  `artifacts/phase-2/home-before.png` finds **zero changed RGB pixels** in the
+  body `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)`.
+  Evidence: `artifacts/phase-9-focus-comparison.json` and
+  `artifacts/fidelity/test-ready.png`.
+- Browser fixture builds are now isolated by preview port. An overlapping
+  diagnostic run initially shared the old build directory; those runs were
+  stopped and the complete suite restarted with isolated builds. Do not count
+  interrupted runs as release evidence.
+- `package:skin` rejects a development API override before building, packages
+  the static application, and runs `verify:skin`. The verifier checks ZIP
+  integrity, the root index/manifest, exact correspondence with dist, relative
+  assets, bundled font/artwork, forbidden files and fixture/local-origin
+  markers. It writes an ignored checksum and source-state report.
+- The inspected release archive contains **11 files / 12 ZIP entries** and is
+  **593,220 bytes**. SHA-256:
+  `c08e47982c6129ab044c102890f2489677d7fe479f1f0e286293e96e8183b874`.
+  Root metadata, bundled assets and relative entry paths pass inspection.
+- The production-asset browser smoke test passes under `/skins/focus/`, with
+  all non-static HTTP and every WebSocket blocked before navigation. It verifies
+  the bundled Geist face actually loaded, relative CSS, 1340 × 800 containment,
+  disabled brewing and unavailable readings without an API, plus direct Help
+  entry and reload. No fixture origin is built into that release asset test.
+- Six negative archive checks reject an extra environment file, fixture code,
+  a hard-coded local API origin, an absolute CSS asset, a missing relative asset
+  and archive bytes that differ from dist. A seventh check confirms a fixture
+  environment override fails before building and leaves the prior archive
+  unchanged. Evidence: `artifacts/phase-9-negative-checks.json` and command output.
+
+The remaining acceptance work needs the Samsung tablet and, for execution
+checks, paired equipment and a supervised operator. Installation, actual CSS
+viewport and WebView compatibility, touch/keyboard/TalkBack, suspend/resume,
+physical starts and stopping policies, saved-shot behavior and each approved
+service/plugin operation remain unverified. The documented locked Stop-label
+contrast shortfall is unchanged; no WCAG AA or hardware-performance claim is made.
+
 ## Phase 8 — extensions and support, November 4, 2026
 
 - `npm run check` passes TypeScript, ESLint, **74 gateway tests** and the

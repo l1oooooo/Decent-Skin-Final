@@ -64,6 +64,9 @@ technical decisions, and the design history for previous iterations.
 - Shared pages use query routes and the single App-owned gateway/session. Keep
   settings/favorite drafts and staged imports above page navigation. Only a newly
   observed shot start interrupts navigation; never infer one from replay data.
+- Workflow guards across asynchronous reads compare captured canonical contents,
+  not object identity: periodic sync replaces equivalent objects. Genuine edits
+  must still prevent a stale write; keep freshness and command gates in place.
 - Daily-use settings keep separate owners for workflow, Decaid preferences,
   machine settings, display/presence and Focus KV preferences. Save only the
   current section's changed fields; retain failed/newer edits and reject drafts
@@ -160,10 +163,14 @@ technical decisions, and the design history for previous iterations.
    state transitions, lifecycle, failed writes and command gating. Test network
    failures without simulation fallback. Use the locked reference evidence in
    `artifacts/focus-reference` when available; generated captures stay ignored.
-7. Before hardware release, verify Decaid skin installation, relative
+7. `npm run package:skin` rejects development API overrides, builds and verifies
+   the archive. `npm run verify:skin` checks it again and records its checksum and
+   source state in ignored `artifacts/skin-release.json`. Follow
+   `docs/TABLET-ACCEPTANCE.md`; never mark device acceptance from local checks.
+8. Before hardware release, verify Decaid skin installation, relative
    asset loading, API contracts, reconnect/resume, and behavior on the Samsung
    WebView. Hardware checks require actual device evidence and explicit scope.
-8. Review staged files for secrets and generated output. Never commit tokens,
+9. Review staged files for secrets and generated output. Never commit tokens,
    private keys, real environment files, upload credentials, dependency folders,
    or test artifacts. Never force-push, overwrite another remote, or discard
    existing work without explicit approval.

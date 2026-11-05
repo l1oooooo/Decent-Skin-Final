@@ -2,7 +2,7 @@
 
 Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Decent-Skin-Final/commit/34b4ef6), Focus skin 0.2.0. This document defines the phased scope. The implementation status below distinguishes completed software work from remaining device acceptance.
 
-## Current implementation status — November 4, 2026
+## Current implementation status — November 5, 2026
 
 | Phase | Software status | Acceptance |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ Approved November 4, 2026. Baseline: [`34b4ef6`](https://github.com/l1oooooo/Dec
 | 6 — History | Implemented: filtered/paged list, recorded curves/context, canonical annotations, recipe repeat, saved-record export and confirmed deletion | Fixture-verified; device acceptance pending |
 | 7 — Advanced operations | Implemented: measured calibration, maintenance tracking/cancellation, supported accessories, firmware/app/skin updates, backup/import and sync outcomes | Fixture-verified; device acceptance pending |
 | 8 — Extensions and support | Implemented: manifest settings, plugin lifecycle/install/update approval, separate launch/return, system preferences, diagnostics/logs, account guidance and reviewed feedback | Fixture-verified; device acceptance pending |
-| 9 — Tablet acceptance | Pending | No hardware operations performed in phases 2–8 |
+| 9 — Tablet acceptance and release | Local checks completed, release packaging verified, and [tablet checklist](TABLET-ACCEPTANCE.md) prepared | Device acceptance pending; no hardware operations performed |
 
 The library now uses the shared full-page layout. Daily-use Settings categories are operational where the installed API and returned capabilities support them. Extensions and System and help are available with explicit native-only guidance. Profile content editing and coffee/equipment inventory are available. Favorite, recipe, inventory, history annotation and settings drafts and staged profile imports are held above navigation; shot interruption retains them. A completed reload does not retain unsaved drafts. Profile-save recovery records persist until outstanding reference updates finish. See [integration details](DECAID.md) and [verification evidence](VERIFICATION.md).
 

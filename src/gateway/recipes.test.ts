@@ -108,6 +108,47 @@ function setup() {
 }
 
 describe("profile and inventory ownership", () => {
+  for (const operation of ["load", "assign"] as const)
+    it.each([false, true])(
+      `${operation} compares workflow contents across reads (changed=%s)`,
+      async (changed) => {
+        const s = setup()
+        const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+        const refresh = () => {
+          if (changed)
+            s.state.workflow!.context!.coffeeName = "Changed during read"
+          else s.state.workflow = structuredClone(s.state.workflow)
+        }
+        if (operation === "load")
+          vi.spyOn(s.gateway.recipes, "preferences").mockImplementation(
+            async () => {
+              refresh()
+              return {}
+            }
+          )
+        else
+          vi.spyOn(s.gateway, "request").mockImplementation(async () => {
+            refresh()
+            return { id: "equipment", model: "Grinder" }
+          })
+        const result =
+          operation === "load"
+            ? s.gateway.recipes.load("old")
+            : s.gateway.recipes.assignInventory("grinders", "equipment")
+        if (changed) {
+          await expect(result).rejects.toThrow(/changed/)
+          expect(update).not.toHaveBeenCalled()
+        } else {
+          await result
+          expect(update).toHaveBeenCalledOnce()
+          expect(update).toHaveBeenCalledWith(
+            expect.objectContaining({
+              context: expect.objectContaining({ coffeeName: "Coffee" }),
+            })
+          )
+        }
+      }
+    )
   it("preserves unknown profile, stage, exit and limiter keys through the metadata sidecar", () => {
     const p = newProfile()
     p.plugin = { v: 1 }

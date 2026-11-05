@@ -1,5 +1,5 @@
 import type { DecaidGateway } from "./client"
-import { finite, object, parseProfile } from "./model"
+import { finite, object, parseProfile, profileFingerprint } from "./model"
 import { validateProfile } from "./profile-data"
 import type { Profile, ShotSample, Workflow } from "./types"
 
@@ -252,9 +252,9 @@ export class ShotHistoryGateway {
     })
   }
   async repeat(id: string) {
-    const before = this.gateway.getSnapshot().workflow
+    const beforeKey = profileFingerprint(this.gateway.getSnapshot().workflow)
     const patch = repeatPatch(await this.get(id))
-    if (this.gateway.getSnapshot().workflow !== before)
+    if (profileFingerprint(this.gateway.getSnapshot().workflow) !== beforeKey)
       throw new Error(
         "The current recipe changed. Review it before repeating this shot."
       )

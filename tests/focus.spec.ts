@@ -10,11 +10,17 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   page,
   request,
 }) => {
+  test.setTimeout(240000)
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/", { waitUntil: "networkidle" })
   const brew = page.getByRole("button", { name: "Brew espresso", exact: true })
-  await expect(brew).toBeEnabled()
+  await expect(brew).toBeEnabled({ timeout: 90000 })
+  await expect(
+    page
+      .getByRole("group", { name: "Favorite profiles" })
+      .getByRole("button", { name: /^Select / })
+  ).toHaveCount(5, { timeout: 90000 })
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])

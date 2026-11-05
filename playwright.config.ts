@@ -4,6 +4,7 @@ import {
   previewPort,
 } from "./tests/fixture-origin.js"
 import { defineConfig } from "@playwright/test"
+const fixtureBuild = `artifacts/test-build-${previewPort}`
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
@@ -24,7 +25,7 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: `VITE_DECAID_URL=${fixtureOrigin} npx vite build --outDir artifacts/test-build && npx vite preview --outDir artifacts/test-build --host 127.0.0.1 --port ${previewPort} --strictPort`,
+      command: `VITE_DECAID_URL=${fixtureOrigin} npx vite build --outDir ${fixtureBuild} && npx vite preview --outDir ${fixtureBuild} --host 127.0.0.1 --port ${previewPort} --strictPort`,
       url: `http://127.0.0.1:${previewPort}`,
       reuseExistingServer: false,
     },

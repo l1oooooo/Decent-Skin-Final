@@ -13,7 +13,8 @@
     "test": "vitest run src/gateway",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "package:skin": "npm run build && node scripts/package-skin.mjs"
+    "package:skin": "node scripts/release-skin.mjs",
+    "verify:skin": "node scripts/verify-skin.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
