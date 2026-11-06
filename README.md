@@ -12,11 +12,15 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.3.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.4.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
 ## Install and update from GitHub
+
+After testing a release on the tablet, post feedback using the
+[release feedback procedure](docs/RELEASE-FEEDBACK.md). It covers clarification,
+fixes, local validation and publishing the next update.
 
 In native Decaid skin management, choose **Install from GitHub Release**.
 Use repository `l1oooooo/Decent-Skin-Final` and asset name `decent-focus.zip`,
@@ -24,7 +28,7 @@ then select **Decent Focus**. Future releases retain that asset name; use
 Decaid’s skin update function to install them. Source-code archives and Git
 pushes alone are not compiled skin updates.
 
-Version 0.2.3 uses the physical group-head controller for all daily starts and
+Version 0.2.4 uses the physical group-head controller for all daily starts and
 stops. The footer contains Steam, Hot water and Flush settings, with no
 right-side group-head guidance. Utility cards retain physical-control instructions. No on-screen brew/utility Start or Stop and no Escape stop
 shortcut remain. Advanced maintenance procedures retain their explicit controls.
@@ -37,14 +41,22 @@ viewport** to read the actual layout dimensions and device pixel ratio. These
 are WebView CSS measurements, not the panel's advertised resolution.
 
 Loading a profile applies its temperature and weight target plus any saved
-Focus recipe preferences. A profile with no saved dose shows **Not set**; a
-missing/zero weight target shows **Off**. Neither value is inherited from the
-previous profile. The ratio stays unavailable until both dose and yield exist.
-Home adjustments affect the current workflow; save profile-specific defaults
-through the profile's Recipe preferences screen.
+Focus recipe preferences. Dose uses the saved Focus preference, then profile
+metadata, then the chosen **18g default**, labeled **Coffee · default**. The
+executable profile format has no dose field, so the fallback is not a profile
+author's recommendation. A missing/zero weight target shows **Off**. Neither
+value is inherited from the previous profile. Initial display does not write
+to Decaid; selecting a profile or editing its recipe applies the fallback.
+Home dose, yield, temperature and grind changes—including +/−—save per profile
+and survive switching profiles and reloading. They remain separate from stage
+definitions. If the workflow changes but preference storage fails, the error
+explains the partial save; retry explicitly before switching profiles.
 
-Tap a dose, yield or temperature value to type it directly, then **Save** or
-**Cancel**. Values are validated before saving; a failed save keeps the draft.
+Tap a dose, yield, temperature or numeric grind value to open the built-in
+keypad, then **Save** or **Cancel**. Digits, decimal point, Backspace and Clear
+work without the tablet's system keyboard; physical keyboard input also works.
+Values are validated before saving; a failed save keeps the draft. Named grinder
+settings still use text entry.
 The header shows the configured steam temperature beside the live brew
 reading; tap it to open Steam settings (quick target range 135–160 °C).
 The scale status uses text only. **Edit profile** beside the Home title opens

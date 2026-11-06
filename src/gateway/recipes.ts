@@ -6,6 +6,7 @@ import {
   normalizeFavorites,
   temperaturePatch,
   commandBlock,
+  activeProfileId,
 } from "./model"
 import {
   executableKey,
@@ -21,6 +22,23 @@ export interface RecipePreference {
   grinderSetting?: string
   temperature?: number
   [key: string]: unknown
+}
+export const defaultDoseWeight = 18
+export function recipeDose(
+  preference: RecipePreference | undefined,
+  record: ProfileRecord | undefined
+) {
+  if (preference?.targetDoseWeight !== undefined)
+    return { value: preference.targetDoseWeight, source: "profile" as const }
+  const saved = record?.metadata?.targetDoseWeight
+  if (
+    typeof saved === "number" &&
+    Number.isFinite(saved) &&
+    saved > 0 &&
+    saved <= 100
+  )
+    return { value: saved, source: "profile" as const }
+  return { value: defaultDoseWeight, source: "default" as const }
 }
 export interface ProfileSave {
   operation: string
@@ -90,8 +108,12 @@ export class RecipeGateway {
     }
   }
   async preferences(): Promise<Record<string, RecipePreference>> {
-    const value = await this.readStore("recipes")
-    if (value === null) return {}
+    const value = await this.gateway.readStored("recipes")
+    if (value === undefined) return {}
+    if (value === null || Array.isArray(value) || typeof value !== "object")
+      throw new Error(
+        "Stored recipe preferences are invalid. Nothing was saved."
+      )
     const map = object(value)
     Object.values(map).forEach(validatePreference)
     return map as Record<string, RecipePreference>
@@ -157,6 +179,72 @@ export class RecipeGateway {
       })
     })
   }
+  async adjust(
+    id: string | null,
+    key: "targetDoseWeight" | "targetYield" | "temperature" | "grinderSetting",
+    value: number | string
+  ) {
+    const snapshot = this.gateway.getSnapshot()
+    const before = snapshot.workflow
+    const record = snapshot.profiles.find((p) => p.id === id)
+    const matched = activeProfileId(
+      before?.profile ?? null,
+      snapshot.profiles,
+      before?.context?.extras && object(before.context.extras).focusProfileId
+    )
+    if (!id || !record || !before?.profile || matched !== id)
+      throw new Error(
+        "Load a profile from the library before saving profile adjustments."
+      )
+    const patch = validatePreference({ [key]: value })
+    const recordKey = profileFingerprint(record)
+    await this.gateway.workflowOperation(async (verify, update) => {
+      const map = await this.preferences()
+      verify()
+      if (
+        profileFingerprint(
+          this.gateway.getSnapshot().profiles.find((p) => p.id === id)
+        ) !== recordKey
+      )
+        throw new Error(
+          "The stored profile changed. Reload it before saving adjustments."
+        )
+      const dose = recipeDose(map[id], record)
+      const context: Workflow["context"] = {
+        ...before.context,
+        targetDoseWeight: before.context?.targetDoseWeight ?? dose.value,
+        extras: {
+          ...object(before.context?.extras ?? {}),
+          focusProfileId: id,
+          ...(key === "targetDoseWeight"
+            ? { focusDoseSource: "current" }
+            : before.context?.targetDoseWeight == null
+              ? { focusDoseSource: dose.source }
+              : {}),
+        },
+        ...(key !== "temperature" ? { [key]: value } : {}),
+      }
+      await update({
+        ...(key === "temperature"
+          ? temperaturePatch(before, Number(value))
+          : {}),
+        context,
+      })
+      try {
+        verify()
+        await this.gateway.request(store + "recipes", "POST", {
+          ...map,
+          [id]: { ...map[id], ...patch },
+        })
+        verify()
+      } catch (error) {
+        throw new Error(
+          `Current recipe updated, but saving this profile adjustment could not be confirmed. Retry explicitly before switching profiles. ${error instanceof Error ? error.message : ""}`,
+          { cause: error }
+        )
+      }
+    })
+  }
   async load(id: string) {
     const record = this.gateway.getSnapshot().profiles.find((p) => p.id === id)
     if (
@@ -176,6 +264,7 @@ export class RecipeGateway {
     const before = this.gateway.getSnapshot().workflow
     const beforeKey = profileFingerprint(before)
     const p = (await this.preferences())[id]
+    const dose = recipeDose(p, record)
     if (profileFingerprint(this.gateway.getSnapshot().workflow) !== beforeKey)
       throw new Error(
         "The recipe changed while loading preferences. Try again."
@@ -189,13 +278,12 @@ export class RecipeGateway {
       extras: {
         ...((before?.context?.extras as Record<string, unknown>) ?? {}),
         focusProfileId: id,
-        focusDoseSource:
-          p?.targetDoseWeight === undefined ? "unset" : "profile",
+        focusDoseSource: dose.source,
       },
     }
     // Zero disables the workflow weight target; never inherit another profile's yield.
     context.targetYield = weightTarget ?? 0
-    context.targetDoseWeight = p?.targetDoseWeight ?? null
+    context.targetDoseWeight = dose.value
     for (const key of [
       "targetDoseWeight",
       "targetYield",

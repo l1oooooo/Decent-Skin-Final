@@ -92,9 +92,11 @@ export default function FocusScreen({
                   [
                     s.doseSource === "profile"
                       ? "Coffee · saved"
-                      : s.doseSource === "unset"
-                        ? "No saved dose"
-                        : "Coffee · current",
+                      : s.doseSource === "default"
+                        ? "Coffee · default"
+                        : s.doseSource === "unset"
+                          ? "No saved dose"
+                          : "Coffee · current",
                     format(s.dose),
                     Number.isFinite(s.dose) ? "g" : "",
                   ],

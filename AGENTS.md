@@ -87,9 +87,15 @@ technical decisions, and the design history for previous iterations.
   Keep utility adjustments and separately authorized advanced procedures.
 - Profile selection applies that profile's temperature and weight target, then
   its explicit Focus recipe overrides. A missing/zero weight target clears the
-  previous target to zero (off); absent saved dose clears targetDoseWeight with
-  null and displays Not set. Never invent a dose from a title or carry it from
-  another profile. Manual Home dose edits remain current workflow adjustments.
+  previous target to zero (off). Dose precedence is Focus preference, profile
+  metadata, then the user-approved 18g fallback (labeled default). Never infer
+  dose from a title or carry it from another profile. Home dose/yield/grind/
+  temperature edits also patch the selected profile’s Focus KV preference;
+  preserve other fields and profiles. Keep pending through both workflow and KV
+  writes, report partial saves, and never retry automatically. The fallback is
+  display-only on initial read; explicit profile selection or recipe edits apply
+  it to workflow context. Numeric dialogs use a built-in keypad, with no system
+  keyboard; named grind settings retain text entry.
 - Device discovery is explicit and uses `connect=false`. Grinder setting/RPM
   commands require the current device's writable descriptors; recipe Send is
   opt-in and one-shot. Presence heartbeats require real activity, never a timer.
@@ -166,6 +172,10 @@ technical decisions, and the design history for previous iterations.
   Avoid dependencies without a concrete need and verified static packaging.
 
 ## Workflow and validation
+
+For post-release tablet feedback, follow the approved
+[release feedback procedure](docs/RELEASE-FEEDBACK.md): review and clarify,
+fix, validate, commit, push, publish and verify the downloadable asset.
 
 1. Inspect relevant code, Git state, and existing documentation. Preserve
    unrelated work; explain significant architectural changes before proceeding.

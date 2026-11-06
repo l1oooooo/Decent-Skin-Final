@@ -271,6 +271,16 @@ test("empty workflows can choose their first profile and named grind settings re
   await expect(
     page.getByRole("button", { name: "Edit grinder setting" })
   ).toHaveText("Fine")
+  const rail = page.getByRole("group", { name: "Favorite profiles" })
+  await rail.getByRole("button").nth(1).click()
+  await rail.getByRole("button").nth(0).click()
+  await expect(
+    page.getByRole("button", { name: "Edit grinder setting" })
+  ).toHaveText("Fine")
+  const saved = await (
+    await request.get(`${fixture}/api/v1/store/decent-skin-codex/recipes`)
+  ).json()
+  expect(saved["profile:0"].grinderSetting).toBe("Fine")
 })
 
 test("mid-shot attachment uses live stages, reduced motion works, long labels cannot widen the canvas", async ({

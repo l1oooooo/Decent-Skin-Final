@@ -277,6 +277,7 @@ const server = createServer(async (req, res) => {
     if (data.profileTitle && workflow.profile)
       workflow.profile.title = data.profileTitle
     if (data.emptyProfile) workflow.profile = null
+    if (data.unsetDose) delete workflow.context.targetDoseWeight
     if (data.grinderSetting)
       workflow.context.grinderSetting = data.grinderSetting
     emit(data.reason)

@@ -12,9 +12,9 @@ import {
   connected,
   finite,
   previewSamples,
-  temperaturePatch,
 } from "@/gateway/model"
-import type { MachineCommand, Profile, Workflow } from "@/gateway/types"
+import { recipeDose } from "@/gateway/recipes"
+import type { MachineCommand, Profile } from "@/gateway/types"
 
 export const format = (value: number | null | undefined, digits = 1) =>
   value != null && Number.isFinite(value) ? value.toFixed(digits) : "—"
@@ -101,7 +101,13 @@ export function useSkin(gateway: DecaidGateway) {
     !block &&
     !!rawProfile &&
     !(snapshot.settings?.blockOnNoScale && !snapshot.scaleConnected)
-  const dose = workflow?.context?.targetDoseWeight ?? NaN
+  const fallbackDose = recipeDose(
+    undefined,
+    snapshot.profiles.find((p) => p.id === matchedProfileId)
+  )
+  const dose = rawProfile
+    ? (workflow?.context?.targetDoseWeight ?? fallbackDose.value)
+    : NaN
   const yieldTarget = workflow?.context?.targetYield ?? NaN
   const temperature = rawProfile?.steps[0]?.temperature ?? NaN
   const grindText = workflow?.context?.grinderSetting ?? ""
@@ -186,26 +192,21 @@ export function useSkin(gateway: DecaidGateway) {
               : operation || "Ready to brew"
   async function change(key: string, value: number) {
     if (!workflow || !finite(value)) return false
-    return perform(() => {
-      const patch: Partial<Workflow> =
-        key === "temperature"
-          ? temperaturePatch(workflow, value)
-          : {
-              context: {
-                ...(key === "dose"
-                  ? { extras: { focusDoseSource: "current" } }
-                  : {}),
-                [key === "dose"
-                  ? "targetDoseWeight"
-                  : key === "yield"
-                    ? "targetYield"
-                    : "grinderSetting"]:
-                  key === "grind" ? value.toFixed(1) : value,
-              },
-            }
-      return gateway.updateWorkflow(patch)
-    })
+    return perform(() =>
+      gateway.recipes.adjust(
+        matchedProfileId,
+        key === "dose"
+          ? "targetDoseWeight"
+          : key === "yield"
+            ? "targetYield"
+            : key === "temperature"
+              ? "temperature"
+              : "grinderSetting",
+        key === "grind" ? value.toFixed(1) : value
+      )
+    )
   }
+
   async function selectProfile(id: string) {
     const selected = snapshot.profiles.find((p) => p.id === id)
     if (!selected) return
@@ -274,10 +275,10 @@ export function useSkin(gateway: DecaidGateway) {
     dose,
     doseSource: !finite(dose)
       ? "unset"
-      : (workflow?.context?.extras as Record<string, unknown> | undefined)
-            ?.focusDoseSource === "profile"
-        ? "profile"
-        : "current",
+      : workflow?.context?.targetDoseWeight == null
+        ? fallbackDose.source
+        : ((workflow.context.extras as Record<string, unknown> | undefined)
+            ?.focusDoseSource ?? "current"),
     yieldTarget,
     temperature,
     grind,
@@ -318,7 +319,7 @@ export function useSkin(gateway: DecaidGateway) {
     perform,
     setGrindText: (value: string) =>
       perform(() =>
-        gateway.updateWorkflow({ context: { grinderSetting: value } })
+        gateway.recipes.adjust(matchedProfileId, "grinderSetting", value)
       ),
     reset: gateway.dismissShot,
     reconnect: () => gateway.sync(),

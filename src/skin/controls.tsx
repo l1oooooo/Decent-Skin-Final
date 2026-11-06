@@ -62,6 +62,7 @@ export function Stepper({
   horizontal = false,
   text,
   onEdit,
+  saveError,
 }: {
   label: string
   value: number
@@ -74,6 +75,7 @@ export function Stepper({
   large?: boolean
   horizontal?: boolean
   text?: string
+  saveError?: string
   onEdit?: () => void
 }) {
   const [editing, setEditing] = useState(false)
@@ -155,7 +157,7 @@ export function Stepper({
       </div>
       {editing && (
         <NumberEditor
-          {...{ label, value, unit, min, max, disabled, onChange }}
+          {...{ label, value, unit, min, max, disabled, onChange, saveError }}
           integer={unit === "s"}
           onClose={() => setEditing(false)}
         />
@@ -208,6 +210,7 @@ export function RecipeControls({
           key={`${s.selectedId}-${key}`}
           {...{ label, value, unit, step, min, max, large }}
           disabled={s.locked}
+          saveError={s.notice}
           text={
             key === "grind"
               ? s.grindText
@@ -217,7 +220,11 @@ export function RecipeControls({
                   ? "Off"
                   : undefined
           }
-          onEdit={key === "grind" ? () => s.setModal("grind") : undefined}
+          onEdit={
+            key === "grind" && !!s.grindText && !Number.isFinite(s.grind)
+              ? () => s.setModal("grind")
+              : undefined
+          }
           onChange={(value) =>
             s.change(key, key === "temperature" ? s.celsius(value) : value)
           }

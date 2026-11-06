@@ -10,7 +10,14 @@ test("first install reads defaults without writes and preserves intentionally em
   page,
   request,
 }) => {
+  await request.post(`${fixture}/__test/state`, { data: { unsetDose: true } })
   await page.goto("/", { waitUntil: "networkidle" })
+  await expect(page.getByLabel("Dose value", { exact: true })).toHaveText(
+    "18.0g"
+  )
+  await expect(
+    page.getByText("Coffee · default", { exact: true })
+  ).toBeVisible()
   await expect(
     page
       .getByRole("group", { name: "Favorite profiles" })
@@ -179,7 +186,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       browse!.y
     )
     await page.screenshot({
-      path: `artifacts/tablet-0.2.3/ready-${viewport.width}x${viewport.height}.png`,
+      path: `artifacts/tablet-0.2.4/ready-${viewport.width}x${viewport.height}.png`,
     })
   }
   await expect(
@@ -213,7 +220,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.3/heating-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.4/heating-800x480.png" })
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 12 },
   })
@@ -234,7 +241,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.3/brewing-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.4/brewing-800x480.png" })
   await page.keyboard.press("Escape")
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
@@ -249,11 +256,11 @@ test("landscape Home fits every panel and touch target without scrolling", async
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
   await page.screenshot({
-    path: "artifacts/tablet-0.2.3/completed-800x480.png",
+    path: "artifacts/tablet-0.2.4/completed-800x480.png",
   })
 })
 
-test("profile selection uses its own temperature and yield; missing dose stays unset", async ({
+test("profile selection uses its own temperature and yield; missing dose uses the chosen default", async ({
   page,
   request,
 }) => {
@@ -280,9 +287,9 @@ test("profile selection uses its own temperature and yield; missing dose stays u
     timeout: 90000,
   })
   for (const [index, title, dose, yieldValue, temp, ratio] of [
-    [1, profiles[1].profile.title, "Not set", "36.0g", "82.0°C", "—"],
+    [1, profiles[1].profile.title, "18.0g", "36.0g", "82.0°C", "1:2.0"],
     [0, profiles[0].profile.title, "18.0g", "50.0g", "88.0°C", "1:2.8"],
-    [2, profiles[2].profile.title, "Not set", "Off", "94.0°C", "—"],
+    [2, profiles[2].profile.title, "18.0g", "Off", "94.0°C", "—"],
   ] as const) {
     await rail.getByRole("button").nth(index).click()
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(title)
@@ -299,19 +306,21 @@ test("profile selection uses its own temperature and yield; missing dose stays u
       page.getByLabel("Recipe summary").locator("p").nth(1)
     ).toHaveText(ratio)
   }
-  await expect(page.getByText("No saved dose", { exact: true })).toBeVisible()
+  await expect(
+    page.getByText("Coffee · default", { exact: true })
+  ).toBeVisible()
   const workflow = await (
     await request.get(`${fixture}/api/v1/workflow`)
   ).json()
   expect(workflow.context.targetYield).toBe(0)
-  expect(workflow.context.targetDoseWeight).toBeUndefined()
+  expect(workflow.context.targetDoseWeight).toBe(18)
   expect(workflow.context.coffeeName).toBe("Fixture coffee")
   const writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(
     writes.every((write: { path: string }) => write.path === "/api/v1/workflow")
   ).toBe(true)
   expect(writes).toHaveLength(3)
-  expect(writes[2].body.context.targetDoseWeight).toBeNull()
+  expect(writes[2].body.context.targetDoseWeight).toBe(18)
 })
 
 test("Help reports the current CSS viewport and updates after resize", async ({
@@ -328,5 +337,5 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.2.3", { exact: true })).toBeVisible()
+  await expect(page.getByText("0.2.4", { exact: true })).toBeVisible()
 })

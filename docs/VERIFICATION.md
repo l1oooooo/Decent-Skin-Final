@@ -1,12 +1,68 @@
 # Focus release-candidate verification
 
+## 0.2.4 — built-in keypad, persistent adjustments and 18g fallback
+
+Device status: **update requires tablet acceptance**. The operator reported
+installing 0.2.3 and requested a built-in numeric keypad, per-profile Home
+adjustments that survive switching, and a dose fallback. They explicitly chose
+**18g**. This cycle used source inspection and isolated fixtures only.
+
+- Numeric dialogs now contain digits, a decimal point, Backspace and Clear,
+  plus Save/Cancel and range validation. The read-only display uses
+  `inputMode="none"`; physical keyboard input is also handled. Integer utility
+  durations disable the decimal key. Numeric grind uses the same keypad;
+  named grind values retain their text editor. Failed drafts stay open with
+  the specific save error.
+- Home dose, yield, temperature and grind edits (including +/−) patch the
+  selected profile's Focus KV preferences as well as the current workflow.
+  Other fields/profiles, workflow context and relative temperature offsets
+  remain intact. Pending covers both writes; canonical workflow/profile guards
+  reject stale reads. Workflow failure prevents preference writes; a preference
+  failure after workflow success reports a partial save with explicit retry.
+  No executable profile save, hardware command or automatic retry is added.
+- Dose precedence on profile selection is Focus preference, profile metadata,
+  then **18g**, labeled **Coffee · default**. The installed executable profile
+  model has no dose field; the fallback is not an author's recommendation.
+  Initial missing-dose display does not write; an explicit profile selection
+  or recipe edit applies the fallback to context. Missing yield still means Off.
+- The approved [release feedback procedure](RELEASE-FEEDBACK.md) is included
+  and linked from README and AGENTS.md.
+- `npm run check`: TypeScript, ESLint, **108 gateway tests** and production
+  build pass. The 15 added tests cover per-profile patching, temperature offsets,
+  partial failures, invalid saved data, pending/identity/workflow/state guards,
+  explicit retry and dose precedence. No dependencies were added; the existing
+  bundle-size advisory remains.
+- **12 focused browser scenarios passed**: all five release-feedback flows,
+  all five tablet regressions, and two Home/named-grind checks. This is focused
+  coverage, not a full-suite rerun. Profile edits survived switching and reload;
+  partial-save retry, first-install read-only defaults, keypad validation,
+  correction, keyboard input, focus return and integer utilities passed.
+  Layout checks passed at 1340 × 800, 1340 × 700, 1280 × 720, 1024 × 600,
+  893 × 533 and 800 × 480 with at least 44px touch controls. Desktop/compact
+  Home and compact keypad screenshots were visually reviewed.
+- Evidence: `artifacts/check-0.2.4-final.log`, `artifacts/lint-0.2.4-final.log`,
+  `artifacts/e2e-0.2.4.log` (10 passed, 11.1 minutes),
+  `artifacts/e2e-0.2.4-focus.log` (2 passed, 3.0 minutes), and
+  `artifacts/tablet-0.2.4`. Runs used the existing local 240-second test /
+  90-second assertion configuration on separate fixture/preview ports. No
+  browser failures occurred; production timeouts and freshness gates are unchanged.
+- `npm run package:skin` and `npm run verify:skin` pass: **11 files / 595,896
+  bytes**, SHA-256
+  `04ae2e4f422d724a8c169def0eff89dfe84fe6848f70a0f1fe84b21772bb015f`.
+  Root metadata, relative assets, bundled fonts/artwork and fixture exclusion
+  are verified. The stable release asset remains `decent-focus.zip`.
+
+See the [0.2.4 tablet recheck](TABLET-ACCEPTANCE.md). Android keyboard behavior,
+installed-Decaid persistence and actual hardware acceptance remain pending.
+
 ## 0.2.3 — release feedback: header, number entry and Streamline copy
 
 Device status: **update requires tablet acceptance**. The operator reported
 installing 0.2.2 and requested the changes below. This iteration used source
 inspection and isolated fixtures only; it did not read or modify the tablet.
-The standard feedback procedure document is deferred until the operator reviews
-this first run.
+The operator approved this first feedback cycle on November 6, 2026. The
+[standard procedure](RELEASE-FEEDBACK.md) now records the agreed workflow; this
+process approval does not change the pending device-acceptance status.
 
 - Removed the right-side physical-control instructions from Home and shared
   footers. Utility cards/navigation prompts retain guidance; daily execution

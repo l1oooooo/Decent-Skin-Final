@@ -15,6 +15,7 @@ import {
   parseProfileRecord,
   normalizeFavorites,
   parseWorkflow,
+  profileFingerprint,
   pouring,
 } from "./model"
 import type {
@@ -895,6 +896,34 @@ export class DecaidGateway {
     } finally {
       this.emit({ pending: false })
     }
+  }
+  async workflowOperation(
+    action: (
+      verify: () => void,
+      update: (patch: Partial<Workflow>) => Promise<void>
+    ) => Promise<void>
+  ) {
+    return this.settingsOperation(async (verifyConnection) => {
+      let expected = profileFingerprint(this.getSnapshot().workflow)
+      const verify = () => {
+        verifyConnection()
+        if (profileFingerprint(this.getSnapshot().workflow) !== expected)
+          throw new Error(
+            "The current recipe changed. Review it before saving again."
+          )
+      }
+      const update = async (patch: Partial<Workflow>) => {
+        verify()
+        this.workflowRevision++
+        const workflow = parseWorkflow(
+          await this.request("/api/v1/workflow", "PUT", patch)
+        )
+        this.workflowRevision++
+        this.emit({ workflow, complete: false })
+        expected = profileFingerprint(workflow)
+      }
+      await action(verify, update)
+    }, true)
   }
   async command(state: MachineCommand) {
     if (state === "idle") {

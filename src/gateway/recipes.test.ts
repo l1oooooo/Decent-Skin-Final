@@ -8,7 +8,7 @@ import {
   executableKey,
 } from "./profile-data"
 import { parseProfileRecord } from "./model"
-import { validateInventoryPatch } from "./recipes"
+import { recipeDose, validateInventoryPatch } from "./recipes"
 import type { ProfileRecord, GatewaySnapshot } from "./types"
 
 function setup() {
@@ -56,6 +56,13 @@ function setup() {
         }
         library.splice(0, library.length, record)
         result = record
+      } else if (path === "/api/v1/workflow" && method === "PUT") {
+        state.workflow = {
+          ...state.workflow,
+          ...body,
+          context: { ...state.workflow?.context, ...body.context },
+        }
+        result = state.workflow
       } else result = {}
       return new Response(JSON.stringify(result))
     }
@@ -294,10 +301,10 @@ describe("profile and inventory ownership", () => {
             steps: [expect.objectContaining({ temperature: 82 })],
           }),
           context: expect.objectContaining({
-            targetDoseWeight: null,
+            targetDoseWeight: 18,
             targetYield: 0,
             extras: expect.objectContaining({
-              focusDoseSource: "unset",
+              focusDoseSource: "default",
               focusProfileId: "old",
               keep: 1,
             }),
@@ -396,5 +403,198 @@ describe("Streamline Home adjustment copy", () => {
     await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
       "requested profile changed"
     )
+  })
+})
+
+describe("persistent Home adjustments", () => {
+  it("patches only the changed preference and retains context, other profiles and stage offsets", async () => {
+    const s = setup()
+    s.kv.recipes = {
+      old: { targetDoseWeight: 18, extension: "keep" },
+      other: { targetDoseWeight: 17 },
+    }
+    const profile = structuredClone(s.source.profile)
+    const originalTemperature = profile.steps[0].temperature
+    s.source.profile.steps.push({
+      ...profile.steps[0],
+      temperature: originalTemperature - 2,
+    })
+    await s.gateway.recipes.adjust("old", "targetDoseWeight", 19.3)
+    await s.gateway.recipes.adjust("old", "targetYield", 39)
+    await s.gateway.recipes.adjust("old", "temperature", 91)
+    await s.gateway.recipes.adjust("old", "grinderSetting", "Fine")
+    expect(s.kv.recipes).toEqual({
+      old: {
+        targetDoseWeight: 19.3,
+        targetYield: 39,
+        temperature: 91,
+        grinderSetting: "Fine",
+        extension: "keep",
+      },
+      other: { targetDoseWeight: 17 },
+    })
+    expect(s.state.workflow!.context).toMatchObject({
+      coffeeName: "Coffee",
+      beanBatchId: "batch",
+      targetDoseWeight: 19.3,
+      targetYield: 39,
+      grinderSetting: "Fine",
+      extras: { keep: 1, focusProfileId: "old" },
+    })
+    expect(
+      s.state.workflow!.profile!.steps.map((step) => step.temperature)
+    ).toEqual([91, 89])
+    expect(s.source.profile.steps[0].temperature).toBe(originalTemperature)
+    expect(
+      s.calls
+        .filter((c) => c.method !== "GET")
+        .every((c) =>
+          [
+            "/api/v1/workflow",
+            "/api/v1/store/decent-skin-codex/recipes",
+          ].includes(c.path)
+        )
+    ).toBe(true)
+    const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+    await s.gateway.recipes.load("old")
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          targetDoseWeight: 19.3,
+          targetYield: 39,
+          grinderSetting: "Fine",
+        }),
+        profile: expect.objectContaining({
+          steps: [
+            expect.objectContaining({ temperature: 91 }),
+            expect.objectContaining({ temperature: 89 }),
+          ],
+        }),
+      })
+    )
+  })
+  it("reports a partial save and permits only an explicit retry", async () => {
+    const s = setup()
+    s.fail("/api/v1/store/decent-skin-codex/recipes")
+    await expect(
+      s.gateway.recipes.adjust("old", "targetDoseWeight", 19)
+    ).rejects.toThrow(
+      "Current recipe updated, but saving this profile adjustment could not be confirmed"
+    )
+    expect(s.state.workflow!.context!.targetDoseWeight).toBe(19)
+    expect(s.state.workflow!.context!.extras).toMatchObject({
+      focusDoseSource: "current",
+    })
+    expect(s.kv.recipes).toEqual({
+      old: { targetDoseWeight: 18, extension: "keep" },
+    })
+    expect(s.calls.filter((c) => c.method === "POST")).toHaveLength(1)
+    expect(s.gateway.getSnapshot().pending).toBe(false)
+    s.fail("")
+    await s.gateway.recipes.adjust("old", "targetDoseWeight", 19)
+    expect(s.kv.recipes).toEqual({
+      old: { targetDoseWeight: 19, extension: "keep" },
+    })
+  })
+  it("does not save preferences after a rejected workflow write", async () => {
+    const s = setup()
+    s.fail("/api/v1/workflow")
+    await expect(
+      s.gateway.recipes.adjust("old", "targetYield", 40)
+    ).rejects.toThrow("rejected")
+    expect(s.calls.filter((c) => c.method === "POST")).toEqual([])
+  })
+  it.each([null, [], "invalid", { old: { temperature: "hot" } }])(
+    "rejects corrupt saved preferences without writes (%j)",
+    async (value) => {
+      const s = setup()
+      s.kv.recipes = value
+      s.kv["decent-skin-codex"] = ["recipes"]
+      await expect(
+        s.gateway.recipes.adjust("old", "targetYield", 40)
+      ).rejects.toThrow()
+      expect(s.calls.every((c) => c.method === "GET")).toBe(true)
+    }
+  )
+  it.each(["equivalent", "workflow", "profile", "offline", "brewing"])(
+    "guards asynchronous reads against %s changes",
+    async (change) => {
+      const s = setup()
+      vi.spyOn(s.gateway.recipes, "preferences").mockImplementation(
+        async () => {
+          if (change === "workflow")
+            s.state.workflow!.context!.coffeeName = "New"
+          if (change === "profile") s.source.metadata = { changed: true }
+          if (change === "equivalent")
+            s.state.workflow = structuredClone(s.state.workflow)
+          if (change === "offline") s.state.connection = "offline"
+          if (change === "brewing") s.state.machine!.state.state = "espresso"
+          return {}
+        }
+      )
+      const result = s.gateway.recipes.adjust("old", "targetYield", 40)
+      if (change === "equivalent") {
+        await result
+        expect(s.state.workflow!.context!.targetYield).toBe(40)
+      } else {
+        await expect(result).rejects.toThrow()
+        expect(s.calls).toEqual([])
+      }
+    }
+  )
+  it("holds the pending gate through KV acknowledgement and blocks another adjustment", async () => {
+    const s = setup()
+    const request = s.gateway.request.bind(s.gateway)
+    let release!: () => void
+    const delayed = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    vi.spyOn(s.gateway, "request").mockImplementation(
+      async (path, method, body) => {
+        if (method === "POST") await delayed
+        return request(path, method, body)
+      }
+    )
+    const first = s.gateway.recipes.adjust("old", "targetYield", 40)
+    await vi.waitFor(() =>
+      expect(s.state.workflow!.context!.targetYield).toBe(40)
+    )
+    expect(s.gateway.getSnapshot().pending).toBe(true)
+    await expect(
+      s.gateway.recipes.adjust("old", "targetDoseWeight", 20)
+    ).rejects.toThrow()
+    release()
+    await first
+    expect(s.gateway.getSnapshot().pending).toBe(false)
+    expect(s.calls.filter((c) => c.method === "POST")).toHaveLength(1)
+  })
+  it("requires identity rather than a matching title", async () => {
+    const s = setup()
+    s.state.workflow!.profile = {
+      ...s.source.profile,
+      steps: [{ ...s.source.profile.steps[0], seconds: 999 }],
+    }
+    await expect(
+      s.gateway.recipes.adjust("old", "targetYield", 40)
+    ).rejects.toThrow("Load a profile")
+    expect(s.calls).toEqual([])
+  })
+  it("uses saved dose, then profile metadata, then the chosen 18g default", () => {
+    const s = setup()
+    s.source.metadata = { targetDoseWeight: 17 }
+    expect(recipeDose({ targetDoseWeight: 19 }, s.source)).toEqual({
+      value: 19,
+      source: "profile",
+    })
+    expect(recipeDose(undefined, s.source)).toEqual({
+      value: 17,
+      source: "profile",
+    })
+    s.source.metadata = {}
+    s.source.profile.title = "21 gram profile"
+    expect(recipeDose(undefined, s.source)).toEqual({
+      value: 18,
+      source: "default",
+    })
   })
 })

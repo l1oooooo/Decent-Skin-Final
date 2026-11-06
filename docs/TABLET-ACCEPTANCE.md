@@ -28,6 +28,28 @@ associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
 
+### Recheck after the 0.2.4 update
+
+1. Install **0.2.4** and tap Home dose/yield/temperature/numeric grind and utility
+   values. Confirm the built-in keypad appears without Android's keyboard,
+   fits the measured viewport (including 800 × 480), and supports decimals,
+   correction, Clear, validation, Save and Cancel. Integer durations disable
+   the decimal button. Check focus return and physical keyboard entry if used.
+2. Change dose with +/− and other recipe values with the keypad. Select another
+   profile, return, then reload Focus: each profile must retain its own changes.
+   Check named grinder settings too. Temperature shifts must preserve stage
+   offsets. Confirm there are no automatic starts or other machine commands.
+3. On a profile without saved dose or dose metadata, confirm **18g** and
+   **Coffee · default**. A saved preference or metadata dose wins. Verify a
+   missing weight target remains **Off**. The initial fallback display causes
+   no write; selecting or editing applies it to the workflow.
+4. During a supervised storage-failure check, verify a failed preference save
+   retains the draft and explains whether the current workflow already changed.
+   Retry explicitly; no automatic retry or success indication is allowed.
+
+Local fixture tests cannot establish Android keyboard suppression, WebView
+compatibility, persistence in the installed Decaid, or hardware acceptance.
+
 ### Recheck after the 0.2.3 update
 
 1. Install Decent Focus **0.2.3** and reload. Confirm the footer has only utility
@@ -72,7 +94,7 @@ The report is generated locally and never marks a device accepted.
    must only dismiss an overlay, never start or stop the machine.
 5. Choose profiles with known different temperatures and weight targets; compare
    Home against their stored profile details. A profile without a saved Focus
-   dose must show **Not set**; a missing/zero weight target must show **Off**.
+   dose uses the **18g default** in 0.2.4; a missing/zero weight target must show **Off**.
    The brew ratio is unavailable until both values are present. Profiles with
    identical source values should still show identical values.
 6. Set a dose for the current preparation if needed. Use Recipe preferences to
