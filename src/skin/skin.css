@@ -102,26 +102,23 @@ html {
   .focus-skin {
     --focus-row-height: 72px;
   }
-  .focus-skin > header {
+  :is(.focus-skin, .focus-page) > header {
     height: 56px;
     padding-right: 8px;
   }
-  .focus-skin > header > div:first-child {
+  :is(.focus-skin, .focus-page) > header > div:first-child {
     width: 156px;
   }
-  .focus-skin > header > button {
+  :is(.focus-skin, .focus-page) > header > button {
     margin-left: 0;
   }
-  .focus-skin [aria-label="Machine status"] {
+  :is(.focus-skin, .focus-page) [aria-label="Machine status"] {
     gap: 8px;
   }
   .focus-skin > footer {
     height: 64px;
     gap: 8px;
     padding-inline: 12px;
-  }
-  .focus-skin > footer > :last-child {
-    width: 240px;
   }
   .focus-skin > footer > div:first-child {
     gap: 0;

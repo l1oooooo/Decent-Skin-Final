@@ -1,4 +1,4 @@
-import type { RefObject } from "react"
+import { useRef, type RefObject } from "react"
 import { format, type SkinSession } from "./use-skin"
 import {
   ChevronUp,
@@ -8,12 +8,11 @@ import {
   History,
   Settings,
   Library,
-  Link,
   Thermometer,
   Waves,
 } from "lucide-react"
 import { Action } from "./primitives"
-import { Brew, TabletStatus, UtilitySettings, Wordmark } from "./controls"
+import { TabletStatus, UtilitySettings, Wordmark } from "./controls"
 import { Popover, PopoverContent, PopoverTrigger } from "./popover"
 import dFlow from "./assets/d-flow.jpg"
 import espresso from "./assets/80s-espresso.jpg"
@@ -41,12 +40,14 @@ export function RevisionHeader({
   onHistory: () => void
   onConnections: () => void
 }) {
+  const container = useRef<HTMLDivElement>(null)
   return (
     <header className="flex h-[72px] shrink-0 items-center border-b border-border pr-7">
       <div className="w-[220px] shrink-0 px-7">
         <Wordmark />
       </div>
       <div
+        ref={container}
         aria-label="Machine status"
         className="ml-auto flex items-center gap-6"
       >
@@ -57,6 +58,30 @@ export function RevisionHeader({
             ? `${format(s.displayTemperature(s.shot.temperature))}°${s.temperatureUnit}`
             : `—°${s.temperatureUnit}`}
         </span>
+        <Popover
+          open={s.settings === "Header steam"}
+          onOpenChange={(open) => s.setSettings(open ? "Header steam" : null)}
+        >
+          <PopoverTrigger
+            aria-label="Steam temperature settings"
+            render={
+              <Action
+                variant="ghost"
+                className="!px-2 text-[12px] text-muted-foreground tabular-nums"
+              />
+            }
+          >
+            Steam{" "}
+            {s.connected && Number.isFinite(s.steamTemperature)
+              ? s.steamEnabled
+                ? `${format(s.displayTemperature(s.steamTemperature), 0)}°${s.temperatureUnit}`
+                : "Off"
+              : "—"}
+          </PopoverTrigger>
+          <PopoverContent container={container} aria-label="Steam settings">
+            <UtilitySettings s={{ ...s, settings: "Steam" }} />
+          </PopoverContent>
+        </Popover>
         <span
           aria-label="Water level"
           className="inline-flex items-center gap-2 text-[12px] text-muted-foreground tabular-nums"
@@ -84,7 +109,6 @@ export function RevisionHeader({
           >
             <span>Scale</span>
             <span>Connect</span>
-            <Link size={14} aria-hidden="true" />
           </Action>
         )}
       </div>
@@ -261,7 +285,6 @@ export function RevisionBottomBar({
           </Popover>
         ))}
       </div>
-      <Brew s={s} className="ml-auto w-[279px] shrink-0" />
     </footer>
   )
 }

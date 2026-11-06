@@ -1,5 +1,56 @@
 # Focus release-candidate verification
 
+## 0.2.3 — release feedback: header, number entry and Streamline copy
+
+Device status: **update requires tablet acceptance**. The operator reported
+installing 0.2.2 and requested the changes below. This iteration used source
+inspection and isolated fixtures only; it did not read or modify the tablet.
+The standard feedback procedure document is deferred until the operator reviews
+this first run.
+
+- Removed the right-side physical-control instructions from Home and shared
+  footers. Utility cards/navigation prompts retain guidance; daily execution
+  still belongs to the physical group head. Focus after a new shot now goes to
+  the header machine status, replacing the removed footer focus target.
+- Header steam target opens Steam settings, with quick edits at 135–160 °C.
+  Scale connection status is text-only. Compact header spacing also applies to
+  shared pages. Celsius wire values and existing command gates are preserved.
+- Numeric values open a Focus-styled dialog with range validation, decimal
+  input, Enter submission, Save/Cancel, focus return and failed-draft retention.
+  Touch entry does not automatically summon the software keyboard. The existing
+  grind text editor remains available for named grinder settings.
+- Edit profile beside the loaded title opens the matched stored record in the
+  existing editor, preserving bundled-default protections.
+- Copy from Streamline reads exact-ID saved Home overrides or legacy metadata
+  into a reviewable Focus preference draft. Only dose, yield, grind text and
+  brew temperature are mapped. Explicit Save writes Focus preferences, retaining
+  unrelated fields/profiles; neither copying nor saving starts a machine or
+  writes Streamline/calibration/utility data.
+- `npm run check`: TypeScript, ESLint, **93 gateway tests** and the production
+  build pass. No dependencies were added. The existing >500 kB bundle advisory
+  remains; device performance and keyboard/WebView behavior are not accepted.
+- **17 distinct focused browser scenarios pass across the recorded runs**:
+  six Home/state scenarios, three new feedback flows, five tablet regressions,
+  two navigation/draft checks and the production-asset smoke check. This is
+  focused regression coverage, not a full-suite rerun. The final-source run
+  passes all **4** affected header, focus, packaging and layout checks. Home
+  fits 1340 × 800, 1340 × 700, 1280 × 720, 1024 × 600, 893 × 533 and 800 × 480
+  without panel scrolling, retaining 44px minimum touch controls. Desktop Home
+  and compact numeric-dialog captures were visually reviewed.
+- Browser evidence: `artifacts/e2e-0.2.3-*.log` and
+  `artifacts/tablet-0.2.3`. Earlier runs exposed two incorrect test route
+  parameters, corrected to the existing `profile` parameter. Initial live-stage
+  and first-install loads exceeded 30-second assertions; both passed with the
+  documented local 240-second tests / 90-second assertions. Production request
+  timeouts and freshness gates were not relaxed.
+- `npm run package:skin` and ZIP verification pass: **11 files / 594,984 bytes**,
+  SHA-256 `ec5e7f4c3cccada16acb32580e25ed4a8d52e4df5fba150fc5a9faaee076b28a`.
+  Root metadata, relative assets, bundled fonts/artwork and fixture exclusion
+  are verified. The stable update asset remains `decent-focus.zip`.
+
+See the [0.2.3 tablet recheck](TABLET-ACCEPTANCE.md). Hardware acceptance remains
+pending; publishing this update is not a device-acceptance claim.
+
 ## 0.2.2 — physical control, full Home framing and profile defaults
 
 Device status: **update requires tablet acceptance**. The operator confirmed

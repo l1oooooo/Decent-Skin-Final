@@ -334,3 +334,67 @@ describe("profile and inventory ownership", () => {
     expect(s.calls).toEqual([])
   })
 })
+
+describe("Streamline Home adjustment copy", () => {
+  it("merges saved overrides over legacy metadata by ID, without writes or utility settings", async () => {
+    const { gateway, source, kv, calls } = setup()
+    source.metadata = {
+      targetDoseWeight: 18,
+      targetYield: 36,
+      brewTemperature: 88,
+      grinderSetting: "Fine",
+    }
+    kv.old = {
+      targetDoseWeight: 19.2,
+      targetYield: 0,
+      brewTemperature: 92.5,
+      targetSteamDuration: 40,
+      weightFlowMultiplier: 1.2,
+    }
+    expect(await gateway.recipes.streamlinePreference("old")).toEqual({
+      targetDoseWeight: 19.2,
+      targetYield: 0,
+      temperature: 92.5,
+      grinderSetting: "Fine",
+    })
+    expect(calls.every((c) => c.method === "GET")).toBe(true)
+    expect(kv.recipes).toEqual({
+      old: { targetDoseWeight: 18, extension: "keep" },
+    })
+  })
+  it("supports legacy metadata only after confirmed absence, and rejects malformed or unavailable data", async () => {
+    const { gateway, source, kv } = setup()
+    source.metadata = { targetDoseWeight: 17 }
+    expect(await gateway.recipes.streamlinePreference("old")).toEqual({
+      targetDoseWeight: 17,
+    })
+    kv.old = "not a record"
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
+      "Invalid Streamline"
+    )
+    kv.old = { brewTemperature: 150 }
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
+      "Invalid temperature"
+    )
+    kv.old = null
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow()
+    kv.streamlineProfileOverrides = []
+    expect(await gateway.recipes.streamlinePreference("old")).toEqual({
+      targetDoseWeight: 17,
+    })
+    kv.streamlineProfileOverrides = ["old"]
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
+      "unavailable or invalid"
+    )
+  })
+  it("does not guess settings from a title or an unrelated record", async () => {
+    const { gateway, source } = setup()
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
+      "No saved Streamline"
+    )
+    source.id = "different"
+    await expect(gateway.recipes.streamlinePreference("old")).rejects.toThrow(
+      "requested profile changed"
+    )
+  })
+})

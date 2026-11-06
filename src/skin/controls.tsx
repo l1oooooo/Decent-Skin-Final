@@ -1,3 +1,5 @@
+import { useState } from "react"
+import { NumberEditor } from "./number-editor"
 import {
   AlertCircle,
   Flame,
@@ -32,6 +34,10 @@ export function TabletStatus({ s }: { s: SkinSession }) {
     <div
       className="flex items-center gap-2 text-[13px] text-muted-foreground"
       role="status"
+      aria-label="Machine state"
+      tabIndex={-1}
+      data-ready={s.ready}
+      data-operation={s.active ? "espresso" : (s.operation ?? "idle")}
     >
       <span
         aria-hidden="true"
@@ -63,13 +69,14 @@ export function Stepper({
   step: number
   min: number
   max: number
-  onChange: (value: number) => void
+  onChange: (value: number) => void | boolean | Promise<boolean | undefined>
   disabled?: boolean
   large?: boolean
   horizontal?: boolean
   text?: string
   onEdit?: () => void
 }) {
+  const [editing, setEditing] = useState(false)
   return (
     <div
       className={`focus-stepper ${
@@ -108,21 +115,19 @@ export function Stepper({
           aria-label={`${label} value`}
           className={`min-w-0 text-center font-medium tracking-[-.045em] tabular-nums ${large ? "text-[42px]" : "text-[28px]"}`}
         >
-          {onEdit ? (
-            <button
-              type="button"
-              aria-label="Edit grinder setting"
-              className="min-h-12 max-w-full min-w-12 truncate"
-              disabled={disabled}
-              onClick={onEdit}
-            >
-              {text || format(value)}
-            </button>
-          ) : (
-            text || format(value, unit === "s" ? 0 : 1)
-          )}
+          <button
+            type="button"
+            aria-label={
+              onEdit ? "Edit grinder setting" : `Edit ${label.toLowerCase()}`
+            }
+            className="min-h-12 max-w-full min-w-12 truncate"
+            disabled={disabled}
+            onClick={onEdit ?? (() => setEditing(true))}
+          >
+            {text || format(value, unit === "s" ? 0 : 1)}
+          </button>
           <span className="ml-1 text-[13px] font-normal tracking-normal text-muted-foreground">
-            {unit}
+            {text === "Off" || text === "Not set" ? "" : unit}
           </span>
         </output>
         <Action
@@ -148,6 +153,13 @@ export function Stepper({
           <Plus size={16} />
         </Action>
       </div>
+      {editing && (
+        <NumberEditor
+          {...{ label, value, unit, min, max, disabled, onChange }}
+          integer={unit === "s"}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </div>
   )
 }
@@ -193,14 +205,8 @@ export function RecipeControls({
         ] as const
       ).map(([label, value, unit, step, min, max, key]) => (
         <Stepper
-          key={key}
+          key={`${s.selectedId}-${key}`}
           {...{ label, value, unit, step, min, max, large }}
-          unit={
-            (key === "yield" && value === 0) ||
-            (key === "dose" && !Number.isFinite(value))
-              ? ""
-              : unit
-          }
           disabled={s.locked}
           text={
             key === "grind"
@@ -271,6 +277,20 @@ export function UtilitySettings({ s }: { s: SkinSession }) {
           </button>
         )}
 
+        {steam && (
+          <Stepper
+            label="Steam temperature"
+            value={s.displayTemperature(s.steamTemperature)}
+            unit={`°${s.temperatureUnit}`}
+            step={s.temperatureUnit === "F" ? 1.8 : 1}
+            min={s.displayTemperature(135)}
+            max={s.displayTemperature(160)}
+            disabled={s.profileLocked || !s.steamEnabled}
+            onChange={(value) =>
+              s.setSteamTemperature(Math.round(s.celsius(value)))
+            }
+          />
+        )}
         {water && (
           <Stepper
             label="Water temperature"
@@ -338,22 +358,6 @@ export function ShotNumbers({
         </div>
       ))}
     </div>
-  )
-}
-export function Brew({
-  s,
-  className = "",
-}: {
-  s: SkinSession
-  className?: string
-}) {
-  return (
-    <GroupHeadGuidance
-      operation={s.operation || "Espresso"}
-      running={s.active || !!s.operation}
-      ready={s.ready}
-      className={className}
-    />
   )
 }
 export function GroupHeadGuidance({

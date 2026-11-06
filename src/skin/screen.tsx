@@ -1,6 +1,6 @@
 import { format, type SkinSession } from "./use-skin"
 import { useRef } from "react"
-import { Eyebrow } from "./primitives"
+import { Action, Eyebrow } from "./primitives"
 import { RecipeControls, Extraction, ShotNumbers, Notice } from "./controls"
 import { RevisionHeader, RevisionProfiles, RevisionBottomBar } from "./chrome"
 
@@ -12,12 +12,14 @@ export default function FocusScreen({
   onConnections,
   onHistory,
   onBrowse,
+  onEdit,
   onAssign,
 }: {
   s: SkinSession
   onHistory: () => void
   onSettings: () => void
   onConnections: () => void
+  onEdit: () => void
   onBrowse: () => void
   onAssign: (slot: number) => void
 }) {
@@ -45,12 +47,25 @@ export default function FocusScreen({
         <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="focus-main flex min-w-0 flex-1 flex-col px-7 py-6">
           <div className="focus-profile-heading min-h-[88px]">
-            <h1
-              title={s.profile.name}
-              className="line-clamp-2 text-[30px] leading-tight font-medium tracking-[-.045em]"
-            >
-              {s.profile.name}
-            </h1>
+            <div className="flex items-start gap-3">
+              <h1
+                title={s.profile.name}
+                className="line-clamp-2 min-w-0 flex-1 text-[30px] leading-tight font-medium tracking-[-.045em]"
+              >
+                {s.profile.name}
+              </h1>
+              <Action
+                variant="ghost"
+                className="shrink-0 !px-2 text-[12px] text-muted-foreground"
+                disabled={
+                  s.profileLocked ||
+                  !s.allProfiles.some((p) => p.id === s.selectedId)
+                }
+                onClick={onEdit}
+              >
+                Edit profile
+              </Action>
+            </div>
             <p
               title={s.profile.notes}
               className="mt-3 line-clamp-2 text-[13px] text-muted-foreground"

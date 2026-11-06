@@ -38,6 +38,31 @@ are absent, preserving coffee/equipment context and the guarded read/write path.
 It never infers a dose from a profile title. Temperature comes from the actual
 profile frames unless an explicit Focus recipe override is saved.
 
+## Tablet feedback update (0.2.3)
+
+Home and shared footers no longer show right-side group-head guidance. Utility
+cards and active navigation prompts retain instructions. The header steam
+control displays `workflow.steamSettings.targetTemperature` (not a live sensor)
+and uses the existing workflow update path, preserving duration and flow.
+Quick edits use 135–160 °C; the existing machine-aware daily settings screen
+continues to support Bengle's 165 °C upper bound. Wire temperatures stay Celsius.
+
+Direct number entry shares the stepper limits and write gates, with explicit
+Save/Cancel and retained failed drafts. Home's Edit profile uses the matched
+record ID and existing editor, including bundled-profile protection.
+
+Streamline copy was checked against `profile-overrides.js` and `api.js` at
+Streamline commit `65460d41e47bac266a9b3e25bcfa966217f7e90e`.
+It reads the fresh profile record and
+`GET /api/v1/store/streamlineProfileOverrides/{encodedProfileId}`.
+A 404 confirms absence; a null response additionally requires the namespace
+key list to confirm absence. Other errors or malformed values abort the copy.
+Saved KV fields override legacy profile metadata. Only `targetDoseWeight`,
+`targetYield`, `grinderSetting`, and `brewTemperature` (mapped to Focus
+`temperature`) are copied into a reviewable draft. Focus preference validation
+still applies. No Streamline write, workflow load, machine command, calibration
+or utility import occurs. Saving is a separate explicit Focus KV write.
+
 ## UI bindings
 
 | Control/data | Contract |

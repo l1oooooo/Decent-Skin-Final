@@ -59,7 +59,7 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
   })
   await page.goto("/", { waitUntil: "networkidle" })
   const brew = page.getByRole("status", {
-    name: "Group-head espresso",
+    name: "Machine state",
     exact: true,
   })
   await expect(brew).toHaveAttribute("data-ready", "true", { timeout: 90000 })
@@ -109,8 +109,8 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
     data: { state: "espresso", elapsed: 0 },
   })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
 })
 
 test("landscape Home fits every panel and touch target without scrolling", async ({
@@ -119,7 +119,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   for (const viewport of [
     { width: 1340, height: 800 },
@@ -145,7 +145,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       expect(box!.width).toBeGreaterThanOrEqual(44)
     }
     await expect(
-      page.getByRole("status", { name: "Group-head espresso", exact: true })
+      page.getByRole("status", { name: "Machine state", exact: true })
     ).toBeInViewport({ ratio: 1 })
     expect(
       await page
@@ -179,7 +179,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       browse!.y
     )
     await page.screenshot({
-      path: `artifacts/tablet-0.2.2/ready-${viewport.width}x${viewport.height}.png`,
+      path: `artifacts/tablet-0.2.3/ready-${viewport.width}x${viewport.height}.png`,
     })
   }
   await expect(
@@ -213,12 +213,12 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.2/heating-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.3/heating-800x480.png" })
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 12 },
   })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toBeInViewport({ ratio: 1 })
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(
     480
@@ -234,7 +234,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.2/brewing-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.3/brewing-800x480.png" })
   await page.keyboard.press("Escape")
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
@@ -249,7 +249,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
   await page.screenshot({
-    path: "artifacts/tablet-0.2.2/completed-800x480.png",
+    path: "artifacts/tablet-0.2.3/completed-800x480.png",
   })
 })
 
@@ -328,5 +328,5 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.2.2", { exact: true })).toBeVisible()
+  await expect(page.getByText("0.2.3", { exact: true })).toBeVisible()
 })

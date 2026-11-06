@@ -19,7 +19,7 @@ export function PopoverContent({
         side="top"
         align="start"
         sideOffset={12}
-        collisionBoundary={container.current ?? undefined}
+        collisionBoundary="clipping-ancestors"
         collisionPadding={16}
         className="isolate z-[var(--z-dropdown)]"
       >

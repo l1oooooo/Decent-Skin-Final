@@ -96,6 +96,56 @@ export class RecipeGateway {
     Object.values(map).forEach(validatePreference)
     return map as Record<string, RecipePreference>
   }
+  async streamlinePreference(id: string): Promise<RecipePreference> {
+    const record = parseProfileRecord(
+      await this.gateway.request(`/api/v1/profiles/${encodeURIComponent(id)}`)
+    )
+    if (record.id !== id)
+      throw new Error("The requested profile changed. Reopen its preferences.")
+    let saved: unknown = null
+    let absent = false
+    try {
+      saved = await this.gateway.request(
+        `/api/v1/store/streamlineProfileOverrides/${encodeURIComponent(id)}`
+      )
+    } catch (error) {
+      if (!(error instanceof Error && error.message.startsWith("404:")))
+        throw error
+      absent = true
+    }
+    if (saved === null && !absent) {
+      const keys = await this.gateway.request(
+        "/api/v1/store/streamlineProfileOverrides"
+      )
+      if (
+        !Array.isArray(keys) ||
+        !keys.every((key) => typeof key === "string") ||
+        keys.some((key) => key === id || key === encodeURIComponent(id))
+      )
+        throw new Error(
+          "Streamline settings are unavailable or invalid. Nothing was copied."
+        )
+    }
+    if (saved !== null && (typeof saved !== "object" || Array.isArray(saved)))
+      throw new Error("Invalid Streamline settings. Nothing was copied.")
+    const fields = { ...record.metadata, ...object(saved ?? {}) }
+    const preference: RecipePreference = {}
+    for (const [source, target] of [
+      ["targetDoseWeight", "targetDoseWeight"],
+      ["targetYield", "targetYield"],
+      ["grinderSetting", "grinderSetting"],
+      ["brewTemperature", "temperature"],
+    ]) {
+      if (fields[source] !== undefined && fields[source] !== null)
+        preference[target] = fields[source]
+    }
+    validatePreference(preference)
+    if (!Object.keys(preference).length)
+      throw new Error(
+        "No saved Streamline Home adjustments were found for this profile."
+      )
+    return preference
+  }
   async savePreference(id: string, preference: RecipePreference) {
     validatePreference(preference)
     return this.gateway.settingsOperation(async (verify) => {

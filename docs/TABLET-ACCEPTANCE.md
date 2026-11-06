@@ -28,6 +28,29 @@ associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
 
+### Recheck after the 0.2.3 update
+
+1. Install Decent Focus **0.2.3** and reload. Confirm the footer has only utility
+   settings, the scale status has no icon, and the steam target appears beside
+   the brew reading. Measure the actual WebView viewport again.
+2. Tap dose/yield/temperature values. Verify decimal keyboard entry, validation,
+   Cancel, Save, focus return and keyboard dismissal. Test with the keyboard
+   open at the tablet's landscape size; dialog fields and actions must remain
+   reachable. Test a failed save and confirm the draft stays available.
+3. Tap the header steam target. Change and verify the setting, including display
+   in Fahrenheit if used. This target is separate from the live brew reading.
+   Verify physical operation separately; changing settings never starts steam.
+4. Tap **Edit profile** beside the Home title. Confirm it opens the selected
+   record. Review a disposable user profile or save a modified default as new.
+5. In **Browse profiles → Details → Recipe preferences**, tap **Copy from
+   Streamline**. Compare the draft with that exact profile's saved Streamline
+   Home values. Review, Save, load the profile, switch away and back, and verify
+   persistence. Steam/calibration values must remain unchanged. No data was
+   copied to the real tablet during development.
+6. Recheck Ready, Heating, Brewing and Completed, all Home panels, physical
+   starts/stops, scale connection, reconnect/resume and shot history. Record
+   actual results; the prior local checks do not accept this tablet build.
+
 ### Recheck after the 0.2.2 update
 
 1. Open **Settings → Updates and data → Skins**, choose **Check and install

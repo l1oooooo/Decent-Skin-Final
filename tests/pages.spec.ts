@@ -31,7 +31,7 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
   page.on("websocket", () => sockets++)
   await page.goto("/")
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await expect(page).toHaveURL(/page=settings/)
@@ -89,7 +89,7 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
   )
   await page.goto("/?page=unknown")
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await expect(page).not.toHaveURL(/page=/)
 })
@@ -248,7 +248,7 @@ test("failed saves retain draft and acknowledged rail; edits made during Save su
   await expect.poll(async () => (await saved(request))[1]).toBeNull()
 })
 
-test("a physical start dismisses navigation prompts, shows group-head guidance and preserves the draft", async ({
+test("a physical start dismisses navigation prompts, updates machine status and preserves the draft", async ({
   page,
   request,
 }) => {
@@ -261,11 +261,14 @@ test("a physical start dismisses navigation prompts, shows group-head guidance a
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
   await expect(
     page.getByRole("button", { name: "Select 80's Espresso", exact: true })
   ).toBeVisible()
+  await expect(
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toBeFocused()
   await state(request, { state: "idle", reason: "machineEnded" })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page
@@ -362,8 +365,8 @@ test("details, preview, hide/restore and import/export use profile APIs without 
   ).toBeVisible()
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
   await page.getByRole("button", { name: "Browse profiles" }).click()
   await expect(
@@ -407,13 +410,13 @@ test("Back cancellation keeps history usable and active-shot replay does not int
   ).toBeVisible()
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
   await page.goto("/?page=settings")
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings")
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
 })
 
 test("library errors retry, empty states stay honest, and duplicate titles load the chosen ID", async ({

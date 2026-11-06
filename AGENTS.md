@@ -81,8 +81,9 @@ technical decisions, and the design history for previous iterations.
   below the desktop reference size; touch targets remain at least 44px. Do not
   scale the entire canvas. System and help reports the actual WebView viewport.
 - Daily espresso/steam/hot-water/flush starts and stops belong exclusively to
-  the physical group-head controller. Home, shared-page footers and navigation
-  prompts show non-interactive guidance; no start/stop button or Escape command.
+  the physical group-head controller. Home and shared-page footers have no
+  right-side guidance; utility cards and navigation prompts retain non-interactive
+  instructions. No start/stop button or Escape command.
   Keep utility adjustments and separately authorized advanced procedures.
 - Profile selection applies that profile's temperature and weight target, then
   its explicit Focus recipe overrides. A missing/zero weight target clears the

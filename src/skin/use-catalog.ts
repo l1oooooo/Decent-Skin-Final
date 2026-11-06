@@ -151,6 +151,20 @@ export function useCatalog(gateway: DecaidGateway) {
       setPreferenceBase(p)
     })
   }
+  async function copyStreamline() {
+    if (!recipeId || !preference) return
+    const id = recipeId
+    const before = preference
+    await run(async () => {
+      const copied = await gateway.recipes.streamlinePreference(id)
+      setPreference((current) =>
+        current === before ? { ...current, ...copied } : current
+      )
+      setMessage(
+        "Streamline adjustments copied into this draft. Review the values, then Save recipe preferences. Steam and calibration settings are not copied."
+      )
+    })
+  }
   async function savePreference() {
     if (!recipeId || !preference) return
     const submitted = preference
@@ -181,6 +195,7 @@ export function useCatalog(gateway: DecaidGateway) {
     assign,
     openPreference,
     savePreference,
+    copyStreamline,
     setPreference,
     setBeanId,
     change: (key: string, value: unknown) =>

@@ -70,8 +70,8 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
     data: { state: "espresso", elapsed: 12 },
   })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", elapsed: 30, reason: "targetWeight" },
   })

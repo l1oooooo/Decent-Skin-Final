@@ -154,7 +154,7 @@ export default function App() {
     s.setSettings(null)
     requestAnimationFrame(() =>
       document
-        .querySelector<HTMLElement>('[aria-label="Group-head stop espresso"]')
+        .querySelector<HTMLElement>('[aria-label="Machine state"]')
         ?.focus()
     )
   })
@@ -172,7 +172,7 @@ export default function App() {
   useEffect(() => {
     if (nav.route.page === "home" && previousPage.current !== "home") {
       const label = s.active
-        ? "Group-head stop espresso"
+        ? "Machine state"
         : ["history", "shot"].includes(previousPage.current)
           ? "History"
           : previousPage.current === "settings"
@@ -318,6 +318,7 @@ export default function App() {
           onConnections={() =>
             navigate({ page: "settings", category: "connections" })
           }
+          onEdit={() => navigate({ page: "edit", id: s.selectedId })}
           onBrowse={browse}
           onAssign={assign}
         />

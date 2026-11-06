@@ -101,8 +101,8 @@ test("utility patches agree with Home and failed sections retain drafts", async 
   await page.getByRole("button", { name: "Keep editing", exact: true }).click()
   await state(request, { state: "espresso" })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
   await state(request, { state: "idle", failPath: null })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page.getByRole("button", { name: /Brew and utilities/ }).click()
@@ -236,7 +236,7 @@ test("wake schedules and sleep are explicit; unsupported grinder controls stay u
   ).toBeVisible()
   await page.getByRole("button", { name: "Wake machine", exact: true }).click()
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   expect(
     (await writes(request)).filter((r: { path: string }) =>

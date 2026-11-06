@@ -362,8 +362,8 @@ export function RecipePreferences({ catalog: c }: { catalog: Catalog }) {
     <>
       <PageMessage>
         Saved adjustments apply when you load this profile. Blank fields use the
-        profile target or retain the current recipe value. These preferences
-        never move a connected grinder.
+        profile target; a blank dose stays Not set. A blank grind retains the
+        current setting. These preferences never move a connected grinder.
       </PageMessage>
       {c.message && <PageMessage>{c.message}</PageMessage>}
       {!p ? (
@@ -379,6 +379,20 @@ export function RecipePreferences({ catalog: c }: { catalog: Catalog }) {
             void c.savePreference()
           }}
         >
+          <div className="mb-5 flex items-center gap-4">
+            <Action
+              type="button"
+              variant="outline"
+              disabled={c.busy}
+              onClick={c.copyStreamline}
+            >
+              Copy from Streamline
+            </Action>
+            <p className="text-sm text-muted-foreground">
+              Read this profile’s saved Home adjustments from the same Decaid
+              installation, then review and save below.
+            </p>
+          </div>
           <fieldset disabled={c.busy} className="grid grid-cols-2 gap-4">
             {[
               ["targetDoseWeight", "Dose (g)"],

@@ -15,7 +15,7 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/", { waitUntil: "networkidle" })
   const brew = page.getByRole("status", {
-    name: "Group-head espresso",
+    name: "Machine state",
     exact: true,
   })
   await expect(brew).toHaveAttribute("data-ready", "true", { timeout: 90000 })
@@ -85,27 +85,23 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   expect(errors).toEqual([])
 })
 
-test("physical starts roll real stages, stop guidance stays visible, completion has no dots", async ({
+test("physical starts roll real stages, the footer stays quiet, completion has no dots", async ({
   page,
   request,
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
-  await page
-    .getByRole("status", { name: "Group-head espresso", exact: true })
-    .click()
+  await page.getByRole("status", { name: "Machine state", exact: true }).click()
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])
   await state(request, { state: "espresso", elapsed: 0 })
   await expect(
-    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
-  ).toBeVisible()
-  await page
-    .getByRole("status", { name: "Group-head stop espresso", exact: true })
-    .click()
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-operation", "espresso")
+  await page.getByRole("status", { name: "Machine state", exact: true }).click()
   await page.keyboard.press("Escape")
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
@@ -128,7 +124,7 @@ test("physical starts roll real stages, stop guidance stays visible, completion 
   )
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso" })
+    page.getByRole("status", { name: "Machine state" })
   ).toHaveAttribute("data-ready", "true")
   const completed = page
     .locator(".focus-stage")
@@ -151,7 +147,7 @@ test("utility settings persist; starting and stopping stay on the physical group
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   for (const [label, path] of [
     ["Steam", "steam"],
@@ -221,18 +217,18 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await state(request, { connected: false })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "false")
   await expect(page.getByRole("main")).toContainText("Machine disconnected")
   await state(request, { connected: true, mode: "full" })
   await expect(page.getByRole("main")).toContainText("tracking mode")
   await state(request, { mode: "tracking", error: "Profile write rejected" })
   await expect(
-    page.getByRole("status", { name: "Group-head espresso", exact: true })
+    page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await page.getByRole("button", { name: "Browse profiles" }).click()
   await page

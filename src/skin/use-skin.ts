@@ -185,8 +185,8 @@ export function useSkin(gateway: DecaidGateway) {
               ? "Sleeping"
               : operation || "Ready to brew"
   async function change(key: string, value: number) {
-    if (!workflow || !finite(value)) return
-    await perform(() => {
+    if (!workflow || !finite(value)) return false
+    return perform(() => {
       const patch: Partial<Workflow> =
         key === "temperature"
           ? temperaturePatch(workflow, value)
@@ -233,8 +233,8 @@ export function useSkin(gateway: DecaidGateway) {
     value: number
   ) => {
     const current = workflow?.[field]
-    if (!current) return
-    void perform(() =>
+    if (!current) return Promise.resolve(false)
+    return perform(() =>
       gateway.updateWorkflow({ [field]: { ...current, [key]: value } })
     )
   }
@@ -324,6 +324,9 @@ export function useSkin(gateway: DecaidGateway) {
     reconnect: () => gateway.sync(),
     wake: () => perform(() => gateway.command("idle")),
     steamEnabled: (workflow?.steamSettings?.targetTemperature ?? 0) >= 135,
+    steamTemperature: workflow?.steamSettings?.targetTemperature ?? NaN,
+    setSteamTemperature: (value: number) =>
+      utilityChange("steamSettings", "targetTemperature", value),
     steamTime: workflow?.steamSettings?.duration ?? NaN,
     waterTime: workflow?.hotWaterData?.duration ?? NaN,
     flushTime: workflow?.rinseData?.duration ?? NaN,

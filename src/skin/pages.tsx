@@ -173,12 +173,7 @@ export function PageShell({
         <Action variant="outline" onClick={() => navigate({ page: "home" })}>
           Return to Home
         </Action>
-        <div className="ml-auto flex min-w-0 items-center gap-3">
-          {actions}
-          {(s.active || s.operation) && (
-            <GroupHeadGuidance operation={s.operation || "Espresso"} running />
-          )}
-        </div>
+        <div className="ml-auto flex min-w-0 items-center gap-3">{actions}</div>
       </footer>
     </div>
   )

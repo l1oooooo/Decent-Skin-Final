@@ -62,7 +62,7 @@ test("production assets load below a nested skin path without an API or fallback
     await page.goto(`${origin}/skins/focus/`, { waitUntil: "networkidle" })
     await expect(page.getByText("Disconnected", { exact: true })).toBeVisible()
     await expect(
-      page.getByRole("status", { name: "Group-head espresso", exact: true })
+      page.getByRole("status", { name: "Machine state", exact: true })
     ).toHaveAttribute("data-ready", "false")
     await expect(page.getByLabel("Water level", { exact: true })).toHaveText(
       "Water —"
