@@ -408,6 +408,7 @@ const server = createServer(async (req, res) => {
     return reply({ fullVersion: "contract-fixture c9e2650" })
   if (url.pathname === "/api/v1/workflow") {
     if (req.method === "PUT") workflow = merge(workflow, data)
+    if (workflow.context?.targetDoseWeight === null) delete workflow.context.targetDoseWeight
     return reply(workflow)
   }
   const inventoryMatch = url.pathname.match(/^\/api\/v1\/(beans|bean-batches|grinders)(?:\/([^/]+))?(?:\/(batches))?$/)

@@ -1,5 +1,63 @@
 # Focus release-candidate verification
 
+## 0.2.2 — physical control, full Home framing and profile defaults
+
+Device status: **update requires tablet acceptance**. The operator confirmed
+0.2.1 installation and footer visibility, but reported internal Home scrolling,
+remote starts requiring a second physical press, and repeated recipe values.
+Read-only workflow/profile/preferences requests were used for diagnosis; no
+physical start, stop, profile load, device connection or setting write was sent.
+
+- Installed Decaid source confirms an active group-head controller only arms a
+  remote start. At the operator's explicit request, daily Start **and Stop**
+  controls are now non-interactive physical-control guidance. Shared footers,
+  active-shot navigation prompts and the Escape shortcut follow the same rule.
+  Utility settings remain editable while idle. Advanced procedures are separate.
+- The compact Home composition replaces scrolling with smaller gaps, a responsive
+  chart and compact rolling rows. Controls retain at least 44px hit areas; no
+  canvas transform scales them. The 1340 × 800 frame and 104px rolling rows remain;
+  the requested footer guidance and recipe-source labels intentionally change
+  those parts of the previous screenshot. No pixel-identical whole-Home claim.
+- The initial tablet profiles included variants with identical 94°C starts and
+  no weight target. No Focus recipe dose preferences were stored. Those values
+  are not synthesized to look different. The actual bug was inheriting the
+  previous workflow yield when the selected profile's target was zero/missing.
+  Selection now sets targetYield to zero/off in that case, and clears an absent
+  saved dose with the installed API's nullable targetDoseWeight. Saved Focus
+  preferences still override their own profile; coffee/equipment data remains.
+  Invalid negative, non-finite or nonnumeric profile weight targets fail before
+  writing rather than being treated as an instruction to disable a weight stop.
+- **System and help → Screen and viewport** measures layout/visual CSS dimensions,
+  device pixel ratio and zoom in the current browser/WebView. Resize updates are
+  observed locally. The About version now comes from the packaged manifest.
+- `npm run check`: **90 gateway tests**, TypeScript, ESLint and the static build
+  pass. Existing bundle-size advisory remains; no dependencies were added.
+- Focused browser run: **12 passed (12.2 minutes)**, covering six Home
+  scenarios, five tablet regressions and production assets. It checks physical
+  start/stop guidance with no execution requests, utility adjustments, failure
+  gating, first-install preferences, scale warnings/explicit connection, actual
+  profile defaults and the viewport readout.
+- Final-source rerun: **4 passed (4.2 minutes)**. Navigation during a physical
+  start retains drafts; Back cancellation and active-shot replay behave correctly;
+  compiled assets load under a nested path with API access blocked. The no-scroll
+  test passes at **1340 × 800, 1340 × 700, 1280 × 720, 1024 × 600, 893 × 533 and
+  800 × 480**. Ready/Heating/Brewing/Completed captures were visually reviewed,
+  including long titles and a utility popup at the smallest size. Touch controls
+  stay at least 44px. This is focused regression coverage, not a full-suite rerun.
+  Evidence: `artifacts/tablet-0.2.2-final`, `artifacts/tablet-0.2.2-verification`
+  and `artifacts/tablet-0.2.2`. An ignored local runner config uses 240-second
+  tests and 90-second assertions for this Mac; production freshness gates are
+  unchanged.
+- `npm run package:skin` and archive verification pass: **11 files / 594,844
+  bytes**, SHA-256
+  `9bc5f8450f180722e9ec1aff17567751995e74e2c41225881494b1085dfe6554`.
+  The archive has root metadata, relative static assets and bundled font/artwork;
+  no fixture, development origin or source/test code is packaged.
+
+The focused [tablet recheck](TABLET-ACCEPTANCE.md) requires actual viewport
+measurements, physical group-head starts/stops, profile values, reconnect and
+no-scroll framing on the Samsung WebView. Local tests never contact hardware.
+
 ## 0.2.1 — tablet fixes, November 6, 2026
 
 Device status: **update requires tablet acceptance**. Mac read-only checks of

@@ -34,7 +34,9 @@ function Rolling({ s }: { s: SkinSession }) {
         <div className="focus-dividers absolute inset-x-0 top-[88px] h-[104px] border-y border-border" />
         <div
           className="motion-transform absolute inset-x-0 top-[88px]"
-          style={{ transform: `translateY(${-activeIndex * 104}px)` }}
+          style={{
+            transform: `translateY(calc(${-activeIndex} * var(--focus-row-height, 104px)))`,
+          }}
         >
           {rollingStages.map((stage, i) => (
             <div

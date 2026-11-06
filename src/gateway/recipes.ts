@@ -115,6 +115,12 @@ export class RecipeGateway {
       record.visibility === "deleted"
     )
       throw new Error("This profile is unavailable.")
+    const weightTarget = record.profile.target_weight
+    if (
+      weightTarget != null &&
+      (!Number.isFinite(weightTarget) || weightTarget < 0)
+    )
+      throw new Error("The profile has an invalid weight target.")
     const block = commandBlock(this.gateway.getSnapshot())
     if (block) throw new Error(block)
     const before = this.gateway.getSnapshot().workflow
@@ -133,13 +139,13 @@ export class RecipeGateway {
       extras: {
         ...((before?.context?.extras as Record<string, unknown>) ?? {}),
         focusProfileId: id,
+        focusDoseSource:
+          p?.targetDoseWeight === undefined ? "unset" : "profile",
       },
     }
-    if (
-      typeof record.profile.target_weight === "number" &&
-      record.profile.target_weight > 0
-    )
-      context.targetYield = record.profile.target_weight
+    // Zero disables the workflow weight target; never inherit another profile's yield.
+    context.targetYield = weightTarget ?? 0
+    context.targetDoseWeight = p?.targetDoseWeight ?? null
     for (const key of [
       "targetDoseWeight",
       "targetYield",

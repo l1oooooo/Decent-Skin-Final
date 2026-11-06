@@ -101,7 +101,7 @@ test("utility patches agree with Home and failed sections retain drafts", async 
   await page.getByRole("button", { name: "Keep editing", exact: true }).click()
   await state(request, { state: "espresso" })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
   ).toBeVisible()
   await state(request, { state: "idle", failPath: null })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
@@ -236,8 +236,8 @@ test("wake schedules and sleep are explicit; unsupported grinder controls stay u
   ).toBeVisible()
   await page.getByRole("button", { name: "Wake machine", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   expect(
     (await writes(request)).filter((r: { path: string }) =>
       r.path.includes("/grinder/")

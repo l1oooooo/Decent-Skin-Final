@@ -261,10 +261,7 @@ export function RevisionBottomBar({
           </Popover>
         ))}
       </div>
-      <Brew
-        s={s}
-        className={`ml-auto w-[279px] shrink-0 ${s.active ? "!rounded-[8px] !border-transparent !bg-[#e7000b]/10 !text-[#e7000b] hover:!bg-[#e7000b]/20" : ""}`}
-      />
+      <Brew s={s} className="ml-auto w-[279px] shrink-0" />
     </footer>
   )
 }

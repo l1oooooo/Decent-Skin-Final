@@ -216,7 +216,7 @@ test("history handles missing data and retains annotation drafts through physica
     data: { state: "espresso", elapsed: 4 },
   })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
   ).toBeVisible()
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },

@@ -257,7 +257,7 @@ test("inventory drafts survive shot interruption and explicit create/edit/archiv
     data: { state: "espresso", elapsed: 3 },
   })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
   ).toBeVisible()
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },
@@ -325,7 +325,7 @@ test("profile drafts guard navigation, validate exits and retain edits after a p
     data: { state: "espresso", elapsed: 4 },
   })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
   ).toBeVisible()
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },

@@ -154,7 +154,7 @@ export default function App() {
     s.setSettings(null)
     requestAnimationFrame(() =>
       document
-        .querySelector<HTMLButtonElement>('[aria-label="Stop extraction"]')
+        .querySelector<HTMLElement>('[aria-label="Group-head stop espresso"]')
         ?.focus()
     )
   })
@@ -172,15 +172,13 @@ export default function App() {
   useEffect(() => {
     if (nav.route.page === "home" && previousPage.current !== "home") {
       const label = s.active
-        ? "Stop extraction"
+        ? "Group-head stop espresso"
         : ["history", "shot"].includes(previousPage.current)
           ? "History"
           : previousPage.current === "settings"
             ? "Settings"
             : "Browse profiles"
-      document
-        .querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)
-        ?.focus()
+      document.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus()
     }
     previousPage.current = nav.route.page
   }, [nav.route.page, s.active])
@@ -270,10 +268,6 @@ export default function App() {
     if (event.altKey && event.key.toLowerCase() === "s") {
       event.preventDefault()
       navigate({ page: "settings" })
-    }
-    if (event.key === "Escape" && (s.active || s.operation)) {
-      event.preventDefault()
-      void s.stop()
     }
   })
   useEffect(() => {
@@ -470,7 +464,7 @@ export default function App() {
           stay={nav.stay}
           leave={nav.leave}
           saving={saving}
-          onStop={s.active || s.operation ? s.stop : undefined}
+          activeOperation={s.active ? "Espresso" : s.operation}
         />
       )}
       {s.modal === "grind" && <GrindEditor s={s} />}

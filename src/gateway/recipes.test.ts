@@ -264,6 +264,49 @@ describe("profile and inventory ownership", () => {
     await expect(s.gateway.recipes.load("old")).rejects.toThrow("temperature")
     expect(update).not.toHaveBeenCalled()
   })
+  it.each([-1, NaN, "36"])(
+    "rejects an invalid profile weight target instead of disabling its stop (%s)",
+    async (target) => {
+      const s = setup()
+      Object.assign(s.source.profile, { target_weight: target })
+      const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+      await expect(s.gateway.recipes.load("old")).rejects.toThrow(
+        "invalid weight target"
+      )
+      expect(update).not.toHaveBeenCalled()
+      expect(s.calls).toEqual([])
+    }
+  )
+  it.each([0, null, undefined])(
+    "clears the previous yield for a profile without a weight target (%s)",
+    async (target) => {
+      const s = setup()
+      s.kv.recipes = {}
+      s.state.workflow!.context!.targetDoseWeight = 20
+      s.state.workflow!.context!.targetYield = 36
+      s.source.profile.target_weight = target
+      s.source.profile.steps[0].temperature = 82
+      const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+      await s.gateway.recipes.load("old")
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          profile: expect.objectContaining({
+            steps: [expect.objectContaining({ temperature: 82 })],
+          }),
+          context: expect.objectContaining({
+            targetDoseWeight: null,
+            targetYield: 0,
+            extras: expect.objectContaining({
+              focusDoseSource: "unset",
+              focusProfileId: "old",
+              keep: 1,
+            }),
+          }),
+        })
+      )
+      expect(s.calls.every((c) => c.method === "GET")).toBe(true)
+    }
+  )
   it("keeps inventory edits as patches and validates list and weight fields", () => {
     expect(
       validateInventoryPatch("beans", {

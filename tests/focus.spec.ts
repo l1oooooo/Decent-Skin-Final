@@ -14,8 +14,11 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/", { waitUntil: "networkidle" })
-  const brew = page.getByRole("button", { name: "Brew espresso", exact: true })
-  await expect(brew).toBeEnabled({ timeout: 90000 })
+  const brew = page.getByRole("status", {
+    name: "Group-head espresso",
+    exact: true,
+  })
+  await expect(brew).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await expect(
     page
       .getByRole("group", { name: "Favorite profiles" })
@@ -82,18 +85,31 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   expect(errors).toEqual([])
 })
 
-test("real stages roll, stop remains available, completion has no dots", async ({
+test("physical starts roll real stages, stop guidance stays visible, completion has no dots", async ({
   page,
   request,
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
-  await page.getByRole("button", { name: "Brew espresso", exact: true }).click()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
+  await page
+    .getByRole("status", { name: "Group-head espresso", exact: true })
+    .click()
+  expect(
+    await (await request.get(`${fixture}/__test/requests`)).json()
+  ).toEqual([])
+  await state(request, { state: "espresso", elapsed: 0 })
   await expect(
-    page.getByRole("button", { name: "Stop extraction" })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
+  ).toBeVisible()
+  await page
+    .getByRole("status", { name: "Group-head stop espresso", exact: true })
+    .click()
+  await page.keyboard.press("Escape")
+  expect(
+    await (await request.get(`${fixture}/__test/requests`)).json()
+  ).toEqual([])
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(page.locator(".focus-stage[data-active=true]")).toContainText(
     "Extraction"
@@ -111,7 +127,9 @@ test("real stages roll, stop remains available, completion has no dots", async (
     "Pressure decline"
   )
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
-  await expect(page.getByRole("button", { name: "Brew again" })).toBeEnabled()
+  await expect(
+    page.getByRole("status", { name: "Group-head espresso" })
+  ).toHaveAttribute("data-ready", "true")
   const completed = page
     .locator(".focus-stage")
     .filter({ hasText: "Shot complete" })
@@ -127,14 +145,14 @@ test("real stages roll, stop remains available, completion has no dots", async (
   ).toBeFocused()
 })
 
-test("steam, hot water and flush settings persist and start/stop only on explicit input", async ({
+test("utility settings persist; starting and stopping stay on the physical group head", async ({
   page,
   request,
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   for (const [label, path] of [
     ["Steam", "steam"],
     ["Hot water", "hotWater"],
@@ -158,27 +176,28 @@ test("steam, hot water and flush settings persist and start/stop only on explici
     ).toHaveText(
       label === "Steam" ? "35s" : label === "Hot water" ? "16s" : "6s"
     )
-    await page
-      .getByRole("button", {
-        name: `Start ${label.toLowerCase()}`,
-        exact: true,
-      })
-      .click()
+    const card = page.getByRole("dialog", { name: `${label} settings` })
     await expect(
-      page.getByRole("button", {
-        name: `Stop ${label.toLowerCase()}`,
+      card.getByRole("status", {
+        name: `Group-head ${label.toLowerCase()}`,
         exact: true,
       })
-    ).toBeEnabled()
-    await page
-      .getByRole("button", { name: `Stop ${label.toLowerCase()}`, exact: true })
-      .click()
+    ).toBeVisible()
+    await expect(card.getByRole("button", { name: /^Start / })).toHaveCount(0)
+    await state(request, { state: path })
     await expect(
-      page.getByRole("button", {
-        name: `Start ${label.toLowerCase()}`,
+      card.getByRole("status", {
+        name: `Group-head stop ${label.toLowerCase()}`,
         exact: true,
       })
-    ).toBeEnabled()
+    ).toBeVisible()
+    await state(request, { state: "idle" })
+    await expect(
+      card.getByRole("status", {
+        name: `Group-head ${label.toLowerCase()}`,
+        exact: true,
+      })
+    ).toBeVisible()
     await page.keyboard.press("Escape")
     const commands = await (
       await request.get(`${fixture}/__test/requests`)
@@ -187,7 +206,12 @@ test("steam, hot water and flush settings persist and start/stop only on explici
       commands.some(
         (c: { path: string }) => c.path === `/api/v1/machine/state/${path}`
       )
-    ).toBe(true)
+    ).toBe(false)
+    expect(
+      commands.filter((c: { path: string }) =>
+        c.path.startsWith("/api/v1/machine/state/")
+      )
+    ).toEqual([])
   }
 })
 
@@ -197,19 +221,19 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await state(request, { connected: false })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeDisabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "false")
   await expect(page.getByRole("main")).toContainText("Machine disconnected")
   await state(request, { connected: true, mode: "full" })
   await expect(page.getByRole("main")).toContainText("tracking mode")
   await state(request, { mode: "tracking", error: "Profile write rejected" })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await page.getByRole("button", { name: "Browse profiles" }).click()
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
@@ -229,8 +253,8 @@ test("empty workflows can choose their first profile and named grind settings re
   await page.goto("/", { waitUntil: "networkidle" })
   await page.getByRole("button", { name: "Steam", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: "Start steam", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head steam", exact: true })
+  ).toBeVisible()
   await page.keyboard.press("Escape")
   await page.getByRole("button", { name: "Browse profiles" }).click()
   const load = page.getByRole("button", {

@@ -11,6 +11,7 @@ import {
   History,
 } from "lucide-react"
 import { RevisionHeader } from "./chrome"
+import { GroupHeadGuidance } from "./controls"
 import { Action } from "./primitives"
 import type { Route } from "./navigation"
 import type { SkinSession } from "./use-skin"
@@ -175,9 +176,7 @@ export function PageShell({
         <div className="ml-auto flex min-w-0 items-center gap-3">
           {actions}
           {(s.active || s.operation) && (
-            <Action onClick={s.stop}>
-              {s.active ? "Stop extraction" : "Stop operation"}
-            </Action>
+            <GroupHeadGuidance operation={s.operation || "Espresso"} running />
           )}
         </div>
       </footer>
@@ -417,9 +416,9 @@ export function ConfirmNavigation({
   stay,
   leave,
   saving,
-  onStop,
+  activeOperation,
 }: {
-  onStop?: () => void
+  activeOperation?: string | null
   stay: () => void
   leave: () => void
   saving: boolean
@@ -448,10 +447,8 @@ export function ConfirmNavigation({
           : "Acknowledged settings, favorites and library profiles will stay as they are."}
       </p>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
-        {onStop && (
-          <Action variant="outline" onClick={onStop}>
-            Stop extraction
-          </Action>
+        {activeOperation && (
+          <GroupHeadGuidance operation={activeOperation} running />
         )}
         <Action variant="outline" onClick={stay}>
           Keep editing

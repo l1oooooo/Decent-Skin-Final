@@ -1,21 +1,31 @@
 import { useEffect, useRef, useState, useId } from "react"
+import { useViewport } from "./viewport"
 import type { SkinSession } from "./use-skin"
 function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
   const clipId = useId()
   const root = useRef<HTMLDivElement>(null)
+  const svg = useRef<SVGSVGElement>(null)
+  const viewport = useViewport()
+  const compact = viewport.width <= 1100 || viewport.height < 800
   const [w, setWidth] = useState(820)
+  const [plotHeight, setPlotHeight] = useState(205)
   useEffect(() => {
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(entry.contentRect.width)
-    )
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === root.current) setWidth(entry.contentRect.width)
+        if (entry.target === svg.current)
+          setPlotHeight(entry.contentRect.height)
+      }
+    })
     if (root.current) observer.observe(root.current)
+    if (svg.current) observer.observe(svg.current)
     return () => observer.disconnect()
   }, [])
-  const h = 220,
+  const h = compact ? Math.max(70, plotHeight) : 220,
     left = 35,
     right = w - 44,
     top = 18,
-    bottom = 185
+    bottom = h - 35
   const [showFlow, setFlow] = useState(true)
   const [showTemperature, setTemperature] = useState(true)
   const curve = s.active || s.complete ? s.samples : s.preview
@@ -85,6 +95,7 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
         )}
       </div>
       <svg
+        ref={svg}
         className="w-full overflow-visible"
         style={{ height }}
         viewBox={`0 0 ${w} ${h}`}
@@ -92,27 +103,34 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
         role="img"
         aria-label={`Pressure, flow and temperature curves. Temperature uses the right axis, ${s.displayTemperature(60)} to ${s.displayTemperature(100)} degrees ${s.temperatureUnit === "F" ? "Fahrenheit" : "Celsius"}.`}
       >
-        {[0, 3, 6, 9, 12].map((n) => (
-          <g key={n}>
-            <line
-              x1={left}
-              x2={right}
-              y1={bottom - (n / 12) * (bottom - top)}
-              y2={bottom - (n / 12) * (bottom - top)}
-              stroke="var(--border)"
-              strokeDasharray="2 5"
-            />
-            <text
-              x="0"
-              y={bottom - (n / 12) * (bottom - top) + 4}
-              fill="var(--muted-foreground)"
-              fontSize="12"
-            >
-              {n}
-            </text>
-          </g>
-        ))}
-        {[60, 70, 80, 90, 100].map((n) => (
+        {(h < 100 ? [0, 12] : h < 150 ? [0, 6, 12] : [0, 3, 6, 9, 12]).map(
+          (n) => (
+            <g key={n}>
+              <line
+                x1={left}
+                x2={right}
+                y1={bottom - (n / 12) * (bottom - top)}
+                y2={bottom - (n / 12) * (bottom - top)}
+                stroke="var(--border)"
+                strokeDasharray="2 5"
+              />
+              <text
+                x="0"
+                y={bottom - (n / 12) * (bottom - top) + 4}
+                fill="var(--muted-foreground)"
+                fontSize="12"
+              >
+                {n}
+              </text>
+            </g>
+          )
+        )}
+        {(h < 100
+          ? [60, 100]
+          : h < 150
+            ? [60, 80, 100]
+            : [60, 70, 80, 90, 100]
+        ).map((n) => (
           <text
             key={`temperature-${n}`}
             x={w}
@@ -128,7 +146,7 @@ function Trace({ s, height = 205 }: { s: SkinSession; height?: number }) {
           <text
             key={n}
             x={left + (n / duration) * (right - left)}
-            y="213"
+            y={h - 7}
             fill="var(--muted-foreground)"
             textAnchor={n === duration ? "end" : "start"}
             fontSize="12"

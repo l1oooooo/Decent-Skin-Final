@@ -43,12 +43,18 @@ export default function FocusScreen({
       />
       <div className="focus-body flex min-h-0 flex-1">
         <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
-        <main className="flex min-w-0 flex-1 flex-col px-7 py-6">
-          <div className="min-h-[88px]">
-            <h1 className="line-clamp-2 text-[30px] leading-tight font-medium tracking-[-.045em]">
+        <main className="focus-main flex min-w-0 flex-1 flex-col px-7 py-6">
+          <div className="focus-profile-heading min-h-[88px]">
+            <h1
+              title={s.profile.name}
+              className="line-clamp-2 text-[30px] leading-tight font-medium tracking-[-.045em]"
+            >
               {s.profile.name}
             </h1>
-            <p className="mt-3 line-clamp-2 text-[13px] text-muted-foreground">
+            <p
+              title={s.profile.notes}
+              className="mt-3 line-clamp-2 text-[13px] text-muted-foreground"
+            >
               {s.profile.notes}
             </p>
           </div>
@@ -68,8 +74,20 @@ export default function FocusScreen({
                       : "—",
                     "",
                   ],
-                  ["Coffee", format(s.dose), "g"],
-                  ["Drink", format(s.yieldTarget), "g"],
+                  [
+                    s.doseSource === "profile"
+                      ? "Coffee · saved"
+                      : s.doseSource === "unset"
+                        ? "No saved dose"
+                        : "Coffee · current",
+                    format(s.dose),
+                    Number.isFinite(s.dose) ? "g" : "",
+                  ],
+                  [
+                    s.yieldTarget === 0 ? "Weight target off" : "Drink",
+                    s.yieldTarget === 0 ? "—" : format(s.yieldTarget),
+                    s.yieldTarget === 0 ? "" : "g",
+                  ],
                 ].map(([label, value, unit]) => (
                   <div key={label}>
                     <p className="mb-3 text-[13px] text-muted-foreground">
@@ -88,7 +106,7 @@ export default function FocusScreen({
               </div>
             )}
           </section>
-          <section className="mt-6 min-h-0 flex-1">
+          <section className="focus-chart mt-6 min-h-0 flex-1">
             <div className="mb-3 flex items-center justify-between">
               <Eyebrow>
                 {s.complete
@@ -113,7 +131,7 @@ export default function FocusScreen({
         </main>
         <aside
           ref={recipePanel}
-          className="flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6"
+          className="focus-controls-panel flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6"
         >
           {showingShot ? (
             <Focus

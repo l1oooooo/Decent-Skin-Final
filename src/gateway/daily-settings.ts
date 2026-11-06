@@ -249,7 +249,7 @@ export const fields: Record<
       toggle(
         "keyboardShortcuts",
         "Enable keyboard shortcuts",
-        "Alt+H: Home · Alt+S: Settings · Escape: stop an active operation. Shortcuts are ignored while typing."
+        "Alt+H: Home · Alt+S: Settings. Shortcuts are ignored while typing. Start and stop at the physical group-head controller."
       ),
     ],
   },

@@ -22,6 +22,22 @@ Skin entry is port 3000, which redirects to an assigned origin. The API origin i
 
 The adapter requires the managed sequencing modes `tracking` or `disabled`. Full gateway mode is blocked for new operations: the official shot-state channel documents that no sequencer runs in background full mode. The skin does not silently change this setting. Decaid remains responsible for tare, weight stops, utility duration limits and recording.
 
+## Group-head control and profile defaults (0.2.2)
+
+The installed source's `doc/device-notes/de1.md` confirms that an active group-head
+controller requires a physical start; a remote start only arms the machine.
+The requested skin behavior is now physical-only for daily starts **and stops**.
+It shows non-interactive guidance, including during active-shot navigation;
+Escape dismisses overlays but never sends a stop. Separately approved advanced
+maintenance/calibration operations are unchanged.
+
+Workflow context accepts `targetDoseWeight: null` and omits it when serializing
+an unset dose. `targetYield` cannot be null; zero disables the sequencer's
+weight target. Profile selection sends these values explicitly when defaults
+are absent, preserving coffee/equipment context and the guarded read/write path.
+It never infers a dose from a profile title. Temperature comes from the actual
+profile frames unless an explicit Focus recipe override is saved.
+
 ## UI bindings
 
 | Control/data | Contract |
@@ -31,7 +47,7 @@ The adapter requires the managed sequencing modes `tracking` or `disabled`. Full
 | Grind | PUT workflow with string `context.grinderSetting`; it records the setting, not a motor command |
 | Temperature | PUT complete preserved profile with equal offset applied to each step's `temperature`; preserve relative step temperatures |
 | Profile list | GET `/api/v1/profiles?includeHidden=true`; visible/hidden views use returned record metadata |
-| Profile selection | PUT workflow with returned complete `profile`, including executable fields; positive profile target weight becomes workflow target yield |
+| Profile selection | PUT workflow with returned complete `profile`, including executable fields; profile weight target becomes workflow target yield (zero/missing becomes 0/off); a missing saved dose clears targetDoseWeight with null; saved Focus overrides apply explicitly |
 | Favorite order | GET/POST `/api/v1/store/decent-skin-codex/favorites`; POST a five-element nullable ID array, acknowledge on successful 2xx; GET 404 or GET 200/null with absence confirmed by the namespace key list means no stored preference |
 | Hide / restore profile | PUT `/api/v1/profiles/{id}/visibility` with `{ "visibility": "hidden" }` or `"visible"`; use returned record, preserve favorites and workflow |
 | Profile import | POST `/api/v1/profiles/import` with exported record array; imported/skipped/failed/errors are separate, existing IDs are skipped |
@@ -39,8 +55,8 @@ The adapter requires the managed sequencing modes `tracking` or `disabled`. Full
 | Steam enable/time | `steamSettings.targetTemperature` (0 disables, 140 enables), `duration` |
 | Water temperature/time | `hotWaterData.targetTemperature`, `duration` |
 | Flush time | `rinseData.duration` |
-| Brew/steam/water/flush/stop | Explicit PUT `/api/v1/machine/state/{espresso,steam,hotWater,flush,idle}` |
-| Scale reconnect | Explicit PUT `/api/v1/devices/connect?deviceId=…` for a known scale; no automatic scan |
+| Daily brew/steam/water/flush/stop | Physical group-head controller only; Home guidance sends no execution request. Advanced procedures retain their separate explicit API operations. |
+| Scale reconnect | Explicit PUT `/api/v1/devices/connect` with selected `{deviceId}`; check outcome, no automatic scan |
 | History / details | GET `/api/v1/shots?limit=20&offset=…`, `/api/v1/shots/{id}` |
 | Device connections | GET `/api/v1/devices` plus `/ws/v1/devices` |
 | Readings / rolling stage | `/ws/v1/machine/snapshot`; `profileFrame` is zero-based into actual profile steps |

@@ -5,7 +5,7 @@ import {
   Waves,
   Minus,
   Plus,
-  Play,
+  Coffee,
   Square,
   X,
 } from "lucide-react"
@@ -72,9 +72,9 @@ export function Stepper({
 }) {
   return (
     <div
-      className={
+      className={`focus-stepper ${
         horizontal ? "flex items-center justify-between gap-4" : "min-w-0"
-      }
+      }`}
       role="group"
       aria-label={label}
     >
@@ -87,7 +87,7 @@ export function Stepper({
           aria-label={`Decrease ${label.toLowerCase()}`}
           disabled={
             disabled ||
-            (Boolean(text) && !Number.isFinite(value)) ||
+            (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
             value <= min
           }
           onClick={() =>
@@ -130,7 +130,7 @@ export function Stepper({
           aria-label={`Increase ${label.toLowerCase()}`}
           disabled={
             disabled ||
-            (Boolean(text) && !Number.isFinite(value)) ||
+            (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
             value >= max
           }
           onClick={() =>
@@ -168,7 +168,7 @@ export function RecipeControls({
     <div
       className={
         vertical
-          ? "space-y-7"
+          ? "focus-recipe-controls space-y-7"
           : divided
             ? "grid h-full grid-cols-3 divide-x divide-border [&>div]:px-7"
             : "grid grid-cols-3 gap-7"
@@ -180,7 +180,7 @@ export function RecipeControls({
             ? [["Grind size", s.grind, "", 0.1, 0, 20, "grind"] as const]
             : []),
           ["Dose", s.dose, "g", 0.1, 8, 30, "dose"],
-          ["Target yield", s.yieldTarget, "g", 0.5, 10, 120, "yield"],
+          ["Target yield", s.yieldTarget, "g", 0.5, 0, 1000, "yield"],
           [
             "Temperature",
             s.displayTemperature(s.temperature),
@@ -195,8 +195,22 @@ export function RecipeControls({
         <Stepper
           key={key}
           {...{ label, value, unit, step, min, max, large }}
+          unit={
+            (key === "yield" && value === 0) ||
+            (key === "dose" && !Number.isFinite(value))
+              ? ""
+              : unit
+          }
           disabled={s.locked}
-          text={key === "grind" ? s.grindText : undefined}
+          text={
+            key === "grind"
+              ? s.grindText
+              : key === "dose" && !Number.isFinite(value)
+                ? "Not set"
+                : key === "yield" && value === 0
+                  ? "Off"
+                  : undefined
+          }
           onEdit={key === "grind" ? () => s.setModal("grind") : undefined}
           onChange={(value) =>
             s.change(key, key === "temperature" ? s.celsius(value) : value)
@@ -283,28 +297,7 @@ export function UtilitySettings({ s }: { s: SkinSession }) {
             steam ? s.setSteamTime : water ? s.setWaterTime : s.setFlushTime
           }
         />
-        <Action
-          className="h-14 w-full tabular-nums"
-          disabled={
-            (!running && s.profileLocked) ||
-            (!!s.operation && !running) ||
-            (steam && !s.steamEnabled)
-          }
-          onClick={() => s.utility(s.settings!)}
-        >
-          {running ? (
-            <Square size={16} />
-          ) : steam ? (
-            <Flame size={16} />
-          ) : water ? (
-            <Droplets size={16} />
-          ) : (
-            <Waves size={16} />
-          )}
-          {running
-            ? `Stop ${s.settings?.toLowerCase()}`
-            : `Start ${s.settings?.toLowerCase()}`}
-        </Action>
+        <GroupHeadGuidance operation={s.settings!} running={running} />
       </div>
       <p className="mt-4 text-[12px] text-muted-foreground">
         {running
@@ -355,18 +348,52 @@ export function Brew({
   className?: string
 }) {
   return (
-    <Action
-      className={`h-14 bg-foreground text-background hover:bg-foreground/90 ${className}`}
-      disabled={(!s.ready && !s.active) || !!s.operation}
-      onClick={s.active ? s.stop : s.start}
+    <GroupHeadGuidance
+      operation={s.operation || "Espresso"}
+      running={s.active || !!s.operation}
+      ready={s.ready}
+      className={className}
+    />
+  )
+}
+export function GroupHeadGuidance({
+  operation,
+  ready,
+  running = false,
+  className = "",
+}: {
+  operation: string
+  ready?: boolean
+  running?: boolean
+  className?: string
+}) {
+  const Icon = running
+    ? Square
+    : operation === "Espresso"
+      ? Coffee
+      : operation === "Steam"
+        ? Flame
+        : operation === "Hot water"
+          ? Droplets
+          : Waves
+  return (
+    <div
+      role="status"
+      aria-label={`Group-head ${running ? "stop " : ""}${operation.toLowerCase()}`}
+      tabIndex={-1}
+      data-ready={ready}
+      className={`focus-start-guidance flex min-h-12 items-center gap-3 text-[14px] ${className}`}
     >
-      {s.active ? <Square size={16} /> : <Play size={16} className="ml-0.5" />}
-      {s.active
-        ? "Stop extraction"
-        : s.complete
-          ? "Brew again"
-          : "Brew espresso"}
-    </Action>
+      <Icon size={20} aria-hidden="true" className="shrink-0" />
+      <div>
+        <p className="font-medium">
+          {running ? `Stop ${operation.toLowerCase()}` : `Press ${operation}`}
+        </p>
+        <p className="text-[12px] text-muted-foreground">
+          on the group-head controller
+        </p>
+      </div>
+    </div>
   )
 }
 export function Notice({ s }: { s: SkinSession }) {

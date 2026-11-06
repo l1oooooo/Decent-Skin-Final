@@ -12,7 +12,7 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.1.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.2.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
@@ -24,24 +24,36 @@ then select **Decent Focus**. Future releases retain that asset name; use
 Decaid’s skin update function to install them. Source-code archives and Git
 pushes alone are not compiled skin updates.
 
-Version 0.2.1 fixes first-install favorites/Focus preferences and scale-error
-handling. **Connect scale** opens Connections so you can choose the intended
-device; it does not automatically scan or connect. Brewing without a scale is
-supported when **Settings → Brew and utilities → Require a scale before
-brewing** is off. Recipe editing and utilities are independent of that policy.
-Without a scale, weight-based stopping is unavailable. The skin never changes
-this Decaid policy automatically.
+Version 0.2.2 uses the physical group-head controller for all daily starts and
+stops. Home shows which operation to press; Steam, Hot water and Flush still
+open their settings. No on-screen brew/utility Start or Stop and no Escape stop
+shortcut remain. Advanced maintenance procedures retain their explicit controls.
 
-The Home footer stays within the available WebView height. Shorter landscape
-screens scroll content panels while keeping Steam, Hot water, Flush and Brew /
-Stop reachable. The accepted 1340 × 800 framing is retained without scaling
-fonts or touch controls. Actual tablet acceptance remains pending.
+Home fits landscape CSS viewports down to 800 × 480 without scrolling its
+panels, using compact spacing and a responsive chart while preserving 44px
+minimum touch targets. At 1340 × 800 the original three-column frame and rolling
+rows remain. On the tablet, open **Settings → System and help → Screen and
+viewport** to read the actual layout dimensions and device pixel ratio. These
+are WebView CSS measurements, not the panel's advertised resolution.
+
+Loading a profile applies its temperature and weight target plus any saved
+Focus recipe preferences. A profile with no saved dose shows **Not set**; a
+missing/zero weight target shows **Off**. Neither value is inherited from the
+previous profile. The ratio stays unavailable until both dose and yield exist.
+Home adjustments affect the current workflow; save profile-specific defaults
+through the profile's Recipe preferences screen.
+
+**Connect scale** opens Connections for explicit device selection. Scale-free
+brewing remains governed by **Settings → Brew and utilities → Require a scale
+before brewing**. Without a scale, weight-based stopping is unavailable. The
+skin never changes Decaid's policy automatically. Tablet acceptance remains
+pending for this update.
 
 ## Integration
 
 The adapter is verified against the published contract at installed Decaid **0.9.1+3027**, commit `14361a94b32888f6a81182e9e239f513d39d060c`. Workflow, profiles, machine controls, utilities, shot history and independent device/machine/scale/shot-state streams are wired to REST/WebSocket endpoints. There is no fallback to demo readings and no automatic discovery or machine command on load.
 
-Decaid must own shot sequencing, stop-at-weight and history. Use **tracking** mode (or the native managed `disabled` gateway mode). The skin blocks new operations in full gateway mode, where gateway-owned sequencing is not assured. It never changes gateway mode automatically. Stop remains an explicit, unreplayed request.
+Decaid must own shot sequencing, stop-at-weight and history. Use **tracking** mode (or the native managed `disabled` gateway mode). The skin blocks new operations in full gateway mode, where gateway-owned sequencing is not assured. It never changes gateway mode automatically. Daily starts and stops use the physical group-head controller; no command is replayed.
 
 The five favorite positions use a nullable ID array in Decaid's `decent-skin-codex/favorites` KV value. Only confirmed key absence suggests the first five visible profiles; Decaid’s 200/null response is checked against the namespace key list. Saved empty positions and unavailable IDs remain in place. Use **Browse profiles → Manage favorites** to replace, swap, reorder or clear positions, then Save. Loading a library profile changes the workflow independently. Failed saves retain both the last acknowledged rail and the editor draft.
 

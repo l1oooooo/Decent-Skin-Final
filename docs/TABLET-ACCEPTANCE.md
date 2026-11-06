@@ -21,14 +21,48 @@ before building. Do not remove someone else's development configuration;
 prepare the release in a clean checkout when necessary. The installed skin
 uses its serving hostname on API port 8080. It needs no Node process on Android.
 
-The archive is `artifacts/decent-skin-codex-0.2.1.zip`. Its inspection report is
+The archive is `artifacts/decent-skin-codex-0.2.2.zip`. Its inspection report is
 `artifacts/skin-release.json`: SHA-256, byte count, file inventory, manifest,
 source commit and tracked changes. Re-run verification after committing to
 associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
 
-### Recheck after the 0.2.1 update
+### Recheck after the 0.2.2 update
+
+1. Open **Settings → Updates and data → Skins**, choose **Check and install
+   skin updates**, and confirm. This checks all installed skins. Confirm Decent
+   Focus **0.2.2**, then **Reload current skin**.
+2. Inside Decaid on the tablet, in landscape with the keyboard closed, open
+   **Settings → System and help → Screen and viewport**. Record the layout
+   viewport, visible viewport, device pixel ratio and zoom. A measurement made
+   in Chrome on the Mac is not the tablet's WebView measurement.
+3. Return Home. Verify all five favorites, artwork, Browse profiles, recipe
+   summary, chart, grind/dose/yield/temperature controls and footer fit without
+   scrolling any Home panel. Long titles may wrap or truncate; full names and
+   notes remain available in profile details. Test a utility popover separately.
+4. Verify the footer and utility cards show group-head instructions instead of
+   daily Start/Stop buttons. Prepare the machine and operate Espresso, Steam,
+   Hot water and Flush from the physical group-head controller. Confirm real
+   starts update the screen, physical stops/completion update it correctly,
+   and returning from Settings preserves the physical-control guidance. Escape
+   must only dismiss an overlay, never start or stop the machine.
+5. Choose profiles with known different temperatures and weight targets; compare
+   Home against their stored profile details. A profile without a saved Focus
+   dose must show **Not set**; a missing/zero weight target must show **Off**.
+   The brew ratio is unavailable until both values are present. Profiles with
+   identical source values should still show identical values.
+6. Set a dose for the current preparation if needed. Use Recipe preferences to
+   save a dose/yield/temperature for one profile, then select another profile
+   and return. Confirm the saved values apply only to the intended profile,
+   coffee/equipment context is preserved, and profile selection never starts
+   an operation. Observe physical stopping behavior for both target-weight and
+   no-weight-target profiles; a target marked Off does not enable stop-at-weight.
+7. Recheck scale connection, warning dismissal, suspend/resume and shot history.
+   Record actual device outcomes; local fixture tests do not establish physical
+   operation or compatibility at an unmeasured viewport.
+
+### Historical 0.2.1 recheck (superseded by 0.2.2 controls)
 
 The operator reported that 0.2.0 overflowed the landscape Decaid WebView,
 kept a scale warning open, and showed favorites/Focus-preference errors.

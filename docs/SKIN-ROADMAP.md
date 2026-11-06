@@ -125,7 +125,7 @@ Use one canonical category definition to drive navigation, search, routing, and 
 - Use grouped rows and dividers, consistent field labels and help text, shared numeric/string editors, and the existing button/dialog vocabulary. Avoid unrelated card grids, decorative gradients, or page-specific visual themes.
 - Add query-based routes compatible with static hosting, browser Back, direct entry, and reload. Unknown routes return to Home. No server rewrites or new application server.
 - Keep one gateway/session mounted above page navigation. UI pages subscribe to that session instead of opening independent machine streams.
-- A newly observed physical shot start takes the user to Focus. Retain unsaved drafts for recovery; do not block access to live Stop behind an unsaved-changes prompt. Prompt before ordinary navigation discards a draft.
+- A newly observed physical shot start takes the user to Focus. Retain unsaved drafts for recovery; show physical group-head stop guidance without leaving an unsaved-changes prompt open. Prompt before ordinary navigation discards a draft.
 - Primary touch controls target 48px and never fall below 44px. Preserve focus restoration, keyboard use, dialog focus, overflow containment, and on-screen keyboard usability.
 
 ### Forms, preferences, and public interfaces
@@ -172,7 +172,7 @@ For each phase: specify screens and states, implement one Focus-consistent desig
 
 1. Add persistent app/session ownership and query navigation, including Back/direct-entry behavior.
 2. Add Settings entry, page shell, category/search definitions, shared form/list/detail components, and section draft handling.
-3. Handle physical-shot navigation while preserving drafts and keeping Stop accessible.
+3. Handle physical-shot navigation while preserving drafts and keeping physical group-head stop guidance visible.
 4. Capture Home before/after and prove unchanged layout except the approved Settings entry.
 
 **Exit gate:** shell navigation, loading/error/empty states, focus, dirty drafts, and shot interruption pass isolated browser tests.
@@ -258,7 +258,7 @@ Run `npm run check` for application/configuration work. Run the isolated-fixture
 
 At the baseline checkpoint, `npm run check` passed TypeScript, lint, all 18 gateway tests, and the production build. Prior validation includes six browser scenarios and the focused first-sample chart regression; see [verification record](VERIFICATION.md). No application code changed while writing this roadmap.
 
-The tablet API was unreachable from the development computer during baseline validation. Installation, Samsung WebView acceptance, and physical machine operations remain unverified. The locked Stop label also retains its documented contrast shortfall; do not claim WCAG AA conformance or silently change its approved color.
+The tablet API was unreachable from the development computer during baseline validation. Installation, Samsung WebView acceptance, and physical machine operations remain unverified. The daily on-screen Stop control was replaced by physical group-head guidance in 0.2.2 at the operator's request; this does not establish WCAG AA conformance.
 
 For future work, track every phase as **planned**, **implemented**, **fixture-verified**, then **device-accepted** where applicable. Update the matrix and validation evidence as work lands; do not equate a saved plan or a passing static build with completed features.
 

@@ -58,8 +58,11 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
     },
   })
   await page.goto("/", { waitUntil: "networkidle" })
-  const brew = page.getByRole("button", { name: "Brew espresso", exact: true })
-  await expect(brew).toBeEnabled()
+  const brew = page.getByRole("status", {
+    name: "Group-head espresso",
+    exact: true,
+  })
+  await expect(brew).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await expect(
     page.getByRole("button", { name: "Increase dose", exact: true })
   ).toBeEnabled()
@@ -102,34 +105,62 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
   await expect(
     page.getByRole("button", { name: "Connect scale", exact: true })
   ).toBeVisible()
-  await brew.click()
+  await request.post(`${fixture}/__test/state`, {
+    data: { state: "espresso", elapsed: 0 },
+  })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
+  ).toBeVisible()
 })
 
-test("short landscape viewports keep the footer and touch targets visible in ready and brewing", async ({
+test("landscape Home fits every panel and touch target without scrolling", async ({
   page,
   request,
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(
-    page.getByRole("button", { name: "Brew espresso", exact: true })
-  ).toBeEnabled()
+    page.getByRole("status", { name: "Group-head espresso", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   for (const viewport of [
     { width: 1340, height: 800 },
+    { width: 1340, height: 700 },
+    { width: 1280, height: 720 },
     { width: 1024, height: 600 },
     { width: 893, height: 533 },
     { width: 800, height: 480 },
   ]) {
     await page.setViewportSize(viewport)
-    for (const label of ["Steam", "Hot water", "Flush", "Brew espresso"]) {
+    for (const label of [
+      "Steam",
+      "Hot water",
+      "Flush",
+      "Browse profiles",
+      "Increase temperature",
+      "Decrease dose",
+    ]) {
       const control = page.getByRole("button", { name: label, exact: true })
       await expect(control).toBeInViewport({ ratio: 1 })
       const box = await control.boundingBox()
       expect(box!.height).toBeGreaterThanOrEqual(44)
       expect(box!.width).toBeGreaterThanOrEqual(44)
     }
+    await expect(
+      page.getByRole("status", { name: "Group-head espresso", exact: true })
+    ).toBeInViewport({ ratio: 1 })
+    expect(
+      await page
+        .locator(".focus-main, .focus-body > aside")
+        .evaluateAll((nodes) =>
+          nodes.map((node) => ({
+            vertical: node.scrollHeight <= node.clientHeight + 1,
+            horizontal: node.scrollWidth <= node.clientWidth + 1,
+          }))
+        )
+    ).toEqual([
+      { vertical: true, horizontal: true },
+      { vertical: true, horizontal: true },
+      { vertical: true, horizontal: true },
+    ])
     expect(
       await page.evaluate(() => ({
         width: document.documentElement.scrollWidth,
@@ -148,9 +179,12 @@ test("short landscape viewports keep the footer and touch targets visible in rea
       browse!.y
     )
     await page.screenshot({
-      path: `artifacts/tablet-acceptance/fixture-${viewport.width}x${viewport.height}.png`,
+      path: `artifacts/tablet-0.2.2/ready-${viewport.width}x${viewport.height}.png`,
     })
   }
+  await expect(
+    page.getByRole("button", { name: /^(Brew|Start|Stop) / })
+  ).toHaveCount(0)
   await page.getByRole("button", { name: "Steam", exact: true }).click()
   await expect(
     page.getByRole("dialog", { name: "Steam settings" })
@@ -159,12 +193,140 @@ test("short landscape viewports keep the footer and touch targets visible in rea
     .getByRole("button", { name: "Close utility card", exact: true })
     .click()
   await request.post(`${fixture}/__test/state`, {
+    data: {
+      state: "heating",
+      profileTitle:
+        "A very long imported profile title with roast details and LongUnbrokenProfileIdentifierThatMustFit",
+    },
+  })
+  await expect(page.getByRole("main")).toContainText(
+    "Heating to your brew temperature"
+  )
+  expect(
+    await page
+      .locator(".focus-main, .focus-body > aside")
+      .evaluateAll((nodes) =>
+        nodes.every(
+          (node) =>
+            node.scrollHeight <= node.clientHeight + 1 &&
+            node.scrollWidth <= node.clientWidth + 1
+        )
+      )
+  ).toBe(true)
+  await page.screenshot({ path: "artifacts/tablet-0.2.2/heating-800x480.png" })
+  await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 12 },
   })
   await expect(
-    page.getByRole("button", { name: "Stop extraction", exact: true })
+    page.getByRole("status", { name: "Group-head stop espresso", exact: true })
   ).toBeInViewport({ ratio: 1 })
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(
     480
   )
+  expect(
+    await page
+      .locator(".focus-main, .focus-body > aside")
+      .evaluateAll((nodes) =>
+        nodes.every(
+          (node) =>
+            node.scrollHeight <= node.clientHeight + 1 &&
+            node.scrollWidth <= node.clientWidth + 1
+        )
+      )
+  ).toBe(true)
+  await page.screenshot({ path: "artifacts/tablet-0.2.2/brewing-800x480.png" })
+  await page.keyboard.press("Escape")
+  expect(
+    await (await request.get(`${fixture}/__test/requests`)).json()
+  ).toEqual([])
+  await request.post(`${fixture}/__test/state`, {
+    data: { state: "idle", reason: "machineEnded", elapsed: 30 },
+  })
+  await expect(
+    page.getByRole("button", { name: "Adjust profile settings", exact: true })
+  ).toBeInViewport({ ratio: 1 })
+  await expect(
+    page.getByRole("button", { name: /^(Brew|Start|Stop) / })
+  ).toHaveCount(0)
+  await page.screenshot({
+    path: "artifacts/tablet-0.2.2/completed-800x480.png",
+  })
+})
+
+test("profile selection uses its own temperature and yield; missing dose stays unset", async ({
+  page,
+  request,
+}) => {
+  const profiles = await (
+    await request.get(`${fixture}/api/v1/profiles?includeHidden=true`)
+  ).json()
+  profiles[0].profile.target_weight = 50
+  profiles[0].profile.steps[0].temperature = 88
+  profiles[1].profile.target_weight = 36
+  profiles[1].profile.steps[0].temperature = 82
+  profiles[2].profile.target_weight = 0
+  profiles[2].profile.steps[0].temperature = 94
+  await request.post(`${fixture}/__test/state`, {
+    data: {
+      profiles,
+      recipeStore: {
+        recipes: { "profile:0": { targetDoseWeight: 18, targetYield: 50 } },
+      },
+    },
+  })
+  await page.goto("/", { waitUntil: "networkidle" })
+  const rail = page.getByRole("group", { name: "Favorite profiles" })
+  await expect(rail.getByRole("button", { name: /^Select / })).toHaveCount(5, {
+    timeout: 90000,
+  })
+  for (const [index, title, dose, yieldValue, temp, ratio] of [
+    [1, profiles[1].profile.title, "Not set", "36.0g", "82.0°C", "—"],
+    [0, profiles[0].profile.title, "18.0g", "50.0g", "88.0°C", "1:2.8"],
+    [2, profiles[2].profile.title, "Not set", "Off", "94.0°C", "—"],
+  ] as const) {
+    await rail.getByRole("button").nth(index).click()
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(title)
+    await expect(page.getByLabel("Dose value", { exact: true })).toHaveText(
+      dose
+    )
+    await expect(
+      page.getByLabel("Target yield value", { exact: true })
+    ).toHaveText(yieldValue)
+    await expect(
+      page.getByLabel("Temperature value", { exact: true })
+    ).toHaveText(temp)
+    await expect(
+      page.getByLabel("Recipe summary").locator("p").nth(1)
+    ).toHaveText(ratio)
+  }
+  await expect(page.getByText("No saved dose", { exact: true })).toBeVisible()
+  const workflow = await (
+    await request.get(`${fixture}/api/v1/workflow`)
+  ).json()
+  expect(workflow.context.targetYield).toBe(0)
+  expect(workflow.context.targetDoseWeight).toBeUndefined()
+  expect(workflow.context.coffeeName).toBe("Fixture coffee")
+  const writes = await (await request.get(`${fixture}/__test/requests`)).json()
+  expect(
+    writes.every((write: { path: string }) => write.path === "/api/v1/workflow")
+  ).toBe(true)
+  expect(writes).toHaveLength(3)
+  expect(writes[2].body.context.targetDoseWeight).toBeNull()
+})
+
+test("Help reports the current CSS viewport and updates after resize", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 893, height: 533 })
+  await page.goto("/?page=settings&category=help", { waitUntil: "networkidle" })
+  await expect(
+    page.getByRole("heading", { name: "Screen and viewport", exact: true })
+  ).toBeVisible()
+  const measurements = page
+    .getByText("Layout viewport (CSS pixels)", { exact: true })
+    .locator("..")
+  await expect(measurements).toContainText("893 × 533")
+  await page.setViewportSize({ width: 1024, height: 600 })
+  await expect(measurements).toContainText("1024 × 600")
+  await expect(page.getByText("0.2.2", { exact: true })).toBeVisible()
 })

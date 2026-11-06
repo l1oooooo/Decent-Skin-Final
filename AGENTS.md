@@ -76,9 +76,19 @@ technical decisions, and the design history for previous iterations.
   brewing; scale absence alone must not block recipe editing or utilities.
   The header opens Connections for explicit device selection, never the first
   remembered scale. No automatic discovery or connection retry.
-- Home keeps the footer within the available WebView height. Smaller landscape
-  viewports scroll content panels, without shrinking touch targets or scaling
-  the accepted 1340 × 800 design.
+- Home fits its content without panel scrolling in landscape CSS viewports down
+  to 800 × 480. Compact spacing, chart geometry and 72px rolling rows apply only
+  below the desktop reference size; touch targets remain at least 44px. Do not
+  scale the entire canvas. System and help reports the actual WebView viewport.
+- Daily espresso/steam/hot-water/flush starts and stops belong exclusively to
+  the physical group-head controller. Home, shared-page footers and navigation
+  prompts show non-interactive guidance; no start/stop button or Escape command.
+  Keep utility adjustments and separately authorized advanced procedures.
+- Profile selection applies that profile's temperature and weight target, then
+  its explicit Focus recipe overrides. A missing/zero weight target clears the
+  previous target to zero (off); absent saved dose clears targetDoseWeight with
+  null and displays Not set. Never invent a dose from a title or carry it from
+  another profile. Manual Home dose edits remain current workflow adjustments.
 - Device discovery is explicit and uses `connect=false`. Grinder setting/RPM
   commands require the current device's writable descriptors; recipe Send is
   opt-in and one-shot. Presence heartbeats require real activity, never a timer.

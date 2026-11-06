@@ -192,6 +192,9 @@ export function useSkin(gateway: DecaidGateway) {
           ? temperaturePatch(workflow, value)
           : {
               context: {
+                ...(key === "dose"
+                  ? { extras: { focusDoseSource: "current" } }
+                  : {}),
                 [key === "dose"
                   ? "targetDoseWeight"
                   : key === "yield"
@@ -269,6 +272,12 @@ export function useSkin(gateway: DecaidGateway) {
     stopped: snapshot.stopped,
     paused: !isConnected,
     dose,
+    doseSource: !finite(dose)
+      ? "unset"
+      : (workflow?.context?.extras as Record<string, unknown> | undefined)
+            ?.focusDoseSource === "profile"
+        ? "profile"
+        : "current",
     yieldTarget,
     temperature,
     grind,
@@ -312,8 +321,6 @@ export function useSkin(gateway: DecaidGateway) {
         gateway.updateWorkflow({ context: { grinderSetting: value } })
       ),
     reset: gateway.dismissShot,
-    start: () => perform(() => gateway.command("espresso")),
-    stop: () => perform(() => gateway.command("idle")),
     reconnect: () => gateway.sync(),
     wake: () => perform(() => gateway.command("idle")),
     steamEnabled: (workflow?.steamSettings?.targetTemperature ?? 0) >= 135,
@@ -331,10 +338,6 @@ export function useSkin(gateway: DecaidGateway) {
       utilityChange("hotWaterData", "targetTemperature", value),
     toggleSteam: (enabled: boolean) =>
       utilityChange("steamSettings", "targetTemperature", enabled ? 140 : 0),
-    utility: (name: string) =>
-      perform(() =>
-        gateway.command(operation === name ? "idle" : operations[name])
-      ),
   }
 }
 export type SkinSession = ReturnType<typeof useSkin>

@@ -7,6 +7,8 @@ import { PageMessage } from "./pages"
 import { EditorField, EditorChoice } from "./editor-fields"
 import { SettingInput } from "./settings-controls"
 import { Section, Facts, type Ask } from "./advanced-shared"
+import { useViewport } from "./viewport"
+import skinManifest from "../../public/manifest.json"
 export function HelpPage({
   s,
   h,
@@ -20,6 +22,7 @@ export function HelpPage({
   ask: Ask
   navigate: (r: Route) => void
 }) {
+  const viewport = useViewport()
   const settings = h.values.settings ?? {},
     d = h.drafts.system ?? {},
     feedback = h.drafts.feedback ?? {},
@@ -36,7 +39,7 @@ export function HelpPage({
       <Section title="About and compatibility">
         <Facts
           data={{
-            "Focus skin": "0.2.0",
+            "Focus skin": skinManifest.version,
             "Running Decaid":
               h.values.info?.fullVersion ??
               h.values.info?.version ??
@@ -55,6 +58,23 @@ export function HelpPage({
           Tracking or disabled gateway mode is required for Focus operations;
           choose the mode in native Decaid. This page never changes it
           automatically.
+        </PageMessage>
+      </Section>
+      <Section title="Screen and viewport">
+        <Facts
+          data={{
+            "Layout viewport (CSS pixels)": `${viewport.width} × ${viewport.height}`,
+            "Visible viewport (CSS pixels)": `${Math.round(viewport.visualWidth)} × ${Math.round(viewport.visualHeight)}`,
+            "Device pixel ratio": viewport.dpr,
+            "Viewport zoom": viewport.scale,
+            "Reported screen (CSS pixels)": `${viewport.screenWidth} × ${viewport.screenHeight}`,
+          }}
+        />
+        <PageMessage>
+          Read these values inside Decaid on the tablet, in landscape with the
+          keyboard closed. The layout viewport is the space available to this
+          skin; a Mac browser reports the Mac's viewport instead. Send the
+          layout viewport and device pixel ratio when reporting a fit issue.
         </PageMessage>
       </Section>
       <Section title="System preferences">
@@ -219,8 +239,9 @@ export function HelpPage({
             separately. Set dose, target yield and temperature on Home.
           </li>
           <li>
-            Prepare the machine and cup before starting. Follow the real frame
-            and readings on Focus; Stop remains on the brewing screen.
+            Prepare the machine and cup, then start and stop using the physical
+            group-head controller. Focus shows guidance and live readings; the
+            Home controls adjust settings without starting or stopping.
           </li>
           <li>
             If readings disappear, inspect the machine and reconnect in Decaid.
