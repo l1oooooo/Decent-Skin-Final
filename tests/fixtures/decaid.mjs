@@ -219,7 +219,7 @@ function emit(reason) {
       : { status: "disconnected" }
   )
   send("machine/shotState", event(reason))
-  if (connected) send("machine/snapshot", machine())
+  if (connected && !advancedState.pauseMachine) send("machine/snapshot", machine())
   send("machine/waterLevels", { currentLevel: 75, refillLevel: 10 })
 }
 function merge(a, b) {

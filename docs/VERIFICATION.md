@@ -1,5 +1,60 @@
 # Focus release-candidate verification
 
+## 0.2.5 — one-touch Sleep and live steam temperature
+
+Device status: **update requires tablet acceptance**. The operator reports that
+0.2.4 works, and requested a top-right Sleep button and a read-only actual steam
+temperature. This iteration used installed-source inspection and isolated
+fixtures; no tablet requests or real machine commands were sent.
+
+- Added a 48px top-right moon / Sleep action using the existing
+  `daily.power(true)` path. One tap sends one sleeping request without a
+  confirmation modal. Existing idle, connection, freshness, gateway-mode and
+  pending gates remain; no delayed command, automatic retry or wake was added.
+  The Sleeping UI still requires observed machine state. Failures are visible
+  on Home and shared pages.
+- Replaced the header's target-temperature control with a read-only live
+  `machine.steamTemperature` label. It remains a sensor reading with steam
+  heating disabled. Missing, invalid, stale or disconnected readings show a
+  dash; a local expiry timer clears telemetry without waiting for another
+  update. Celsius/Fahrenheit conversion is display-only. The bottom-left
+  Steam utility menu retains enable, temperature and duration controls.
+- Verified installed Decaid commit `14361a94`: `models/device/machine.dart`
+  serializes `steamTemperature` and defines `MachineState.sleeping`;
+  `services/webserver/de1handler.dart` accepts the sleeping state through its
+  existing PUT route. No new API field or transport path is assumed.
+- `npm run check` passed: TypeScript, lint, **119 gateway tests** and the
+  production build. The 11 added cases verify one-shot sleep, pending and
+  failure handling, no invented success, and rejection while busy, asleep,
+  stale, offline or in full gateway mode. No dependencies were added.
+- **Six focused browser scenarios passed against the final source**: live
+  steam updates while heating is off; stale/missing/disconnected readings and
+  recovery; Celsius/Fahrenheit display; one-touch sleep with no duplicate or
+  reload replay; failed commands on shared pages and active-operation gates;
+  existing steam target controls, profile edit shortcut, viewport layout and
+  version readout. This is focused coverage, not a full-suite rerun.
+- Home framing passed at 1340 × 800, 1340 × 700, 1280 × 720, 1024 × 600,
+  893 × 533 and 800 × 480, including the new 48px Sleep button. Desktop and
+  compact screenshots were visually reviewed. Evidence:
+  `artifacts/check-0.2.5-final-source.log`,
+  `artifacts/e2e-0.2.5-header-final.log` (3 passed, 4.4 minutes),
+  `artifacts/e2e-0.2.5-layout-final.log` (3 passed, 4.4 minutes), and
+  `artifacts/tablet-0.2.5`. The existing local 240-second test / 90-second
+  assertion configuration was used with separate fixture/preview ports.
+- Initial browser failures identified duplicate shared-page notices, corrected
+  by centralizing them in PageShell; a paused-route cleanup race and ambiguous
+  header/utility test selectors were also corrected. Final reruns passed all
+  affected checks. Production request timeouts and command gates were unchanged.
+- `npm run package:skin` and `npm run verify:skin` passed: **11 files / 596,067
+  bytes**, SHA-256
+  `1b030a255bde0c209a38f066c94369f38ca5894a6da4e5f12a01805881e2f1ae`.
+  Root metadata, relative assets, bundled fonts/artwork and fixture exclusion
+  are verified. The existing bundle-size advisory remains. The stable update
+  asset is `decent-focus.zip`.
+
+See the [0.2.5 tablet recheck](TABLET-ACCEPTANCE.md). Actual standby and live
+boiler readings on the installed tablet remain to be confirmed by the operator.
+
 ## 0.2.4 — built-in keypad, persistent adjustments and 18g fallback
 
 Device status: **update requires tablet acceptance**. The operator reported

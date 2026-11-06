@@ -28,6 +28,24 @@ associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
 
+### Recheck after the 0.2.5 update
+
+1. Install **0.2.5**. With the machine idle, tap the top-right moon / Sleep
+   button once. Confirm actual standby and the Sleeping screen, then use the
+   existing Wake machine action when ready. There is no confirmation dialog.
+2. Confirm Sleep is disabled during extraction/utilities, disconnection and
+   pending writes. A failed request must show an error without retrying itself.
+3. Watch the header steam temperature as the boiler heats/cools. It must follow
+   the actual sensor rather than staying at the configured target. Disable steam
+   through the bottom-left menu: the header should still show the cooling boiler's
+   measured temperature. Tapping the header value must not open controls.
+4. Verify Celsius/Fahrenheit display and a dash for unavailable/disconnected
+   readings. Confirm Sleep, Settings and the live values fit the measured tablet
+   viewport with touch targets at least 44px. Steam enable and target controls
+   remain accessible through the bottom-left menu.
+
+These checks require actual device evidence; local fixture results are separate.
+
 ### Recheck after the 0.2.4 update
 
 1. Install **0.2.4** and tap Home dose/yield/temperature/numeric grind and utility

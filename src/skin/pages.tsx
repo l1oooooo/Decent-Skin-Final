@@ -166,6 +166,7 @@ export function PageShell({
               </p>
             )}
           </header>
+          {s.notice && <PageMessage error>{s.notice}</PageMessage>}
           {children}
         </main>
       </div>

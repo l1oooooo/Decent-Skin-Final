@@ -12,7 +12,7 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.4.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.5.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
@@ -28,7 +28,7 @@ then select **Decent Focus**. Future releases retain that asset name; use
 Decaid’s skin update function to install them. Source-code archives and Git
 pushes alone are not compiled skin updates.
 
-Version 0.2.4 uses the physical group-head controller for all daily starts and
+Version 0.2.5 uses the physical group-head controller for all daily starts and
 stops. The footer contains Steam, Hot water and Flush settings, with no
 right-side group-head guidance. Utility cards retain physical-control instructions. No on-screen brew/utility Start or Stop and no Escape stop
 shortcut remain. Advanced maintenance procedures retain their explicit controls.
@@ -57,8 +57,15 @@ keypad, then **Save** or **Cancel**. Digits, decimal point, Backspace and Clear
 work without the tablet's system keyboard; physical keyboard input also works.
 Values are validated before saving; a failed save keeps the draft. Named grinder
 settings still use text entry.
-The header shows the configured steam temperature beside the live brew
-reading; tap it to open Steam settings (quick target range 135–160 °C).
+The header shows the actual live steam temperature beside the brew reading,
+even with steam heating disabled. It is read-only; missing/stale/disconnected
+readings show a dash. Open the bottom-left **Steam** menu to enable steam or
+adjust its target (quick range 135–160 °C).
+
+The top-right moon button puts the machine to **Sleep** with one tap while idle.
+It uses Decaid's standby action, not a mains-power switch or brewing stop.
+It is disabled during operations, pending requests or unavailable connections.
+The Sleeping screen appears only after Decaid reports that state.
 The scale status uses text only. **Edit profile** beside the Home title opens
 the existing stage editor; bundled defaults still require Save as new.
 

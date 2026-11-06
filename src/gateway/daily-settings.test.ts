@@ -189,3 +189,59 @@ describe("daily settings contract", () => {
     expect(calls).toEqual([])
   })
 })
+
+describe("header sleep action", () => {
+  it("sends one sleep request, refreshes state, and does not invent sleeping from an acknowledgement", async () => {
+    const { gateway, state, calls } = setup(() => null)
+    const sync = vi.spyOn(gateway, "sync").mockResolvedValue()
+    await gateway.daily.power(true)
+    expect(calls).toEqual([
+      {
+        path: "/api/v1/machine/state/sleeping",
+        method: "PUT",
+        body: undefined,
+      },
+    ])
+    expect(sync).toHaveBeenCalledOnce()
+    expect(state.machine!.state.state).toBe("idle")
+    expect(gateway.getSnapshot().pending).toBe(false)
+  })
+  it.each([
+    "espresso",
+    "steam",
+    "hotWater",
+    "flush",
+    "heating",
+    "sleeping",
+    "offline",
+    "stale",
+    "full",
+  ])("rejects sleep while %s before sending a command", async (condition) => {
+    const { gateway, state, calls } = setup(() => null)
+    if (condition === "offline") state.connection = "offline"
+    else if (condition === "stale") state.machineReceived = 0
+    else if (condition === "full") state.settings!.gatewayMode = "full"
+    else state.machine!.state.state = condition
+    await expect(gateway.daily.power(true)).rejects.toThrow()
+    expect(calls).toEqual([])
+  })
+  it("keeps a sleep request pending, blocks duplicates and never retries a failed request", async () => {
+    let reject!: () => void
+    const response = new Promise<Response>((resolve) => {
+      reject = () =>
+        resolve(
+          new Response(JSON.stringify({ error: "Sleep rejected" }), {
+            status: 503,
+          })
+        )
+    })
+    const { gateway, calls } = setup(() => response)
+    const first = gateway.daily.power(true)
+    expect(gateway.getSnapshot().pending).toBe(true)
+    await expect(gateway.daily.power(true)).rejects.toThrow("Wait")
+    reject()
+    await expect(first).rejects.toThrow("Sleep rejected")
+    expect(calls).toHaveLength(1)
+    expect(gateway.getSnapshot().pending).toBe(false)
+  })
+})

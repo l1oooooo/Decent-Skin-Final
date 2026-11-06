@@ -16,7 +16,7 @@ test.beforeEach(async ({ request }) => {
   await request.post(`${fixture}/__test/reset`)
 })
 
-test("Home has quiet footer, text-only scale, steam target and profile edit shortcut", async ({
+test("Home has quiet footer, text-only scale, live steam reading and profile edit shortcut", async ({
   page,
   request,
 }) => {
@@ -29,9 +29,11 @@ test("Home has quiet footer, text-only scale, steam target and profile edit shor
   await expect(
     page.getByRole("button", { name: "Connect scale" }).locator("svg")
   ).toHaveCount(0)
-  const steam = page.getByRole("button", { name: "Steam temperature settings" })
-  await expect(steam).toContainText("140°C")
-  await steam.click()
+  const steam = page
+    .getByRole("banner")
+    .getByLabel("Steam temperature", { exact: true })
+  await expect(steam).toHaveText("Steam 50°C")
+  await page.getByRole("button", { name: "Steam", exact: true }).click()
   await page
     .getByRole("button", { name: "Edit steam temperature", exact: true })
     .click()
@@ -41,7 +43,7 @@ test("Home has quiet footer, text-only scale, steam target and profile edit shor
   })
   await enter(dialog, "145")
   await dialog.getByRole("button", { name: "Save", exact: true }).click()
-  await expect(steam).toContainText("145°C")
+  await expect(steam).toHaveText("Steam 50°C")
   await page.getByRole("button", { name: "Close utility card" }).click()
   await page.getByRole("button", { name: "Edit profile", exact: true }).click()
   await expect(page).toHaveURL(/page=edit.*profile=profile%3A0/)
@@ -50,7 +52,7 @@ test("Home has quiet footer, text-only scale, steam target and profile edit shor
   )
   await page.setViewportSize({ width: 800, height: 480 })
   await expect(
-    page.getByRole("button", { name: "Steam temperature settings" })
+    page.getByRole("banner").getByLabel("Steam temperature", { exact: true })
   ).toBeInViewport({ ratio: 1 })
   await expect(
     page.getByRole("button", { name: "Settings", exact: true }).first()

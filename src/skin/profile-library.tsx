@@ -228,7 +228,6 @@ export function ProfileLibrary({
           Favorites
         </Action>
       </div>
-      {s.notice && <PageMessage error>{s.notice}</PageMessage>}
       {s.libraryLoading || s.libraryError ? (
         <>
           <PageMessage error={!!s.libraryError}>
@@ -388,9 +387,7 @@ export function ProfileDetail({
           Recipe preferences
         </Action>
       </div>
-      {(error || s.notice) && (
-        <PageMessage error>{error || s.notice}</PageMessage>
-      )}
+      {error && <PageMessage error>{error}</PageMessage>}
       <dl className="my-6 grid grid-cols-[120px_1fr] gap-x-5 gap-y-3 border-y border-border py-5 text-sm">
         <dt className="text-muted-foreground">Author</dt>
         <dd>{p.by || "Not provided"}</dd>

@@ -25,6 +25,16 @@ const operations: Record<string, MachineCommand> = {
 }
 export function useSkin(gateway: DecaidGateway) {
   const snapshot = useSyncExternalStore(gateway.subscribe, gateway.getSnapshot)
+  const [expiredMachineReading, setExpiredMachineReading] = useState(0)
+  useEffect(() => {
+    const received = snapshot.machineReceived
+    if (!received) return
+    const timer = setTimeout(
+      () => setExpiredMachineReading(received),
+      Math.max(0, received + 5001 - Date.now())
+    )
+    return () => clearTimeout(timer)
+  }, [snapshot.machineReceived])
   const [settings, setSettings] = useState<string | null>(null)
   const [modal, setModal] = useState<string | null>(null)
   const [notice, setNotice] = useState("")
@@ -324,6 +334,14 @@ export function useSkin(gateway: DecaidGateway) {
     reset: gateway.dismissShot,
     reconnect: () => gateway.sync(),
     wake: () => perform(() => gateway.command("idle")),
+    sleep: () => perform(() => gateway.daily.power(true)),
+    liveSteamTemperature:
+      isConnected &&
+      snapshot.machineReceived > 0 &&
+      snapshot.machineReceived !== expiredMachineReading &&
+      finite(machine?.steamTemperature)
+        ? machine.steamTemperature
+        : null,
     steamEnabled: (workflow?.steamSettings?.targetTemperature ?? 0) >= 135,
     steamTemperature: workflow?.steamSettings?.targetTemperature ?? NaN,
     setSteamTemperature: (value: number) =>

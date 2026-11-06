@@ -38,6 +38,26 @@ are absent, preserving coffee/equipment context and the guarded read/write path.
 It never infers a dose from a profile title. Temperature comes from the actual
 profile frames unless an explicit Focus recipe override is saved.
 
+## Header feedback update (0.2.5)
+
+The header reads `MachineSnapshot.steamTemperature` from the existing machine
+snapshot stream, rather than `workflow.steamSettings.targetTemperature`.
+Installed commit `14361a94` defines and serializes that sensor field in
+`lib/src/models/device/machine.dart`. It stays visible with steam heating off;
+non-finite, missing, stale (over five seconds) or disconnected values show a
+dash. Display preferences convert Celsius to Fahrenheit only for presentation.
+The header has no steam popover; bottom-left Steam retains its existing controls.
+
+The explicit top-right Sleep action reuses `daily.power(true)`, sending one
+`PUT /api/v1/machine/state/sleeping`. The installed `de1handler.dart` state route
+accepts the `MachineState.sleeping` enum and forwards it to the machine controller.
+Existing idle, freshness, connection, gateway-mode and pending guards remain.
+No confirmation dialog, automatic retry, delayed sleep or command replay is added.
+The acknowledgement is not treated as observed sleep; the existing machine-state
+UI and Wake machine action remain authoritative. Failed commands are visible on
+Home and shared pages. This code/API verification does not establish hardware
+acceptance and sent no commands to the tablet.
+
 ## Tablet feedback update (0.2.3)
 
 Home and shared footers no longer show right-side group-head guidance. Utility

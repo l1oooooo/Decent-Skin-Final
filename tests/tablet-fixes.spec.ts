@@ -144,6 +144,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       "Browse profiles",
       "Increase temperature",
       "Decrease dose",
+      "Sleep machine",
     ]) {
       const control = page.getByRole("button", { name: label, exact: true })
       await expect(control).toBeInViewport({ ratio: 1 })
@@ -174,6 +175,9 @@ test("landscape Home fits every panel and touch target without scrolling", async
         height: document.documentElement.scrollHeight,
       }))
     ).toEqual(viewport)
+    await expect(
+      page.getByRole("banner").getByLabel("Steam temperature", { exact: true })
+    ).toBeInViewport({ ratio: 1 })
     const lastFavorite = await page
       .getByRole("group", { name: "Favorite profiles" })
       .getByRole("button")
@@ -186,7 +190,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       browse!.y
     )
     await page.screenshot({
-      path: `artifacts/tablet-0.2.4/ready-${viewport.width}x${viewport.height}.png`,
+      path: `artifacts/tablet-0.2.5/ready-${viewport.width}x${viewport.height}.png`,
     })
   }
   await expect(
@@ -220,7 +224,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.4/heating-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.5/heating-800x480.png" })
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 12 },
   })
@@ -241,7 +245,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
         )
       )
   ).toBe(true)
-  await page.screenshot({ path: "artifacts/tablet-0.2.4/brewing-800x480.png" })
+  await page.screenshot({ path: "artifacts/tablet-0.2.5/brewing-800x480.png" })
   await page.keyboard.press("Escape")
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
@@ -256,7 +260,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
   await page.screenshot({
-    path: "artifacts/tablet-0.2.4/completed-800x480.png",
+    path: "artifacts/tablet-0.2.5/completed-800x480.png",
   })
 })
 
@@ -337,5 +341,5 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.2.4", { exact: true })).toBeVisible()
+  await expect(page.getByText("0.2.5", { exact: true })).toBeVisible()
 })

@@ -1,4 +1,4 @@
-import { useRef, type RefObject } from "react"
+import type { RefObject } from "react"
 import { format, type SkinSession } from "./use-skin"
 import {
   ChevronUp,
@@ -8,6 +8,7 @@ import {
   History,
   Settings,
   Library,
+  Moon,
   Thermometer,
   Waves,
 } from "lucide-react"
@@ -40,14 +41,12 @@ export function RevisionHeader({
   onHistory: () => void
   onConnections: () => void
 }) {
-  const container = useRef<HTMLDivElement>(null)
   return (
     <header className="flex h-[72px] shrink-0 items-center border-b border-border pr-7">
       <div className="w-[220px] shrink-0 px-7">
         <Wordmark />
       </div>
       <div
-        ref={container}
         aria-label="Machine status"
         className="ml-auto flex items-center gap-6"
       >
@@ -58,30 +57,13 @@ export function RevisionHeader({
             ? `${format(s.displayTemperature(s.shot.temperature))}°${s.temperatureUnit}`
             : `—°${s.temperatureUnit}`}
         </span>
-        <Popover
-          open={s.settings === "Header steam"}
-          onOpenChange={(open) => s.setSettings(open ? "Header steam" : null)}
+        <span
+          aria-label="Steam temperature"
+          className="text-[12px] whitespace-nowrap text-muted-foreground tabular-nums"
         >
-          <PopoverTrigger
-            aria-label="Steam temperature settings"
-            render={
-              <Action
-                variant="ghost"
-                className="!px-2 text-[12px] text-muted-foreground tabular-nums"
-              />
-            }
-          >
-            Steam{" "}
-            {s.connected && Number.isFinite(s.steamTemperature)
-              ? s.steamEnabled
-                ? `${format(s.displayTemperature(s.steamTemperature), 0)}°${s.temperatureUnit}`
-                : "Off"
-              : "—"}
-          </PopoverTrigger>
-          <PopoverContent container={container} aria-label="Steam settings">
-            <UtilitySettings s={{ ...s, settings: "Steam" }} />
-          </PopoverContent>
-        </Popover>
+          Steam {format(s.displayTemperature(s.liveSteamTemperature), 0)}°
+          {s.temperatureUnit}
+        </span>
         <span
           aria-label="Water level"
           className="inline-flex items-center gap-2 text-[12px] text-muted-foreground tabular-nums"
@@ -132,6 +114,16 @@ export function RevisionHeader({
         onClick={onSettings}
       >
         <Settings size={16} aria-hidden="true" />
+      </Action>
+      <Action
+        variant="ghost"
+        aria-label="Sleep machine"
+        title={s.block || "Sleep machine"}
+        className="!size-12 shrink-0 !px-0 text-muted-foreground"
+        disabled={!!s.block}
+        onClick={() => void s.sleep()}
+      >
+        <Moon size={16} aria-hidden="true" />
       </Action>
     </header>
   )

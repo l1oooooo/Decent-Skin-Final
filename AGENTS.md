@@ -85,6 +85,14 @@ technical decisions, and the design history for previous iterations.
   right-side guidance; utility cards and navigation prompts retain non-interactive
   instructions. No start/stop button or Escape command.
   Keep utility adjustments and separately authorized advanced procedures.
+  The top-right Sleep button is an explicitly requested one-tap standby action,
+  using the existing idle/fresh/connected/pending gates. It never acts as a
+  shot/utility stop, queues a request or retries automatically. Confirm sleeping
+  from observed machine state, not the request acknowledgement.
+- Header steam is read-only live `machine.steamTemperature`, separate from the
+  workflow target. Show the measured value even with steam heating disabled;
+  unavailable, stale or disconnected readings show a dash. Steam adjustment
+  and enable controls remain in the bottom-left utility menu.
 - Profile selection applies that profile's temperature and weight target, then
   its explicit Focus recipe overrides. A missing/zero weight target clears the
   previous target to zero (off). Dose precedence is Focus preference, profile
