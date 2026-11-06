@@ -119,8 +119,11 @@ export function PageShell({
         s={s}
         onSettings={() => navigate({ page: "settings" })}
         onHistory={() => navigate({ page: "history" })}
+        onConnections={() =>
+          navigate({ page: "settings", category: "connections" })
+        }
       />
-      <div className="flex min-h-0 flex-1">
+      <div className="focus-body flex min-h-0 flex-1">
         <nav
           aria-label="Skin pages"
           className="w-[220px] shrink-0 overflow-y-auto border-r border-border bg-[var(--recess)] p-4"

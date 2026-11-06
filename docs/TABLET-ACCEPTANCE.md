@@ -21,12 +21,46 @@ before building. Do not remove someone else's development configuration;
 prepare the release in a clean checkout when necessary. The installed skin
 uses its serving hostname on API port 8080. It needs no Node process on Android.
 
-The archive is `artifacts/decent-skin-codex-0.2.0.zip`. Its inspection report is
+The archive is `artifacts/decent-skin-codex-0.2.1.zip`. Its inspection report is
 `artifacts/skin-release.json`: SHA-256, byte count, file inventory, manifest,
 source commit and tracked changes. Re-run verification after committing to
 associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
+
+### Recheck after the 0.2.1 update
+
+The operator reported that 0.2.0 overflowed the landscape Decaid WebView,
+kept a scale warning open, and showed favorites/Focus-preference errors.
+Mac read-only checks confirmed the installed release and live API behavior;
+they did not measure the tablet WebView or verify physical scale reconnection.
+
+Update **Decent Focus** through native Decaid skin management, using repository
+`l1oooooo/Decent-Skin-Final` and asset `decent-focus.zip`. Confirm version 0.2.1,
+then reopen the skin. Retain the previous skin for recovery.
+
+1. In landscape inside Decaid, verify Steam, Hot water, Flush and Brew / Stop
+   stay visible without scrolling the whole page. On a shorter viewport, scroll
+   the profile, chart and settings panels independently; check all five favorites,
+   Browse profiles and the temperature adjustment remain reachable without overlap.
+2. Open Manage favorites and Display and presence. Confirm the first-install
+   errors are gone. Existing empty positions and saved assignments must remain.
+   Save one deliberate favorite/preference change, reload, and verify persistence.
+3. With the scale disconnected, dismiss its warning. It should stay dismissed
+   through repeated telemetry; a new disconnect incident may show a new warning.
+   Recipe adjustments and utility settings should remain available while idle.
+4. Tap **Connect scale**, choose the Bookoo Mini Scale in Connections, and tap
+   its **Connect** button. Require a confirmed connection and changing live weight;
+   a failure must remain an error, not a success indication. Scanning is explicit.
+5. To test without a scale, turn off **Require a scale before brewing** under
+   **Settings → Brew and utilities**, then save **Decaid preferences**. This is
+   an operator choice, never an automatic skin change. Confirm Brew is available
+   when the machine is otherwise ready. Weight-based stopping needs a scale;
+   supervise the extraction and use manual stop or the machine's other limits.
+6. In a supervised session, verify both manual Stop without a scale and
+   stop-at-weight with the connected scale. Recheck suspend/resume and that
+   reconnecting never replays a start. Record actual viewport/WebView details
+   and outcomes below; local fixture tests are not hardware acceptance.
 
 The verifier compares every archived byte with `dist`, checks ZIP integrity,
 root metadata, bundled Geist/artwork, relative entry/CSS assets, and rejects

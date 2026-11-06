@@ -9,6 +9,7 @@ import Focus from "./focus"
 export default function FocusScreen({
   s,
   onSettings,
+  onConnections,
   onHistory,
   onBrowse,
   onAssign,
@@ -16,6 +17,7 @@ export default function FocusScreen({
   s: SkinSession
   onHistory: () => void
   onSettings: () => void
+  onConnections: () => void
   onBrowse: () => void
   onAssign: (slot: number) => void
 }) {
@@ -27,14 +29,19 @@ export default function FocusScreen({
     s.phase === "heating" ||
     s.phase === "error" ||
     !!s.notice ||
-    (s.block && !s.active && !s.operation)
+    ((s.block || s.brewBlock) && !s.active && !s.operation)
   return (
     <div
       ref={surface}
       className="focus-skin flex h-full flex-col bg-background"
     >
-      <RevisionHeader s={s} onSettings={onSettings} onHistory={onHistory} />
-      <div className="flex min-h-0 flex-1">
+      <RevisionHeader
+        s={s}
+        onSettings={onSettings}
+        onHistory={onHistory}
+        onConnections={onConnections}
+      />
+      <div className="focus-body flex min-h-0 flex-1">
         <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="flex min-w-0 flex-1 flex-col px-7 py-6">
           <div className="min-h-[88px]">

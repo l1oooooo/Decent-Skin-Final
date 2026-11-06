@@ -227,6 +227,65 @@ describe("Decaid integration", () => {
     expect(gateway.getSnapshot().scale).toBeNull()
     expect(gateway.getSnapshot().scaleConnected).toBe(false)
   })
+  it("keeps scale errors dismissible without unlocking machine errors or replaying notices", async () => {
+    await connect()
+    const error = {
+      kind: "scaleDisconnected",
+      timestamp: "2026-11-06T12:00:00Z",
+      deviceId: "scale",
+      message: "Scale disconnected unexpectedly.",
+    }
+    const status = {
+      devices: devices.map((d) =>
+        d.type === "scale" ? { ...d, state: "disconnected" } : d
+      ),
+      connectionStatus: { error },
+    }
+    gateway.receive("devices", status)
+    expect(commandBlock(gateway.getSnapshot())).toBe("")
+    expect(gateway.getSnapshot().deviceNotice).toBe(error.message)
+    gateway.clearMessage()
+    gateway.receive("devices", status)
+    expect(gateway.getSnapshot().deviceNotice).toBe("")
+    gateway.receive("devices", {
+      ...status,
+      connectionStatus: {
+        error: { ...error, timestamp: "2026-11-06T12:01:00Z" },
+      },
+    })
+    expect(gateway.getSnapshot().deviceNotice).toBe(error.message)
+    gateway.receive("devices", {
+      ...status,
+      connectionStatus: {
+        error: {
+          ...error,
+          kind: "profileUploadFailed",
+          message: "Profile upload failed",
+        },
+      },
+    })
+    gateway.clearMessage()
+    expect(commandBlock(gateway.getSnapshot())).toBe("Profile upload failed")
+  })
+  it("permits scale-free brewing only when Decaid policy permits it", async () => {
+    await connect()
+    gateway.receive("devices", {
+      devices: devices.filter((d) => d.type !== "scale"),
+      connectionStatus: {
+        error: { kind: "scaleConnectFailed", message: "Scale unavailable" },
+      },
+    })
+    gateway.acceptSettings({ gatewayMode: "tracking", blockOnNoScale: true })
+    await gateway.updateWorkflow({ context: { targetDoseWeight: 19 } })
+    await expect(gateway.command("espresso")).rejects.toThrow(
+      "Connect the scale"
+    )
+    gateway.acceptSettings({ gatewayMode: "tracking", blockOnNoScale: false })
+    await gateway.command("espresso")
+    expect(
+      writes.filter((w) => w.path === "/api/v1/machine/state/espresso")
+    ).toHaveLength(1)
+  })
   it("allows an explicit stop even with an offline stream", async () => {
     await connect()
     sockets[0].close()

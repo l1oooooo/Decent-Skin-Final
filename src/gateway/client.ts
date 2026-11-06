@@ -40,6 +40,8 @@ export const initialSnapshot = (): GatewaySnapshot => ({
   observedShot: 0,
   devices: [],
   deviceError: "",
+  deviceErrorKind: "",
+  deviceNotice: "",
   machine: null,
   machineReceived: 0,
   scale: null,
@@ -105,6 +107,8 @@ export class DecaidGateway {
   readonly shots = new ShotHistoryGateway(this)
   private favoritesRevision = 0
   private favoritesSaving = false
+  private deviceErrorKey = ""
+  private dismissedDeviceError = ""
   private channels = new Set<string>()
   private observedIdle = false
   private navigationState: string | null = null
@@ -142,7 +146,10 @@ export class DecaidGateway {
     this.notification = undefined
     this.listeners.forEach((fn) => fn())
   }
-  clearMessage = () => this.emit({ message: "" })
+  clearMessage = () => {
+    this.dismissedDeviceError = this.deviceErrorKey
+    this.emit({ message: "", deviceNotice: "" })
+  }
   dismissShot = () => {
     if (!pouring(this.snapshot.machine)) {
       this.shotDismissed = true
@@ -299,6 +306,25 @@ export class DecaidGateway {
       clearTimeout(timeout)
       parent.removeEventListener("abort", abort)
     }
+  }
+  async readStored(key: string): Promise<unknown | undefined> {
+    const namespace = "/api/v1/store/decent-skin-codex"
+    let value: unknown
+    try {
+      value = await this.request(`${namespace}/${encodeURIComponent(key)}`)
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("404:"))
+        return undefined
+      throw error
+    }
+    if (value !== null) return value
+    // The installed Decaid returns 200/null for an absent key.
+    const keys = await this.request(namespace)
+    if (!Array.isArray(keys) || keys.some((item) => typeof item !== "string"))
+      throw new Error(
+        "Could not verify stored preferences. Retry reading them."
+      )
+    return keys.includes(key) ? value : undefined
   }
   start = () => {
     if (this.active) return
@@ -540,6 +566,20 @@ export class DecaidGateway {
         ? object(data.connectionStatus)
         : null
       const error = status?.error ? object(status.error) : null
+      const errorMessage = error
+        ? String(error.message ?? "Device connection needs attention")
+        : ""
+      if (status) {
+        this.deviceErrorKey = error
+          ? JSON.stringify([
+              error.kind,
+              error.deviceId,
+              error.timestamp,
+              errorMessage,
+            ])
+          : ""
+        if (!error) this.dismissedDeviceError = ""
+      }
       this.emit({
         devices,
         scaleConnected,
@@ -547,9 +587,12 @@ export class DecaidGateway {
         ...(scaleConnected ? {} : { scale: null }),
         ...(status
           ? {
-              deviceError: error
-                ? String(error.message ?? "Device connection needs attention")
-                : "",
+              deviceError: errorMessage,
+              deviceErrorKind: String(error?.kind ?? ""),
+              deviceNotice:
+                this.deviceErrorKey === this.dismissedDeviceError
+                  ? ""
+                  : errorMessage,
             }
           : {}),
         ...(!isConnected
@@ -735,21 +778,15 @@ export class DecaidGateway {
     if (revision !== this.libraryRevision) return
     this.emit({ profiles })
     try {
-      let normalized
-      try {
-        normalized = normalizeFavorites(
-          await this.request("/api/v1/store/decent-skin-codex/favorites")
-        )
-      } catch (error) {
-        if (!(error instanceof Error && error.message.startsWith("404:")))
-          throw error
-        normalized = normalizeFavorites(
-          profiles
-            .filter((p) => !p.visibility || p.visibility === "visible")
-            .slice(0, 5)
-            .map((p) => p.id)
-        )
-      }
+      const stored = await this.readStored("favorites")
+      const normalized = normalizeFavorites(
+        stored === undefined
+          ? profiles
+              .filter((p) => !p.visibility || p.visibility === "visible")
+              .slice(0, 5)
+              .map((p) => p.id)
+          : stored
+      )
       if (
         revision === this.libraryRevision &&
         favoritesRevision === this.favoritesRevision &&

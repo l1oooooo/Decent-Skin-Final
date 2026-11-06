@@ -1,5 +1,68 @@
 # Focus release-candidate verification
 
+## 0.2.1 — tablet fixes, November 6, 2026
+
+Device status: **update requires tablet acceptance**. Mac read-only checks of
+0.2.0 verified installed assets, API reads and telemetry against Decaid
+0.9.1+3027 (`14361a94`). The operator reported overflow inside the landscape
+Decaid WebView and a persistent scale-disconnected warning. The actual tablet
+CSS viewport and physical Bookoo reconnection were not measured or tested here.
+
+- The old 1000 px minimum width / 680 px minimum height could exceed the actual
+  WebView. Home now uses the available viewport and retains its action footer;
+  short landscape screens scroll content panels. Touch controls retain their
+  sizes, and popovers stay within available height. Small-screen rules are
+  isolated from the locked reference size.
+- Connection-error notices are separate from command gates. Only the confirmed
+  `scaleDisconnected` and `scaleConnectFailed` kinds cease to block unrelated
+  operations. Decaid's `blockOnNoScale` still gates espresso; no setting is
+  changed automatically. Dismissal tracks the error's identity across replay,
+  while a new incident can reappear. Machine/profile-upload failures remain
+  blocking, even after notice dismissal. Mid-shot scale-loss guidance remains.
+- **Connect scale** opens Connections for explicit device selection. That path
+  submits the selected ID, requires a confirmed outcome and refreshes inventory;
+  it never chooses the first remembered scale or silently treats a failure as
+  success. No physical connection command was sent during development.
+- Installed Decaid returns `200/null` for missing KV keys. Favorites and Focus
+  preferences now confirm absence against the namespace key list before using
+  suggestions/defaults. Stored null, malformed responses, failed reads, empty
+  favorites and unavailable IDs do not silently become new assignments.
+- `npm run check` passes TypeScript, ESLint, **84 gateway tests** and the static
+  build. The existing 500 kB bundle advisory remains. No dependency was added.
+- At 1340 × 800, the final-build locked Focus screenshot has **zero changed RGB
+  pixels** against `artifacts/phase-2/home-before.png` in both the Home body
+  `(0,72)–(1340,704)` and footer `(0,704)–(1340,800)`.
+  Evidence: `artifacts/tablet-acceptance/focus-comparison-0.2.1.json`.
+- Final tablet-specific/production-asset run: **4 passed (4.4 minutes)**. It
+  covers first-install defaults without writes, deliberately empty favorites,
+  dismiss/replay behavior, explicit selected-device connection, optional-scale
+  brewing, and Ready/Brewing controls at 1340 × 800, 1024 × 600, 893 × 533 and
+  800 × 480. All footer touch targets remain at least 44 px, the document does
+  not overflow, favorite/Browse controls do not overlap, and the utility popup
+  fits the smallest viewport. Production assets also load below a nested path
+  with the API blocked and no fallback readings. Captures were visually reviewed.
+  Evidence: `artifacts/tablet-final-fixes` and `artifacts/tablet-acceptance`.
+- All six existing Home scenarios passed in an earlier focused run, and the
+  final-build locked-layout, utility, empty-workflow and mid-shot cases also
+  passed. The shared-pages navigation case passed separately. A broader sweep
+  was interrupted after startup timeouts and a calibration read-back hit the
+  stale-reading guard. Do not count interrupted runs as acceptance or claim a
+  clean complete suite. The three serial recovery cases subsequently passed (**3 passed, 2.9 minutes**):
+  sensor/flow calibration, real brewing stages/completion, and disconnect/error/
+  sequencing gates. This diagnostic run used a 90-second test assertion allowance
+  and a 240-second test timeout in an ignored local config; production request
+  timeouts, freshness limits and command gates were not changed. Evidence:
+  `artifacts/tablet-serial-recovery`. There is no claim of a single clean full-suite run.
+- `npm run package:skin` passes. The verified archive has **11 files**, is
+  **593,844 bytes**, and has SHA-256
+  `ad1d28429cbe8895d6030aa9bb0c0a2510abe63d2849c7394356f84929947dd6`.
+  It contains the production static build, bundled fonts/artwork, root metadata
+  and relative assets; no fixture endpoint or test code is packaged.
+
+See [TABLET-ACCEPTANCE.md](TABLET-ACCEPTANCE.md) for the focused 0.2.1 recheck:
+landscape framing, preference persistence, warning dismissal, Bookoo connection,
+optional-scale policy, physical manual stop / stop-at-weight and resume.
+
 ## Phase 9 — local release preparation, November 5, 2026
 
 Device status: **not accepted**. No tablet, machine, account or external service

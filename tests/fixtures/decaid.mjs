@@ -81,6 +81,7 @@ let workflow,
   connected,
   mode,
   error,
+  connectionError,
   shotId,
   started,
   commandLog,
@@ -115,6 +116,7 @@ function reset() {
   connected = true
   mode = "tracking"
   error = null
+  connectionError = null
   shotId = null
   started = false
   commandLog = []
@@ -203,7 +205,7 @@ function emit(reason) {
   send("devices", {
     devices: devices(),
     scanning: false,
-    connectionStatus: { phase: "ready", error: null },
+    connectionStatus: { phase: "ready", error: connectionError },
   })
   send(
     "scale/snapshot",
@@ -261,6 +263,7 @@ const server = createServer(async (req, res) => {
     if ("grinder" in data) grinderConnected = data.grinder
     if ("failPath" in data) failPath = data.failPath
     error = data.error ?? null
+    if ("connectionError" in data) connectionError = data.connectionError
     if ("favorites" in data) favorites = data.favorites
     if (data.profiles) library = data.profiles
     if (data.recipeStore) recipeStore = data.recipeStore
@@ -356,9 +359,12 @@ const server = createServer(async (req, res) => {
     if(req.method === "POST") Object.assign(daily.settings,data)
     return reply({ ...daily.settings,gatewayMode:mode })
   }
+  if (url.pathname === "/api/v1/store/decent-skin-codex") {
+    return reply([...Object.keys(recipeStore), ...(favorites === undefined ? [] : ["favorites"]), ...(preferences === undefined ? [] : ["preferences"])])
+  }
   if (url.pathname === "/api/v1/store/decent-skin-codex/preferences") {
     if(req.method === "POST") { preferences=data;return reply(null,204) }
-    return preferences === undefined ? reply({error:"Not found"},404) : reply(preferences)
+    return preferences === undefined ? reply(null) : reply(preferences)
   }
   const dailyPaths={"/api/v1/machine/settings":"machine","/api/v1/machine/settings/advanced":"advanced","/api/v1/display":"display","/api/v1/presence/settings":"presence","/api/v1/machine/info":"info"}
   if(dailyPaths[url.pathname]) {
@@ -468,7 +474,7 @@ const server = createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/api/v1/store/")) {
     if (req.method === "POST") { favorites = data; res.writeHead(204).end(); return }
-    return favorites === undefined ? reply({ error: "Not found" }, 404) : reply(favorites)
+    return favorites === undefined ? reply(null) : reply(favorites)
   }
   if (url.pathname === "/api/v1/machine/state") return reply(machine())
   if (url.pathname.startsWith("/api/v1/machine/state/")) {
@@ -485,6 +491,8 @@ const server = createServer(async (req, res) => {
     return reply({ ok: true })
   }
   if (url.pathname === "/api/v1/devices/connect") {
+    if (data.deviceId !== "scale-fixture") return reply({error:"Wrong device"},400)
+    connectionError = null
     scale = true
     emit()
     return reply({ outcome: "connected", state: "connected" })

@@ -12,9 +12,30 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.0.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.1.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
+
+## Install and update from GitHub
+
+In native Decaid skin management, choose **Install from GitHub Release**.
+Use repository `l1oooooo/Decent-Skin-Final` and asset name `decent-focus.zip`,
+then select **Decent Focus**. Future releases retain that asset name; use
+Decaid’s skin update function to install them. Source-code archives and Git
+pushes alone are not compiled skin updates.
+
+Version 0.2.1 fixes first-install favorites/Focus preferences and scale-error
+handling. **Connect scale** opens Connections so you can choose the intended
+device; it does not automatically scan or connect. Brewing without a scale is
+supported when **Settings → Brew and utilities → Require a scale before
+brewing** is off. Recipe editing and utilities are independent of that policy.
+Without a scale, weight-based stopping is unavailable. The skin never changes
+this Decaid policy automatically.
+
+The Home footer stays within the available WebView height. Shorter landscape
+screens scroll content panels while keeping Steam, Hot water, Flush and Brew /
+Stop reachable. The accepted 1340 × 800 framing is retained without scaling
+fonts or touch controls. Actual tablet acceptance remains pending.
 
 ## Integration
 
@@ -22,7 +43,7 @@ The adapter is verified against the published contract at installed Decaid **0.9
 
 Decaid must own shot sequencing, stop-at-weight and history. Use **tracking** mode (or the native managed `disabled` gateway mode). The skin blocks new operations in full gateway mode, where gateway-owned sequencing is not assured. It never changes gateway mode automatically. Stop remains an explicit, unreplayed request.
 
-The five favorite positions use a nullable ID array in Decaid's `decent-skin-codex/favorites` KV value. Only a missing-key 404 suggests the first five visible profiles. Saved empty positions and unavailable IDs remain in place. Use **Browse profiles → Manage favorites** to replace, swap, reorder or clear positions, then Save. Loading a library profile changes the workflow independently. Failed saves retain both the last acknowledged rail and the editor draft.
+The five favorite positions use a nullable ID array in Decaid's `decent-skin-codex/favorites` KV value. Only confirmed key absence suggests the first five visible profiles; Decaid’s 200/null response is checked against the namespace key list. Saved empty positions and unavailable IDs remain in place. Use **Browse profiles → Manage favorites** to replace, swap, reorder or clear positions, then Save. Loading a library profile changes the workflow independently. Failed saves retain both the last acknowledged rail and the editor draft.
 
 **Settings** sits beside History. Static query routes support direct entry, reload and browser Back: `?page=settings`, `?page=library`, `?page=favorites`, and `?page=profile&profile=<encoded ID>`. All pages share one session. A newly observed machine shot start returns to Focus, closes overlays and retains settings and favorite drafts and staged imports; return to Manage favorites or Profile library to recover them. Ordinary navigation away from that editor prompts before discarding changes. Reload/unload prompts for unsaved changes where the browser supports it; drafts do not persist across a completed reload.
 
@@ -36,7 +57,7 @@ The [skin completion roadmap](docs/SKIN-ROADMAP.md) records the planned screens,
 
 Gateway unit tests cover command gating, malformed data, workflow preservation, failed writes, sequencing, scale loss and stale samples. Browser tests build the same app against an isolated local API fixture on port 18081. The fixture does not forward requests and is not packaged in the skin. Run `npm run check` or `npm run build` before the browser suite: its release smoke test also reads `dist/`, serves it under a nested skin path, and blocks all API/WebSocket traffic before loading it.
 
-Desktop validation does **not** establish Samsung WebView or machine acceptance. The tablet reported gateway `http://192.168.50.13:8080`, but it was unreachable from the development computer. Installation, actual CSS viewport, background/resume, physical group-head operation, stop-at-weight and device behavior still need on-tablet verification. Do not describe this release candidate as hardware verified.
+Desktop validation does **not** establish Samsung WebView or machine acceptance. Read-only tablet checks on November 6 confirmed the installed assets, REST reads, telemetry streams and desktop browser navigation. Actual tablet CSS viewport, background/resume, physical group-head operation, stop-at-weight and device behavior still need on-tablet verification. Do not describe this release candidate as hardware verified.
 
 ## Source layout
 

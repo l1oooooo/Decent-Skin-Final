@@ -255,6 +255,10 @@ export function useSkin(gateway: DecaidGateway) {
     locked: !!block || !rawProfile,
     profileLocked: !!block,
     block,
+    brewBlock:
+      snapshot.settings?.blockOnNoScale && !snapshot.scaleConnected
+        ? "Decaid requires a scale. Connect one, or turn off Require a scale before brewing in Settings → Brew and utilities."
+        : "",
     phase,
     status,
     shot,
@@ -292,7 +296,7 @@ export function useSkin(gateway: DecaidGateway) {
         ? `Low water · ${snapshot.water.toFixed(0)} mm. Refill the tank.`
         : "") ||
       snapshot.message ||
-      snapshot.deviceError ||
+      snapshot.deviceNotice ||
       (snapshot.scaleLost
         ? "Scale disconnected during this shot. Stop-at-weight is unavailable; stop the extraction manually."
         : ""),
@@ -310,17 +314,6 @@ export function useSkin(gateway: DecaidGateway) {
     reset: gateway.dismissShot,
     start: () => perform(() => gateway.command("espresso")),
     stop: () => perform(() => gateway.command("idle")),
-    retryScale: () =>
-      perform(async () => {
-        const device = snapshot.devices.find((d) => d.type === "scale")
-        if (!device)
-          throw new Error("Pair a scale in Decaid, then reconnect here.")
-        await gateway.request(
-          `/api/v1/devices/connect?deviceId=${encodeURIComponent(device.id)}`,
-          "PUT"
-        )
-        await gateway.sync()
-      }),
     reconnect: () => gateway.sync(),
     wake: () => perform(() => gateway.command("idle")),
     steamEnabled: (workflow?.steamSettings?.targetTemperature ?? 0) >= 135,

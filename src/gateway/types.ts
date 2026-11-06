@@ -114,6 +114,8 @@ export interface GatewaySnapshot {
   observedShot: number
   devices: Device[]
   deviceError: string
+  deviceErrorKind: string
+  deviceNotice: string
   machine: MachineSnapshot | null
   machineReceived: number
   scale: { weight: number; timestamp: string } | null

@@ -56,6 +56,25 @@ function setup(
   return { gateway, state, calls }
 }
 describe("daily settings contract", () => {
+  it("defaults absent 200/null preferences but rejects stored null and failed key reads", async () => {
+    const missing = setup((path) => (path.endsWith("/preferences") ? null : []))
+    expect(await missing.gateway.daily.read("preferences")).toEqual({
+      temperatureUnit: "C",
+      refillWarningMm: 0,
+      keyboardShortcuts: false,
+    })
+    expect(missing.calls.every((call) => call.method === "GET")).toBe(true)
+    for (const keys of [
+      ["preferences"],
+      {},
+      new Response("unavailable", { status: 503 }),
+    ]) {
+      const invalid = setup((path) =>
+        path.endsWith("/preferences") ? null : keys
+      )
+      await expect(invalid.gateway.daily.read("preferences")).rejects.toThrow()
+    }
+  })
   it("only treats missing preferences as defaults, preserving unknown keys", async () => {
     const { gateway } = setup(
       () => new Response('{"error":"missing"}', { status: 404 })

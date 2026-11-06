@@ -71,12 +71,21 @@ technical decisions, and the design history for previous iterations.
   machine settings, display/presence and Focus KV preferences. Save only the
   current section's changed fields; retain failed/newer edits and reject drafts
   for a replaced machine. No write is retried automatically.
+- Scale connection warnings are dismissible by event identity, separate from
+  machine command gates. Preserve Decaid's explicit blockOnNoScale policy for
+  brewing; scale absence alone must not block recipe editing or utilities.
+  The header opens Connections for explicit device selection, never the first
+  remembered scale. No automatic discovery or connection retry.
+- Home keeps the footer within the available WebView height. Smaller landscape
+  viewports scroll content panels, without shrinking touch targets or scaling
+  the accepted 1340 × 800 design.
 - Device discovery is explicit and uses `connect=false`. Grinder setting/RPM
   commands require the current device's writable descriptors; recipe Send is
   opt-in and one-shot. Presence heartbeats require real activity, never a timer.
 - Temperature preferences affect display only; all wire values remain Celsius.
   Focus refill warnings require a confirmed non-refill-kit machine and use mm.
-- Favorites are five nullable IDs. Only missing-key 404 permits suggestions;
+- Favorites are five nullable IDs. Only a confirmed missing key permits
+  suggestions (404, or 200/null with absence confirmed by the namespace key list);
   malformed, empty and unavailable assignments must not silently fall back.
   Update the rail only after an acknowledged explicit Save. Workflow loading
   is independent; never identify a profile by title alone.

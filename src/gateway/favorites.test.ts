@@ -22,7 +22,7 @@ const records = [
     profile: { ...profile, steps: [{ ...profile.steps[0], flow: 3 }] },
   },
 ]
-function fixture(stored: unknown, status = 200) {
+function fixture(stored: unknown, status = 200, keys: unknown = ["favorites"]) {
   let value = stored
   let readStatus = status
   let failed = false
@@ -30,6 +30,8 @@ function fixture(stored: unknown, status = 200) {
   const gateway = new DecaidGateway(
     "http://test.invalid",
     async (url, init) => {
+      if (String(url).endsWith("/store/decent-skin-codex"))
+        return Response.json(keys)
       if (String(url).includes("/profiles")) return Response.json(records)
       if (init?.method === "POST") {
         writes.push(JSON.parse(String(init.body)))
@@ -86,6 +88,25 @@ describe("five favorite positions", () => {
       expect(gateway.getSnapshot().favoritesLoaded).toBe(false)
       expect(gateway.getSnapshot().favoritesIssue).not.toBe("")
       expect(writes).toEqual([])
+    }
+  })
+  it("confirms null is an absent key before suggesting, without any writes", async () => {
+    const { gateway, writes } = fixture(null, 200, [])
+    await gateway.loadProfiles()
+    expect(gateway.getSnapshot().favorites).toEqual([
+      "one",
+      "two",
+      null,
+      null,
+      null,
+    ])
+    expect(gateway.getSnapshot().favoritesIssue).toBe("")
+    expect(writes).toEqual([])
+    for (const keys of [["favorites"], {}, [42]]) {
+      const invalid = fixture(null, 200, keys)
+      await invalid.gateway.loadProfiles()
+      expect(invalid.gateway.getSnapshot().favoritesLoaded).toBe(false)
+      expect(invalid.writes).toEqual([])
     }
   })
   it("keeps order, unavailable IDs and first duplicate occurrence", () => {

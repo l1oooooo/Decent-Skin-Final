@@ -39,9 +39,11 @@ body {
 }
 .skin-viewport {
   width: 100%;
+  height: 100vh;
   height: 100dvh;
-  min-width: 1000px;
-  min-height: 680px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 button:not(:disabled),
 select,
@@ -93,4 +95,71 @@ button:active:not(:disabled):not([data-slot="button"]) {
 html {
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
+}
+
+/* Keep the action bar in the WebView; short screens scroll content panels. */
+@media (max-width: 1100px), (max-height: 679px) {
+  .focus-body {
+    overflow: hidden;
+  }
+  .focus-skin > div > main,
+  .focus-skin > div > aside {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .focus-skin > div > main > * {
+    flex-shrink: 0;
+  }
+  .focus-skin [aria-label="Profile selection"] > div:first-child {
+    min-height: min-content;
+  }
+}
+@media (max-width: 1100px) {
+  .focus-skin > div > aside:first-child,
+  .focus-page nav,
+  .focus-skin > header > div:first-child,
+  .focus-page > header > div:first-child {
+    width: 176px;
+  }
+  .focus-skin > div > aside:last-child {
+    width: 280px;
+    padding-inline: 16px;
+  }
+  .focus-skin > div > main,
+  .focus-page main {
+    padding-inline: 16px;
+  }
+  .focus-skin > header,
+  .focus-page > header {
+    padding-right: 8px;
+  }
+  [aria-label="Machine status"] {
+    gap: 8px;
+  }
+  .focus-skin > header > button,
+  .focus-page > header > button {
+    margin-left: 0;
+  }
+  .focus-skin > footer {
+    gap: 8px;
+    padding-inline: 16px;
+  }
+  .focus-skin > footer > button {
+    width: 220px;
+  }
+  .focus-skin [aria-label="Recipe summary"] > div {
+    gap: 12px;
+  }
+  .focus-skin [aria-label="Recipe summary"] .text-\[40px\] {
+    font-size: clamp(28px, 3vw, 40px);
+  }
+}
+@media (max-height: 679px) {
+  .focus-skin > div > main > section {
+    flex: none;
+  }
+  .focus-skin > div > aside > * {
+    flex-shrink: 0;
+  }
 }

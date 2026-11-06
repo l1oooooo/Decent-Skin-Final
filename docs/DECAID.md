@@ -2,7 +2,7 @@
 
 ## Verified source version
 
-The tablet's `/api/v1/info` reported Decaid **0.9.1+3027**, commit **14361a94b32888f6a81182e9e239f513d39d060c**, build time 2026-10-28T06:20:27Z, local IP 192.168.50.13. Its network address was not reachable from the development computer. API compatibility below is a source/schema review, not a successful hardware session.
+The tablet's `/api/v1/info` reported Decaid **0.9.1+3027**, commit **14361a94b32888f6a81182e9e239f513d39d060c**, build time 2026-10-28T06:20:27Z. Read-only checks on November 6 confirmed installed assets, REST reads and receive-only telemetry streams from the Mac. Desktop browser navigation was also checked; no machine commands were sent. This does not establish tablet WebView or physical brewing acceptance.
 
 Authoritative references:
 
@@ -32,7 +32,7 @@ The adapter requires the managed sequencing modes `tracking` or `disabled`. Full
 | Temperature | PUT complete preserved profile with equal offset applied to each step's `temperature`; preserve relative step temperatures |
 | Profile list | GET `/api/v1/profiles?includeHidden=true`; visible/hidden views use returned record metadata |
 | Profile selection | PUT workflow with returned complete `profile`, including executable fields; positive profile target weight becomes workflow target yield |
-| Favorite order | GET/POST `/api/v1/store/decent-skin-codex/favorites`; POST a five-element nullable ID array, acknowledge on 204; only GET 404 means no stored preference |
+| Favorite order | GET/POST `/api/v1/store/decent-skin-codex/favorites`; POST a five-element nullable ID array, acknowledge on successful 2xx; GET 404 or GET 200/null with absence confirmed by the namespace key list means no stored preference |
 | Hide / restore profile | PUT `/api/v1/profiles/{id}/visibility` with `{ "visibility": "hidden" }` or `"visible"`; use returned record, preserve favorites and workflow |
 | Profile import | POST `/api/v1/profiles/import` with exported record array; imported/skipped/failed/errors are separate, existing IDs are skipped |
 | Profile export | GET `/api/v1/profiles/export?includeHidden=true&includeDeleted=false`; preserve complete records |
@@ -99,7 +99,7 @@ bounds. No live tablet or hardware operation was used for this work.
 | Machine/power | GET `machine/info`; POST `machine/settings` for tank/fan, POST advanced for refillKitSetting; explicit idle-gated sleep/wake; charging/night fields in settings |
 | Display | GET `display`, PUT brightness; requested and applied values are distinct; platformSupported gates controls; explicit POST/DELETE wakelock override |
 | Presence | GET/POST `presence/settings`; GET/POST/PUT/DELETE schedules with local time, weekday and duration validation |
-| Focus preferences | GET/POST `store/decent-skin-codex/preferences`, preserves unknown keys; only 404 supplies defaults; Celsius/Fahrenheit, refill warning mm and optional shortcuts |
+| Focus preferences | GET/POST `store/decent-skin-codex/preferences`, preserves unknown keys; only confirmed key absence supplies defaults; Celsius/Fahrenheit, refill warning mm and optional shortcuts |
 | Grinder | GET info/state on Connections only; capability and writable descriptor gates; PUT setting/rpm/grinding/idle; identity and a newly fetched idle state checked before commands |
 
 Steam is 0 (disabled), 135–160 °C on DE1, or through 165 °C on Bengle.

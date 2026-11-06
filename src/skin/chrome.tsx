@@ -8,7 +8,7 @@ import {
   History,
   Settings,
   Library,
-  RotateCw,
+  Link,
   Thermometer,
   Waves,
 } from "lucide-react"
@@ -34,10 +34,12 @@ export function RevisionHeader({
   s,
   onSettings,
   onHistory,
+  onConnections,
 }: {
   s: SkinSession
   onSettings: () => void
   onHistory: () => void
+  onConnections: () => void
 }) {
   return (
     <header className="flex h-[72px] shrink-0 items-center border-b border-border pr-7">
@@ -75,14 +77,14 @@ export function RevisionHeader({
         ) : (
           <Action
             variant="ghost"
-            aria-label="Retry scale connection"
-            title="Scale disconnected — retry connection"
+            aria-label="Connect scale"
+            title="Scale optional — open Connections"
             className="gap-2 !px-2 text-[12px] text-muted-foreground"
-            onClick={s.retryScale}
+            onClick={onConnections}
           >
             <span>Scale</span>
-            <span>Retry</span>
-            <RotateCw size={14} aria-hidden="true" />
+            <span>Connect</span>
+            <Link size={14} aria-hidden="true" />
           </Action>
         )}
       </div>

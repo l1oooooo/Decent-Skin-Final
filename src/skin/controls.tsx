@@ -377,7 +377,7 @@ export function Notice({ s }: { s: SkinSession }) {
       : s.phase === "heating"
         ? "Heating to your brew temperature."
         : !s.active && !s.operation
-          ? s.block
+          ? s.block || s.brewBlock
           : "")
   if (!message) return null
   return (

@@ -109,7 +109,11 @@ export const fields: Record<
   connections: {},
   brew: {
     settings: [
-      toggle("blockOnNoScale", "Require a scale before brewing"),
+      toggle(
+        "blockOnNoScale",
+        "Require a scale before brewing",
+        "Turn off to brew without a scale. Weight-based stopping needs a connected scale; use the machine’s other limits or stop manually."
+      ),
       toggle("blockTareDuringShot", "Block tare during a shot"),
       toggle(
         "stopHotWaterAtWeight",
@@ -354,19 +358,15 @@ export class DailySettingsGateway {
     this.gateway = gateway
   }
   async read(owner: SettingsOwner): Promise<SettingsRecord> {
-    try {
-      const data = await this.gateway.request(ownerPaths[owner])
-      return owner === "preferences" ? parsePreferences(data) : object(data)
-    } catch (error) {
-      if (
-        owner === "preferences" &&
-        error instanceof Error &&
-        error.message.startsWith("404:")
-      )
-        return { ...defaultPreferences }
-      throw error
+    if (owner === "preferences") {
+      const data = await this.gateway.readStored("preferences")
+      return data === undefined
+        ? { ...defaultPreferences }
+        : parsePreferences(data)
     }
+    return object(await this.gateway.request(ownerPaths[owner]))
   }
+
   async save(
     owner: SettingsOwner,
     patch: SettingsRecord

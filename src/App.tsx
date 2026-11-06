@@ -321,6 +321,9 @@ export default function App() {
           s={s}
           onHistory={() => navigate({ page: "history" })}
           onSettings={() => navigate({ page: "settings" })}
+          onConnections={() =>
+            navigate({ page: "settings", category: "connections" })
+          }
           onBrowse={browse}
           onAssign={assign}
         />

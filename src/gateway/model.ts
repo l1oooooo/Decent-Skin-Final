@@ -77,7 +77,11 @@ export function commandBlock(s: GatewaySnapshot, now = Date.now()): string {
   if (!s.settings) return "Waiting for Decaid settings."
   if (!["tracking", "disabled"].includes(s.settings.gatewayMode))
     return "Use Decaid's tracking mode for gateway-owned shot control and stop-at-weight."
-  if (s.deviceError) return s.deviceError
+  if (
+    s.deviceError &&
+    !["scaleDisconnected", "scaleConnectFailed"].includes(s.deviceErrorKind)
+  )
+    return s.deviceError
   if (s.machine.state.state !== "idle")
     return `Machine is ${s.machine.state.state}.`
   return ""
