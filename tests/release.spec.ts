@@ -60,12 +60,12 @@ test("production assets load below a nested skin path without an API or fallback
   await page.routeWebSocket("**/*", (socket) => socket.close())
   try {
     await page.goto(`${origin}/skins/focus/`, { waitUntil: "networkidle" })
-    await expect(page.getByText("Disconnected", { exact: true })).toBeVisible()
+    await expect(page.locator(".candidate-status")).toBeVisible()
     await expect(
       page.getByRole("status", { name: "Machine state", exact: true })
     ).toHaveAttribute("data-ready", "false")
-    await expect(page.getByLabel("Water level", { exact: true })).toHaveText(
-      "Water —"
+    await expect(page.getByLabel("Tank volume", { exact: true })).toHaveText(
+      "Tank— ml"
     )
     await expect.poll(() => blocked.length).toBeGreaterThan(0)
     expect(

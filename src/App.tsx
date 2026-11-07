@@ -12,7 +12,8 @@ import { DailySettingsPage } from "@/skin/daily-settings"
 import { useDailySettings } from "@/skin/use-daily-settings"
 import { settingsCategories } from "@/skin/pages"
 import type { SettingsCategory } from "@/gateway/daily-settings"
-import FocusScreen from "@/skin/screen"
+import { LiveBrewingScreen } from "@/skin/brewing/live-view"
+import { useLiveBrewing } from "@/skin/brewing/live-session"
 import { ProfileDetail, ProfileLibrary } from "@/skin/profile-library"
 import { GrindEditor } from "@/skin/grind-editor"
 import { HistoryPage, ShotDetail, ShotActions } from "@/skin/history"
@@ -29,6 +30,7 @@ import {
 } from "@/skin/pages"
 import { Action } from "@/skin/primitives"
 import "@/skin/skin.css"
+import "@/skin/brewing/brewing.css"
 
 export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
@@ -101,6 +103,11 @@ export default function App() {
                       transfer.operation === "import" ||
                       (route.slot !== undefined && editor.dirty)
                     : false
+  )
+  const brewing = useLiveBrewing(
+    s.snapshot,
+    s.machineFresh,
+    nav.route.page === "home"
   )
   const openHistory = useEffectEvent(() => {
     if (nav.route.page === "history" && !history.loaded) void history.list()
@@ -177,7 +184,7 @@ export default function App() {
           ? "History"
           : previousPage.current === "settings"
             ? "Settings"
-            : "Browse profiles"
+            : "All profiles"
       document.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus()
     }
     previousPage.current = nav.route.page
@@ -311,13 +318,15 @@ export default function App() {
           )}
         </div>
       ) : page === "home" ? (
-        <FocusScreen
-          s={s}
+        <LiveBrewingScreen
+          home={s}
+          state={brewing.state}
+          dispatch={brewing.dispatch}
+          tankCalibration={
+            s.snapshot.refillKit === true ? null : "standard-de1"
+          }
           onHistory={() => navigate({ page: "history" })}
           onSettings={() => navigate({ page: "settings" })}
-          onConnections={() =>
-            navigate({ page: "settings", category: "connections" })
-          }
           onEdit={() => navigate({ page: "edit", id: s.selectedId })}
           onBrowse={browse}
           onAssign={assign}

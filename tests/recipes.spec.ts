@@ -331,7 +331,7 @@ test("profile drafts guard navigation, validate exits and retain edits after a p
     data: { state: "idle", reason: "targetWeight" },
   })
   await page
-    .getByRole("button", { name: "Browse profiles", exact: true })
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/, exact: true })
     .click()
   await page
     .getByRole("button", { name: "Details 80's Espresso", exact: true })

@@ -74,16 +74,16 @@ technical decisions, and the design history for previous iterations.
 - Scale connection warnings are dismissible by event identity, separate from
   machine command gates. Preserve Decaid's explicit blockOnNoScale policy for
   brewing; scale absence alone must not block recipe editing or utilities.
-  The header opens Connections for explicit device selection, never the first
-  remembered scale. No automatic discovery or connection retry.
+  Home scale is read-only; Settings → Connections owns explicit device selection,
+  never the first remembered scale. No automatic discovery or connection retry.
 - Home fits its content without panel scrolling in landscape CSS viewports down
-  to 800 × 480. Compact spacing, chart geometry and 72px rolling rows apply only
+  to 800 × 480. Compact spacing and chart geometry apply only
   below the desktop reference size; touch targets remain at least 44px. Do not
   scale the entire canvas. System and help reports the actual WebView viewport.
 - Daily espresso/steam/hot-water/flush starts and stops belong exclusively to
-  the physical group-head controller. Home and shared-page footers have no
-  right-side guidance; utility cards and navigation prompts retain non-interactive
-  instructions. No start/stop button or Escape command.
+  the physical group-head controller. Home has no footer; shared-page footers have no
+  right-side guidance. Home utility popovers contain settings only; navigation
+  prompts retain non-interactive instructions. No start/stop button or Escape command.
   Keep utility adjustments and separately authorized advanced procedures.
   The top-right Sleep button is an explicitly requested one-tap standby action,
   using the existing idle/fresh/connected/pending gates. It never acts as a
@@ -92,7 +92,7 @@ technical decisions, and the design history for previous iterations.
 - Header steam is read-only live `machine.steamTemperature`, separate from the
   workflow target. Show the measured value even with steam heating disabled;
   unavailable, stale or disconnected readings show a dash. Steam adjustment
-  and enable controls remain in the bottom-left utility menu.
+  and enable controls are in the approved top-navigation Steam popover.
 - Profile selection applies that profile's temperature and weight target, then
   its explicit Focus recipe overrides. A missing/zero weight target clears the
   previous target to zero (off). Dose precedence is Focus preference, profile
@@ -150,13 +150,23 @@ technical decisions, and the design history for previous iterations.
   consent remain in native Decaid.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
-  layout and typography. Retired variants and appearance controls are removed;
+  Phase 4.1 layout and typography. Retired variants and appearance controls are removed;
   their history is in `docs/design/HISTORY.md` and Git.
-- The Cover rail has five real favorite profiles above artwork. Focus uses
-  104px rolling status rows, 10px dot-to-label gap, stationary fading dividers,
-  and the circular 3×3 dot wave on the current process only. Shot complete is
-  the final row without dots. No right-panel timer, progress bar, description
-  or top strip. Stages follow real profile frames rather than demo timing.
+- The approved Phase 4.1 Home/brewing presentation lives in `src/skin/brewing`.
+  Five real favorites sit above artwork; the header shows machine readiness,
+  independent of the rolling shot-stage title. Steam/Hot Water/Flush settings,
+  History, Settings and Sleep occupy the top navigation. Scale is read-only.
+  Home's planned chart is configuration-based; only its illustration is smoothed.
+  Live pressure/flow gradient areas and target pressure, group temperature and
+  scale weight-flow lines retain exact received samples and missing-value gaps.
+  The single App-owned live presentation holds confirmed completion for 3 seconds,
+  returns Home and emits one toast; interrupted/unclassified outcomes stay explicit.
+  New shots supersede holds; replay does not navigate or manufacture elapsed time.
+  The user confirmed the standard removable DE1 tank for this deployment; show
+  estimated mL only with fresh machine data and no refill kit.
+- `design/brewing` is a development-only event source and preview. It imports
+  shared presentation from `src`; production must never import from `design`.
+  Run `npm run check:brewing` to audit the actual production module graph/output.
 - Installed integration target: Decaid 0.9.1+3027, commit 14361a94. See
   `docs/DECAID.md` for contract and operating-mode constraints. Static builds
   and fixture tests do not establish Samsung WebView or hardware acceptance.

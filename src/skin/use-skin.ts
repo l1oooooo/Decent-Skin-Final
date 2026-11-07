@@ -35,6 +35,16 @@ export function useSkin(gateway: DecaidGateway) {
     )
     return () => clearTimeout(timer)
   }, [snapshot.machineReceived])
+  const [expiredScaleReading, setExpiredScaleReading] = useState(0)
+  useEffect(() => {
+    const received = snapshot.scaleReceived
+    if (!received) return
+    const timer = setTimeout(
+      () => setExpiredScaleReading(received),
+      Math.max(0, received + 5001 - Date.now())
+    )
+    return () => clearTimeout(timer)
+  }, [snapshot.scaleReceived])
   const [settings, setSettings] = useState<string | null>(null)
   const [modal, setModal] = useState<string | null>(null)
   const [notice, setNotice] = useState("")
@@ -106,6 +116,15 @@ export function useSkin(gateway: DecaidGateway) {
       ([, value]) => value === machine?.state.state
     )?.[0] ?? null
   const isConnected = connected(snapshot)
+  const machineFresh =
+    isConnected &&
+    snapshot.machineReceived > 0 &&
+    snapshot.machineReceived !== expiredMachineReading
+  const scaleFresh =
+    isConnected &&
+    snapshot.scaleConnected &&
+    snapshot.scaleReceived > 0 &&
+    snapshot.scaleReceived !== expiredScaleReading
   const block = commandBlock(snapshot)
   const ready =
     !block &&
@@ -266,6 +285,7 @@ export function useSkin(gateway: DecaidGateway) {
     operation,
     ready,
     connected: isConnected,
+    machineFresh,
     locked: !!block || !rawProfile,
     profileLocked: !!block,
     block,
@@ -293,9 +313,9 @@ export function useSkin(gateway: DecaidGateway) {
     temperature,
     grind,
     grindText,
-    waterLevel: snapshot.water,
-    scaleConnected: snapshot.scaleConnected,
-    scaleWeight: snapshot.scale?.weight ?? null,
+    waterLevel: machineFresh ? snapshot.water : null,
+    scaleConnected: scaleFresh,
+    scaleWeight: scaleFresh ? (snapshot.scale?.weight ?? null) : null,
     settings,
     setSettings,
     modal,

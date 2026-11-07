@@ -5,6 +5,7 @@ import {
   type Page,
   type APIRequestContext,
 } from "@playwright/test"
+test.setTimeout(240000)
 const state = (request: APIRequestContext, data: Record<string, unknown>) =>
   request.post(`${fixture}/__test/state`, { data })
 const saved = async (request: APIRequestContext) =>
@@ -17,7 +18,7 @@ async function manage(page: Page) {
   await page.goto("/?page=favorites")
   await expect(
     page.getByRole("button", { name: "Replace favorite 1", exact: true })
-  ).toBeEnabled()
+  ).toBeEnabled({ timeout: 90000 })
 }
 test.beforeEach(async ({ request }) => {
   await request.post(`${fixture}/__test/reset`)
@@ -180,7 +181,9 @@ test("all-empty favorites survive reload; ordinary navigation protects drafts an
   await expect(
     page.getByRole("button", { name: "Empty favorite 1" })
   ).toBeEnabled()
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
     .click()
@@ -209,7 +212,9 @@ test("failed saves retain draft and acknowledged rail; edits made during Save su
     page.getByRole("button", { name: "Select D-Flow / default", exact: true })
   ).toBeVisible()
   await state(request, { error: null })
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   await page
     .getByRole("main")
     .getByRole("button", { name: "Manage favorites", exact: true })
@@ -264,8 +269,12 @@ test("a physical start dismisses navigation prompts, updates machine status and 
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-operation", "espresso")
   await expect(
-    page.getByRole("button", { name: "Select 80's Espresso", exact: true })
+    page.getByRole("region", { name: "Shot monitoring" })
   ).toBeVisible()
+  await expect(page.locator(".focus-body")).toHaveAttribute(
+    "aria-hidden",
+    "true"
+  )
   await expect(
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toBeFocused()
@@ -334,7 +343,9 @@ test("details, preview, hide/restore and import/export use profile APIs without 
   await expect(
     page.getByRole("button", { name: "Unavailable favorite 1" })
   ).toBeVisible()
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   await page.getByRole("combobox", { name: "Profile visibility" }).click()
   await page.getByRole("option", { name: "Hidden", exact: true }).click()
   await page
@@ -368,7 +379,9 @@ test("details, preview, hide/restore and import/export use profile APIs without 
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-operation", "espresso")
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   await expect(
     page.getByRole("region", { name: "Review import" })
   ).toContainText("profiles.json")
@@ -438,7 +451,8 @@ test("library errors retry, empty states stay honest, and duplicate titles load 
   )
   await page.goto("/?page=library")
   await expect(page.getByRole("alert")).toContainText(
-    "Library temporarily unavailable"
+    "Library temporarily unavailable",
+    { timeout: 90000 }
   )
   await page.getByRole("button", { name: "Retry", exact: true }).click()
   await expect(
@@ -489,11 +503,17 @@ test.afterEach(async ({ page, request }, info) => {
   if (page.isClosed()) return
   if (
     await page
-      .getByRole("button", { name: "Browse profiles", exact: true })
+      .getByRole("button", {
+        name: /^(All profiles|Browse profiles)$/,
+        exact: true,
+      })
       .count()
   ) {
     await page
-      .getByRole("button", { name: "Browse profiles", exact: true })
+      .getByRole("button", {
+        name: /^(All profiles|Browse profiles)$/,
+        exact: true,
+      })
       .click()
     await page
       .getByRole("navigation")

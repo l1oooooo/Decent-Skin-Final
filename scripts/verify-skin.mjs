@@ -68,7 +68,7 @@ for (const file of files) {
   if (/\.(?:html|js|css|json|svg)$/.test(file)) {
     const text = bytes.toString("utf8")
     if (
-      /__test\/|contract-fixture|fixture-only|\/@vite\/client|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY|\bgh[pousr]_[A-Za-z0-9]{20,}/.test(
+      /Simulate GHC|DesignSimulator|design-dock|Brewing simulator|__test\/|contract-fixture|fixture-only|\/@vite\/client|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY|\bgh[pousr]_[A-Za-z0-9]{20,}/.test(
         text
       )
     )

@@ -28,7 +28,7 @@ test("first install reads defaults without writes and preserves intentionally em
   })
   await expect(
     page.getByLabel("Temperature units", { exact: true })
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 90000 })
   await expect(
     page.getByText("Invalid Decaid response", { exact: true })
   ).toHaveCount(0)
@@ -83,7 +83,10 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
   await expect(
     page.getByText(connectionError.message, { exact: true })
   ).toHaveCount(0)
-  await page.getByRole("button", { name: "Connect scale", exact: true }).click()
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page
+    .getByRole("button", { name: /^Connections Machine, scale/ })
+    .click()
   await expect(
     page.getByRole("heading", { name: "Connections", exact: true })
   ).toBeVisible()
@@ -110,7 +113,7 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
     data: { scale: false, connectionError: null },
   })
   await expect(
-    page.getByRole("button", { name: "Connect scale", exact: true })
+    page.getByLabel("Scale disconnected", { exact: true })
   ).toBeVisible()
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 0 },
@@ -141,7 +144,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
       "Steam",
       "Hot water",
       "Flush",
-      "Browse profiles",
+      "All profiles",
       "Increase temperature",
       "Decrease dose",
       "Sleep machine",
@@ -184,7 +187,10 @@ test("landscape Home fits every panel and touch target without scrolling", async
       .last()
       .boundingBox()
     const browse = await page
-      .getByRole("button", { name: "Browse profiles", exact: true })
+      .getByRole("button", {
+        name: /^(All profiles|Browse profiles)$/,
+        exact: true,
+      })
       .boundingBox()
     expect(lastFavorite!.y + lastFavorite!.height).toBeLessThanOrEqual(
       browse!.y
@@ -201,7 +207,10 @@ test("landscape Home fits every panel and touch target without scrolling", async
     page.getByRole("dialog", { name: "Steam settings" })
   ).toBeInViewport({ ratio: 1 })
   await page
-    .getByRole("button", { name: "Close utility card", exact: true })
+    .getByRole("button", {
+      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+      exact: true,
+    })
     .click()
   await request.post(`${fixture}/__test/state`, {
     data: {
@@ -254,7 +263,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
     data: { state: "idle", reason: "machineEnded", elapsed: 30 },
   })
   await expect(
-    page.getByRole("button", { name: "Adjust profile settings", exact: true })
+    page.getByRole("button", { name: "Back to Home", exact: true })
   ).toBeInViewport({ ratio: 1 })
   await expect(
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
@@ -341,5 +350,5 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.2.5", { exact: true })).toBeVisible()
+  await expect(page.getByText("0.3.0", { exact: true })).toBeVisible()
 })

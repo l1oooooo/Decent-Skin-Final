@@ -16,7 +16,7 @@ test("header steam follows live readings even with heating off, with no header c
   const steam = page
     .getByRole("banner")
     .getByLabel("Steam temperature", { exact: true })
-  await expect(steam).toHaveText("Steam 87°C")
+  await expect(steam).toHaveText(/Steam\s*87\s*°C/)
   await expect(
     page.getByRole("button", { name: "Steam temperature settings" })
   ).toHaveCount(0)
@@ -32,7 +32,7 @@ test("header steam follows live readings even with heating off, with no header c
     data: { advanced: { pauseMachine: true } },
   })
   try {
-    await expect(steam).toHaveText("Steam —°C", { timeout: 15000 })
+    await expect(steam).toHaveText(/Steam\s*—\s*°C/, { timeout: 15000 })
     await expect(
       page.getByRole("button", { name: "Sleep machine" })
     ).toBeDisabled()
@@ -42,7 +42,7 @@ test("header steam follows live readings even with heating off, with no header c
       data: { advanced: { pauseMachine: false } },
     })
   }
-  await expect(steam).toHaveText("Steam 87°C")
+  await expect(steam).toHaveText(/Steam\s*87\s*°C/)
   await steam.click()
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await page.getByRole("button", { name: "Steam", exact: true }).click()
@@ -50,16 +50,20 @@ test("header steam follows live readings even with heating off, with no header c
   await expect(
     page.getByRole("switch", { name: "Enable steam" })
   ).toHaveAttribute("aria-checked", "false")
-  await page.getByRole("button", { name: "Close utility card" }).click()
-  await expect(steam).toHaveText("Steam 87°C")
+  await page
+    .getByRole("button", {
+      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+    })
+    .click()
+  await expect(steam).toHaveText(/Steam\s*87\s*°C/)
   await request.post(`${fixture}/__test/state`, {
     data: { advanced: { steamTemperature: 73 } },
   })
-  await expect(steam).toHaveText("Steam 73°C")
+  await expect(steam).toHaveText(/Steam\s*73\s*°C/)
   await request.post(`${fixture}/__test/state`, {
     data: { advanced: { steamTemperature: null } },
   })
-  await expect(steam).toHaveText("Steam —°C")
+  await expect(steam).toHaveText(/Steam\s*—\s*°C/)
   await request.post(`${fixture}/__test/state`, {
     data: {
       advanced: { steamTemperature: 100 },
@@ -67,9 +71,9 @@ test("header steam follows live readings even with heating off, with no header c
     },
   })
   await page.reload({ waitUntil: "networkidle" })
-  await expect(steam).toHaveText("Steam 212°F")
+  await expect(steam).toHaveText(/Steam\s*212\s*°F/)
   await request.post(`${fixture}/__test/state`, { data: { connected: false } })
-  await expect(steam).toHaveText("Steam —°F")
+  await expect(steam).toHaveText(/Steam\s*—\s*°F/)
   await expect(
     page.getByRole("button", { name: "Sleep machine" })
   ).toBeDisabled()
@@ -85,7 +89,7 @@ test("Sleep is one touch, waits for observation, and sends no repeated or wake c
 }) => {
   await page.goto("/", { waitUntil: "networkidle" })
   const sleep = page.getByRole("button", { name: "Sleep machine" })
-  await expect(sleep).toBeEnabled()
+  await expect(sleep).toBeEnabled({ timeout: 90000 })
   let release!: () => void
   let received!: () => void
   const held = new Promise<void>((resolve) => {

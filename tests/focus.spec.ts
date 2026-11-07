@@ -32,13 +32,11 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   ).toMatchObject({ x: 0, y: 0, width: 1340, height: 72 })
   expect(
     await page.locator(".focus-skin > div > aside").first().boundingBox()
-  ).toMatchObject({ x: 0, y: 72, width: 220, height: 632 })
+  ).toMatchObject({ x: 0, y: 72, width: 220, height: 728 })
   expect(
     await page.locator(".focus-skin > div > aside").last().boundingBox()
-  ).toMatchObject({ x: 1012, y: 72, width: 328, height: 632 })
-  expect(
-    await page.locator(".focus-skin > footer").boundingBox()
-  ).toMatchObject({ x: 0, y: 704, width: 1340, height: 96 })
+  ).toMatchObject({ x: 1012, y: 72, width: 328, height: 728 })
+  await expect(page.locator(".focus-skin > footer")).toHaveCount(0)
   await page.screenshot({ path: "artifacts/fidelity/test-ready.png" })
   await page.getByRole("button", { name: "Increase dose", exact: true }).click()
   await expect(page.getByLabel("Dose value", { exact: true })).toHaveText(
@@ -55,7 +53,10 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
     page.getByLabel("Temperature value", { exact: true })
   ).toHaveText("88.5°C")
   await page
-    .getByRole("button", { name: "Browse profiles", exact: true })
+    .getByRole("button", {
+      name: /^(All profiles|Browse profiles)$/,
+      exact: true,
+    })
     .click()
   await expect(
     page.getByRole("heading", { name: "Profile library", exact: true })
@@ -107,38 +108,30 @@ test("physical starts roll real stages, the footer stays quiet, completion has n
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])
   await state(request, { state: "espresso", elapsed: 12 })
-  await expect(page.locator(".focus-stage[data-active=true]")).toContainText(
-    "Extraction"
-  )
+  await expect(page.locator(".rolling-window")).toContainText("Extraction")
+  await expect(page.locator(".rolling-icon > span")).toHaveCount(9)
   await expect(
-    page.locator(".focus-stage[data-active=true] .focus-dot")
-  ).toHaveCount(9)
-  await expect(page.locator(".graph-color path").first()).toHaveAttribute(
-    "d",
-    /M.+L/
-  )
+    page.locator(".brew-chart-surface [data-series=pressure]")
+  ).toHaveAttribute("d", /M.+L/)
   await page.screenshot({ path: "artifacts/fidelity/test-brewing.png" })
   await state(request, { state: "espresso", elapsed: 22 })
-  await expect(page.locator(".focus-stage[data-active=true]")).toContainText(
+  await expect(page.locator(".rolling-window")).toContainText(
     "Pressure decline"
   )
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
   await expect(
     page.getByRole("status", { name: "Machine state" })
   ).toHaveAttribute("data-ready", "true")
-  const completed = page
-    .locator(".focus-stage")
-    .filter({ hasText: "Shot complete" })
-  await expect(completed.locator(".focus-dot")).toHaveCount(0)
-  await expect(page.locator(".motion-transform")).toHaveCSS(
-    "transform",
-    "matrix(1, 0, 0, 1, 0, -312)"
+  await expect(page.locator(".rolling-window")).toHaveText("Shot complete")
+  await expect(page.locator(".rolling-status")).toHaveAttribute(
+    "data-running",
+    "false"
   )
   await page.screenshot({ path: "artifacts/fidelity/test-completed.png" })
-  await page.getByRole("button", { name: "Adjust profile settings" }).click()
+  await expect(page.locator(".brew-toast")).toHaveText("Shot completed")
   await expect(
     page.getByRole("button", { name: "Decrease grind size" })
-  ).toBeFocused()
+  ).toBeVisible()
 })
 
 test("utility settings persist; starting and stopping stay on the physical group head", async ({
@@ -173,27 +166,16 @@ test("utility settings persist; starting and stopping stay on the physical group
       label === "Steam" ? "35s" : label === "Hot water" ? "16s" : "6s"
     )
     const card = page.getByRole("dialog", { name: `${label} settings` })
-    await expect(
-      card.getByRole("status", {
-        name: `Group-head ${label.toLowerCase()}`,
-        exact: true,
-      })
-    ).toBeVisible()
+    await expect(card).not.toContainText("Press")
     await expect(card.getByRole("button", { name: /^Start / })).toHaveCount(0)
     await state(request, { state: path })
     await expect(
-      card.getByRole("status", {
-        name: `Group-head stop ${label.toLowerCase()}`,
-        exact: true,
-      })
-    ).toBeVisible()
+      card.getByRole("button", { name: `Increase ${timeLabel}`, exact: true })
+    ).toBeDisabled()
     await state(request, { state: "idle" })
     await expect(
-      card.getByRole("status", {
-        name: `Group-head ${label.toLowerCase()}`,
-        exact: true,
-      })
-    ).toBeVisible()
+      card.getByRole("button", { name: `Increase ${timeLabel}`, exact: true })
+    ).toBeEnabled()
     await page.keyboard.press("Escape")
     const commands = await (
       await request.get(`${fixture}/__test/requests`)
@@ -230,7 +212,9 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
   await expect(
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
     .click()
@@ -249,10 +233,12 @@ test("empty workflows can choose their first profile and named grind settings re
   await page.goto("/", { waitUntil: "networkidle" })
   await page.getByRole("button", { name: "Steam", exact: true }).click()
   await expect(
-    page.getByRole("status", { name: "Group-head steam", exact: true })
+    page.getByRole("dialog", { name: "Steam settings", exact: true })
   ).toBeVisible()
   await page.keyboard.press("Escape")
-  await page.getByRole("button", { name: "Browse profiles" }).click()
+  await page
+    .getByRole("button", { name: /^(All profiles|Browse profiles)$/ })
+    .click()
   const load = page.getByRole("button", {
     name: "Load D-Flow / default",
     exact: true,
@@ -287,35 +273,84 @@ test("mid-shot attachment uses live stages, reduced motion works, long labels ca
   page,
   request,
 }) => {
-  await state(request, { state: "espresso", elapsed: 12 })
-  await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.goto("/", { waitUntil: "networkidle" })
-  await expect(page.locator(".focus-stage[data-active=true]")).toContainText(
-    "Extraction"
+  const transport: string[] = []
+  page.on("requestfailed", (request) =>
+    transport.push(`${request.url()}: ${request.failure()?.errorText}`)
   )
-  await expect(page.locator(".focus-dot").first()).toHaveCSS(
-    "animation-name",
-    "none"
-  )
-  await expect(page.locator(".motion-transform")).toHaveCSS(
-    "transition-duration",
-    "0s"
-  )
-  await expect(page.getByLabel("Shot readings")).toContainText("—s")
-  await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
-  await page.getByRole("button", { name: "Adjust profile settings" }).click()
-  await state(request, {
-    profileTitle:
-      "An exceptionally long profile name with multiple roast details and a LongUnbrokenImportedIdentifierThatMustNotOverlapTheSidebar",
+  page.on("response", (response) => {
+    if (response.status() >= 400)
+      transport.push(`${response.status()} ${response.url()}`)
   })
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "exceptionally"
-  )
-  const dims = await page.evaluate(() => ({
-    width: document.documentElement.scrollWidth,
-    height: document.documentElement.scrollHeight,
-  }))
-  expect(dims).toEqual({ width: 1340, height: 800 })
+  page.on("websocket", (socket) => {
+    socket.on("close", () => transport.push(`Closed ${socket.url()}`))
+    socket.on("socketerror", (error) =>
+      transport.push(`${socket.url()}: ${error}`)
+    )
+  })
+  try {
+    await state(request, { state: "espresso", elapsed: 12 })
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await page.goto("/", { waitUntil: "networkidle" })
+    await expect(page.locator(".rolling-window")).toContainText("Extraction", {
+      timeout: 90000,
+    })
+    await expect(page.locator(".rolling-icon > span").first()).toHaveCSS(
+      "animation-name",
+      "none"
+    )
+    await expect(page.locator(".brew-metrics > div").first()).toContainText(
+      "—s"
+    )
+    await page.evaluate(async (origin) => {
+      const toast = document.querySelector(".brew-toast")!
+      await new Promise<void>((resolve, reject) => {
+        const observer = new MutationObserver(() => {
+          if (toast.textContent === "Shot completed") {
+            clearTimeout(timeout)
+            observer.disconnect()
+            resolve()
+          }
+        })
+        const timeout = setTimeout(() => {
+          observer.disconnect()
+          reject(
+            new Error("Mid-shot attachment did not complete and return Home")
+          )
+        }, 15000)
+        observer.observe(toast, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        })
+        void fetch(`${origin}/__test/state`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            state: "idle",
+            elapsed: 30,
+            reason: "targetWeight",
+          }),
+        }).catch(reject)
+      })
+    }, fixture)
+    await state(request, {
+      profileTitle:
+        "An exceptionally long profile name with multiple roast details and a LongUnbrokenImportedIdentifierThatMustNotOverlapTheSidebar",
+    })
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "exceptionally"
+    )
+    const dims = await page.evaluate(() => ({
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight,
+    }))
+    expect(dims).toEqual({ width: 1340, height: 800 })
+  } finally {
+    await test.info().attach("transport-events", {
+      body: JSON.stringify(transport),
+      contentType: "application/json",
+    })
+  }
 })
 
 test.afterEach(async ({ page }, testInfo) => {

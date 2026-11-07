@@ -4,6 +4,13 @@ Focus is the locked Home and brewing screen for the Decaid skin. Settings, profi
 
 ## Run and build
 
+For the isolated brewing redesign, run `npm run dev:brewing` and open
+[the design preview](http://127.0.0.1:5174/). Its simulated GHC and telemetry
+are development-only. The approved presentation is shared from `src/skin/brewing`;
+production uses the live Decaid adapter. See the
+[review guide](docs/design/BREWING-PREVIEW.md) and
+[Streamline chart audit](docs/design/BREWING-CHART-RESEARCH.md).
+
 ```sh
 npm ci
 npm run dev
@@ -12,7 +19,7 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.2.5.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.3.0.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
@@ -28,15 +35,16 @@ then select **Decent Focus**. Future releases retain that asset name; use
 Decaid’s skin update function to install them. Source-code archives and Git
 pushes alone are not compiled skin updates.
 
-Version 0.2.5 uses the physical group-head controller for all daily starts and
-stops. The footer contains Steam, Hot water and Flush settings, with no
-right-side group-head guidance. Utility cards retain physical-control instructions. No on-screen brew/utility Start or Stop and no Escape stop
-shortcut remain. Advanced maintenance procedures retain their explicit controls.
+The 0.3.0 candidate uses the physical group-head controller for all daily starts
+and stops. Home exposes Steam, Hot Water and Flush settings in the top navigation,
+with no footer or physical-control instructions inside these popovers. There are
+no on-screen daily Start/Stop buttons or Escape stop shortcut. Advanced maintenance
+procedures retain their explicit controls.
 
 Home fits landscape CSS viewports down to 800 × 480 without scrolling its
 panels, using compact spacing and a responsive chart while preserving 44px
-minimum touch targets. At 1340 × 800 the original three-column frame and rolling
-rows remain. On the tablet, open **Settings → System and help → Screen and
+minimum touch targets. At 1340 × 800 the approved three-column Home expands into the five-trace
+brewing view with its rolling stage title. On the tablet, open **Settings → System and help → Screen and
 viewport** to read the actual layout dimensions and device pixel ratio. These
 are WebView CSS measurements, not the panel's advertised resolution.
 
@@ -59,10 +67,10 @@ Values are validated before saving; a failed save keeps the draft. Named grinder
 settings still use text entry.
 The header shows the actual live steam temperature beside the brew reading,
 even with steam heating disabled. It is read-only; missing/stale/disconnected
-readings show a dash. Open the bottom-left **Steam** menu to enable steam or
+readings show a dash. Open the top-navigation **Steam** menu to enable steam or
 adjust its target (quick range 135–160 °C).
 
-The top-right moon button puts the machine to **Sleep** with one tap while idle.
+The top-right power icon / Sleep button puts the machine to **Sleep** with one tap while idle.
 It uses Decaid's standby action, not a mains-power switch or brewing stop.
 It is disabled during operations, pending requests or unavailable connections.
 The Sleeping screen appears only after Decaid reports that state.
@@ -70,7 +78,7 @@ The scale status uses text only. **Edit profile** beside the Home title opens
 the existing stage editor; bundled defaults still require Save as new.
 
 To copy Home adjustments from Streamline in the same Decaid installation, open
-**Browse profiles → Details → Recipe preferences → Copy from Streamline**.
+**All profiles → Details → Recipe preferences → Copy from Streamline**.
 Review dose, yield, grind and first-stage temperature, then **Save recipe
 preferences** and load the profile. This matches the exact profile ID and reads
 Streamline's saved overrides or legacy metadata. It does not import steam,
@@ -249,3 +257,12 @@ Direct routes are `?page=settings&category=extensions`, optionally with
 `&plugin=<encoded ID>`, and `?page=settings&category=help`. Drafts survive page
 navigation and shot interruption within the session, but not a reload. Device
 acceptance remains phase 9.
+
+## Phase 5 integration candidate
+
+The approved Phase 4.1 Home and brewing experience is integrated on
+`codex/phase-5-production-integration` as version 0.3.0. It uses the existing
+Decaid gateway and guarded navigation/writes. See [the integration audit and
+validation record](docs/PHASE-5-INTEGRATION.md). The isolated design preview still
+runs with `npm run dev:brewing`; no preview controls enter the production build.
+This candidate is not deployed and requires supervised tablet/machine acceptance.

@@ -1,7 +1,7 @@
 {
   "name": "decent-skin",
   "private": true,
-  "version": "0.2.5",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,10 @@
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "package:skin": "node scripts/release-skin.mjs",
-    "verify:skin": "node scripts/verify-skin.mjs"
+    "verify:skin": "node scripts/verify-skin.mjs",
+    "dev:brewing": "vite --config design/brewing/vite.config.ts",
+    "check:brewing": "tsc -p design/brewing/tsconfig.json && vitest run design/brewing/experience/model.test.ts && node scripts/verify-brewing-isolation.mjs",
+    "test:brewing": "playwright test --config design/brewing/playwright.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

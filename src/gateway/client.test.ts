@@ -430,3 +430,151 @@ describe("Decaid integration", () => {
     ).toMatch(/heating/)
   })
 })
+
+describe("Phase 5 telemetry and shot identity", () => {
+  it("retains five real traces, drops absent sensors and keeps true zero scale flow", async () => {
+    await connect()
+    gateway.receive("scale/snapshot", {
+      timestamp: machine(1).timestamp,
+      weight: 0,
+      weightFlow: 0,
+    })
+    gateway.receive("machine/snapshot", {
+      ...machine(1, "espresso", "preinfusion"),
+      groupTemperature: 91,
+      targetPressure: 3,
+    })
+    expect(gateway.getSnapshot().samples[0]).toMatchObject({
+      temperature: 88,
+      groupTemperature: 91,
+      targetPressure: 3,
+      weightFlow: 0,
+      frame: 0,
+    })
+    gateway.receive("scale/snapshot", { status: "disconnected" })
+    gateway.receive("machine/snapshot", machine(2, "espresso", "pouring"))
+    expect(gateway.getSnapshot().samples.at(-1)).toMatchObject({
+      groupTemperature: null,
+      targetPressure: null,
+      weightFlow: null,
+      weight: null,
+    })
+    expect(writes).toEqual([])
+  })
+  it("bounds a sustained telemetry stream and clears it for the next shot without writes", async () => {
+    await connect()
+    for (let i = 0; i < 10000; i++)
+      gateway.receive("machine/snapshot", {
+        ...machine(1 + i / 10, "espresso", "pouring"),
+        pressure: i / 1000,
+      })
+    const samples = gateway.getSnapshot().samples
+    expect(samples).toHaveLength(3600)
+    expect(samples[0].elapsed).toBe(640)
+    expect(samples.at(-1)?.pressure).toBe(9.999)
+    gateway.receive("machine/snapshot", machine(1002))
+    gateway.receive(
+      "machine/snapshot",
+      machine(1003, "espresso", "preinfusion")
+    )
+    expect(gateway.getSnapshot().samples).toHaveLength(1)
+    expect(gateway.getSnapshot().samples[0].elapsed).toBe(0)
+    expect(writes).toEqual([])
+  })
+  it("does not reset observed extraction when a shot ID arrives after machine telemetry", async () => {
+    await connect()
+    gateway.receive("machine/snapshot", machine(1, "espresso", "preinfusion"))
+    gateway.receive("machine/snapshot", machine(2, "espresso", "pouring"))
+    const before = gateway.getSnapshot()
+    gateway.receive("machine/shotState", {
+      event: "state",
+      state: "pouring",
+      timestamp: machine(2).timestamp,
+      shotId: "late-id",
+    })
+    expect(gateway.getSnapshot().samples).toBe(before.samples)
+    expect(gateway.getSnapshot().shotSequence).toBe(before.shotSequence)
+  })
+  it("rejects a previous shot's terminal event during a rapid consecutive shot", async () => {
+    await connect()
+    gateway.receive("machine/shotState", {
+      event: "state",
+      state: "preheating",
+      timestamp: machine(1).timestamp,
+      shotId: "first",
+    })
+    gateway.receive(
+      "machine/snapshot",
+      machine(1, "espresso", "preparingForShot")
+    )
+    gateway.receive("machine/snapshot", machine(2, "espresso", "pouring"))
+    gateway.receive("machine/snapshot", machine(3))
+    gateway.receive(
+      "machine/snapshot",
+      machine(4, "espresso", "preparingForShot")
+    )
+    gateway.receive("machine/shotState", {
+      event: "state",
+      state: "preheating",
+      timestamp: machine(4).timestamp,
+      shotId: "second",
+    })
+    const sequence = gateway.getSnapshot().shotSequence
+    gateway.receive("machine/shotState", {
+      event: "terminal",
+      state: "finished",
+      timestamp: machine(5).timestamp,
+      shotId: "first",
+      decision: { kind: "stop", reason: "targetWeight" },
+    })
+    expect(gateway.getSnapshot()).toMatchObject({
+      shotSequence: sequence,
+      shotId: "second",
+      complete: false,
+      shotOutcome: null,
+    })
+  })
+  it("does not misclassify a physical machine-ended event as confirmed success", async () => {
+    await connect()
+    gateway.receive("machine/snapshot", machine(1, "espresso", "pouring"))
+    gateway.receive("machine/shotState", {
+      event: "terminal",
+      state: "finished",
+      timestamp: machine(2).timestamp,
+      decision: { kind: "stop", reason: "machineEnded" },
+    })
+    expect(gateway.getSnapshot().shotOutcome).toBe("unknown")
+  })
+})
+
+it("keeps shot identity on reconnect replay and starts a new generation only after idle", async () => {
+  await connect()
+  gateway.receive("machine/snapshot", machine(1, "espresso", "pouring"))
+  gateway.receive("machine/shotState", {
+    event: "state",
+    state: "pouring",
+    timestamp: machine(1).timestamp,
+    shotId: "reconnect",
+  })
+  const sequence = gateway.getSnapshot().shotSequence
+  gateway.receive("devices", { devices: [] })
+  gateway.receive("devices", { devices })
+  gateway.receive("machine/shotState", {
+    event: "state",
+    state: "pouring",
+    timestamp: machine(2).timestamp,
+    shotId: "reconnect",
+  })
+  gateway.receive("machine/snapshot", machine(2, "espresso", "pouring"))
+  expect(gateway.getSnapshot()).toMatchObject({
+    shotSequence: sequence,
+    shotId: "reconnect",
+  })
+  expect(gateway.getSnapshot().samples.at(-1)?.breakBefore).toBe(true)
+  gateway.receive("machine/snapshot", machine(3))
+  gateway.receive(
+    "machine/snapshot",
+    machine(4, "espresso", "preparingForShot")
+  )
+  expect(gateway.getSnapshot().shotSequence).toBe(sequence + 1)
+})

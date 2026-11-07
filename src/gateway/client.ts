@@ -39,6 +39,8 @@ export const initialSnapshot = (): GatewaySnapshot => ({
   favoritesLoaded: false,
   favoritesIssue: "",
   observedShot: 0,
+  shotSequence: 0,
+  shotOutcome: null,
   devices: [],
   deviceError: "",
   deviceErrorKind: "",
@@ -46,6 +48,7 @@ export const initialSnapshot = (): GatewaySnapshot => ({
   machine: null,
   machineReceived: 0,
   scale: null,
+  scaleReceived: 0,
   scaleConnected: false,
   water: null,
   settings: null,
@@ -113,6 +116,10 @@ export class DecaidGateway {
   private channels = new Set<string>()
   private observedIdle = false
   private navigationState: string | null = null
+  private shotOpen = false
+  private shotBeganAt = 0
+  private lastShotEventTime = 0
+  private retiredShotIds = new Set<string>()
   private shotDismissed = false
   private restoredShot: string | null = null
   private restoringShot: string | null = null
@@ -616,24 +623,50 @@ export class DecaidGateway {
         this.observedIdle = true
       this.navigationState = m.state.state
       const wasRunning = pouring(s.machine)
-      const newShot =
-        running && !wasRunning && (s.shotStart === null || s.complete)
-      if (newShot) this.shotDismissed = false
-      const start = newShot ? timestamp : s.shotStart
+      const newSession =
+        m.state.state === "espresso" &&
+        !this.shotOpen &&
+        (s.machine?.state.state !== "espresso" ||
+          (m.state.substate === "preparingForShot" &&
+            s.machine?.state.substate !== "preparingForShot"))
+      if (newSession) this.beginShot(timestamp)
+      const current = this.snapshot
+      const newShot = running && current.shotStart === null
+      const start = newShot ? timestamp : current.shotStart
+      const scaleFresh =
+        current.scaleConnected && Date.now() - current.scaleReceived <= 5000
       const sample = {
         elapsed: start === null ? 0 : Math.max(0, (timestamp - start) / 1000),
         pressure: m.pressure,
         flow: m.flow,
         temperature: m.mixTemperature,
-        weight: s.scale?.weight ?? null,
+        weight: scaleFresh ? (current.scale?.weight ?? null) : null,
+        weightFlow:
+          scaleFresh && finite(current.scale?.weightFlow)
+            ? current.scale.weightFlow
+            : null,
+        targetPressure: finite(m.targetPressure) ? m.targetPressure : null,
+        groupTemperature: finite(m.groupTemperature)
+          ? m.groupTemperature
+          : null,
+        frame: m.profileFrame,
+        breakBefore:
+          current.samples.length > 0 &&
+          (current.machineReceived === 0 ||
+            Date.now() - current.machineReceived > 5000),
       }
       const samples = newShot
         ? [sample]
         : (running || wasRunning) &&
-            (s.samples.length === 0 ||
+            (current.samples.length === 0 ||
               timestamp > (s.machine ? Date.parse(s.machine.timestamp) : 0))
-          ? [...s.samples.slice(-3599), sample]
-          : s.samples
+          ? [...current.samples.slice(-3599), sample]
+          : current.samples
+      const ended =
+        this.shotOpen &&
+        m.state.state !== "espresso" &&
+        timestamp >= this.shotBeganAt
+      if (ended) this.shotOpen = false
       this.emit({
         machine: m,
         observedShot: s.observedShot + (observedStart ? 1 : 0),
@@ -650,8 +683,8 @@ export class DecaidGateway {
               shotProfile: s.workflow?.profile ?? null,
             }
           : {}),
-        ...(!running && wasRunning && m.state.state !== "espresso"
-          ? { complete: true }
+        ...(ended
+          ? { complete: true, shotOutcome: current.shotOutcome ?? "unknown" }
           : {}),
       })
     } else if (channel === "scale/snapshot") {
@@ -668,7 +701,12 @@ export class DecaidGateway {
           samples.length > 0
         this.emit({
           scaleConnected: true,
-          scale: { weight: data.weight, timestamp: data.timestamp },
+          scale: {
+            weight: data.weight,
+            timestamp: data.timestamp,
+            weightFlow: finite(data.weightFlow) ? data.weightFlow : null,
+          },
+          scaleReceived: Date.now(),
           ...(settling
             ? {
                 samples: [
@@ -686,43 +724,68 @@ export class DecaidGateway {
         throw new Error("Invalid Decaid shot state")
       const event = data as unknown as ShotEvent
       if (["idle", "preheating"].includes(event.state)) this.observedIdle = true
-      const newShot =
+      const time = Date.parse(event.timestamp)
+      if (
+        !Number.isFinite(time) ||
+        time < this.lastShotEventTime ||
+        (event.shotId && this.retiredShotIds.has(event.shotId))
+      )
+        return
+      const terminal =
+        ["finished", "idle"].includes(event.state) ||
+        ["stop", "abort", "terminal", "finalize"].includes(
+          event.decision?.kind ?? ""
+        )
+      if (
+        terminal &&
+        this.snapshot.shotId &&
         event.shotId &&
-        event.shotId !== this.snapshot.shotId &&
-        !["finished", "idle"].includes(event.state)
-      if (newShot) this.shotDismissed = false
+        event.shotId !== this.snapshot.shotId
+      )
+        return
+      if (terminal && time < this.shotBeganAt) return
+      this.lastShotEventTime = time
+      const newId =
+        event.shotId && event.shotId !== this.snapshot.shotId && !terminal
+      if (newId && (!this.shotOpen || this.snapshot.shotId))
+        this.beginShot(time)
       this.emit({
         shotId: event.shotId ?? this.snapshot.shotId,
         scaleLost: event.scaleLost === true,
-        ...(newShot
-          ? {
-              samples: [],
-              elapsedKnown: this.observedIdle,
-              shotFrame: 0,
-              shotStart: null,
-              complete: false,
-              stopped: false,
-              shotProfile: this.snapshot.workflow?.profile ?? null,
-            }
-          : {}),
       })
-      if (event.state === "pouring" && this.snapshot.shotStart === null)
-        this.emit({ shotStart: Date.parse(event.timestamp) })
-      if (["stop", "abort", "terminal"].includes(event.decision?.kind ?? ""))
+      // A replay's timestamp is not the actual extraction start. Only a machine
+      // transition supplies an observed elapsed origin.
+      const decision = event.decision
+      if (decision && ["stop", "abort", "terminal"].includes(decision.kind)) {
+        const outcome =
+          decision.reason === "disconnected"
+            ? "disconnected"
+            : decision.reason === "noScale"
+              ? "blocked"
+              : decision.reason === "error" || decision.kind === "abort"
+                ? "failed"
+                : ["apiStop", "appStop"].includes(decision.reason)
+                  ? "manual"
+                  : ["targetWeight", "targetVolume"].includes(decision.reason)
+                    ? "success"
+                    : "unknown"
         this.emit({
-          stopped: !["targetWeight", "targetVolume", "machineEnded"].includes(
-            event.decision?.reason ?? ""
-          ),
-          message:
-            event.decision?.kind === "abort" ||
-            event.decision?.reason === "error" ||
-            event.decision?.reason === "disconnected"
-              ? event.decision?.details ||
-                `Shot stopped: ${event.decision?.reason}`
-              : this.snapshot.message,
+          shotOutcome: outcome,
+          stopped: outcome !== "success" && outcome !== "unknown",
+          ...(decision.kind === "abort" || decision.kind === "terminal"
+            ? { complete: true }
+            : {}),
+          message: ["failed", "disconnected", "blocked"].includes(outcome)
+            ? decision.details || `Shot stopped: ${decision.reason}`
+            : this.snapshot.message,
         })
+      }
       if (event.state === "finished" && !this.shotDismissed) {
-        this.emit({ complete: true })
+        this.shotOpen = false
+        this.emit({
+          complete: true,
+          shotOutcome: this.snapshot.shotOutcome ?? "unknown",
+        })
         if (
           event.shotId &&
           this.restoredShot !== event.shotId &&
@@ -735,8 +798,32 @@ export class DecaidGateway {
       }
     }
   }
+  private beginShot(timestamp: number) {
+    const s = this.snapshot
+    if (s.shotId) this.retiredShotIds.add(s.shotId)
+    if (this.retiredShotIds.size > 32)
+      this.retiredShotIds.delete(this.retiredShotIds.values().next().value!)
+    this.shotOpen = true
+    this.shotDismissed = false
+    this.shotBeganAt = timestamp
+    this.emit({
+      shotSequence: s.shotSequence + 1,
+      shotId: null,
+      shotOutcome: null,
+      samples: [],
+      shotStart: null,
+      shotFrame: 0,
+      complete: false,
+      stopped: false,
+      scaleLost: false,
+      elapsedKnown: this.observedIdle,
+      shotProfile: s.workflow?.profile ?? null,
+    })
+  }
   private async restoreShot(id: string) {
     this.restoreAttempts.set(id, (this.restoreAttempts.get(id) ?? 0) + 1)
+    if (this.restoreAttempts.size > 32)
+      this.restoreAttempts.delete(this.restoreAttempts.keys().next().value!)
     try {
       const record = await this.shot(id)
       if (
@@ -747,7 +834,7 @@ export class DecaidGateway {
         return
       const start = Date.parse(record.measurements[0].machine.timestamp)
       this.restoredShot = id
-      const samples = record.measurements.map((point) => ({
+      const samples = record.measurements.slice(-3600).map((point) => ({
         elapsed: Math.max(
           0,
           (Date.parse(point.machine.timestamp) - start) / 1000
@@ -756,6 +843,16 @@ export class DecaidGateway {
         flow: point.machine.flow,
         weight: point.scale?.weight ?? null,
         temperature: point.machine.mixTemperature,
+        targetPressure: finite(point.machine.targetPressure)
+          ? point.machine.targetPressure
+          : null,
+        groupTemperature: finite(point.machine.groupTemperature)
+          ? point.machine.groupTemperature
+          : null,
+        weightFlow: finite(point.scale?.weightFlow)
+          ? point.scale.weightFlow
+          : null,
+        frame: point.machine.profileFrame,
       }))
       this.emit({
         samples,

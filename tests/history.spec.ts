@@ -30,6 +30,9 @@ test("history filters, paging, detail and Back share one read-only session", asy
   page.on("websocket", () => sockets++)
   await page.goto("/?page=history")
   await expect(
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
+  await expect(
     page.getByText("23 matching shots", { exact: false })
   ).toBeVisible()
   await page.getByRole("button", { name: "Next page", exact: true }).click()
@@ -66,6 +69,9 @@ test("annotations retain failed and newer edits, clear canonical notes and never
     await request.get(`${fixture}/api/v1/shots/record`)
   ).json()
   await page.goto("/?page=shot&shot=record")
+  await expect(
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await expect(page.getByLabel("Shot notes", { exact: true })).toHaveValue(
     "Sweet and balanced"
   )
@@ -149,6 +155,9 @@ test("repeat loads only the recorded recipe; export and confirmed deletion repor
     await request.get(`${fixture}/api/v1/shots/record`)
   ).json()
   await page.goto("/?page=shot&shot=record")
+  await expect(
+    page.getByRole("status", { name: "Machine state", exact: true })
+  ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
   await expect(
     page.getByRole("button", { name: "Repeat recipe", exact: true })
   ).toBeEnabled()

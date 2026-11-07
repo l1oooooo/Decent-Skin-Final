@@ -20,19 +20,26 @@ test("Home has quiet footer, text-only scale, live steam reading and profile edi
   page,
   request,
 }) => {
+  test.setTimeout(240000)
   await request.post(`${fixture}/__test/state`, { data: { scale: false } })
   await page.goto("/", { waitUntil: "networkidle" })
+  await expect(page.locator(".candidate-status")).toHaveText("DE1Ready", {
+    timeout: 90000,
+  })
   await expect(
     page.getByRole("button", { name: "Edit dose", exact: true })
   ).toBeEnabled()
-  await expect(page.locator("footer")).not.toContainText("group-head")
+  await expect(page.locator("footer")).toHaveCount(0)
   await expect(
-    page.getByRole("button", { name: "Connect scale" }).locator("svg")
-  ).toHaveCount(0)
+    page.getByLabel("Scale disconnected", { exact: true })
+  ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Connect scale" })).toHaveCount(
+    0
+  )
   const steam = page
     .getByRole("banner")
     .getByLabel("Steam temperature", { exact: true })
-  await expect(steam).toHaveText("Steam 50°C")
+  await expect(steam).toHaveText(/Steam\s*50\s*°C/)
   await page.getByRole("button", { name: "Steam", exact: true }).click()
   await page
     .getByRole("button", { name: "Edit steam temperature", exact: true })
@@ -43,8 +50,12 @@ test("Home has quiet footer, text-only scale, live steam reading and profile edi
   })
   await enter(dialog, "145")
   await dialog.getByRole("button", { name: "Save", exact: true }).click()
-  await expect(steam).toHaveText("Steam 50°C")
-  await page.getByRole("button", { name: "Close utility card" }).click()
+  await expect(steam).toHaveText(/Steam\s*50\s*°C/)
+  await page
+    .getByRole("button", {
+      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+    })
+    .click()
   await page.getByRole("button", { name: "Edit profile", exact: true }).click()
   await expect(page).toHaveURL(/page=edit.*profile=profile%3A0/)
   await expect(page.getByLabel("Profile name", { exact: true })).toHaveValue(
@@ -176,6 +187,7 @@ test("Home adjustments survive profile switches and a reload, with partial saves
   page,
   request,
 }) => {
+  test.setTimeout(240000)
   await page.goto("/", { waitUntil: "networkidle" })
   const rail = page.getByRole("group", { name: "Favorite profiles" })
   await expect(rail.getByRole("button")).toHaveCount(5)

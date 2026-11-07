@@ -1,53 +1,43 @@
-import { format, type SkinSession } from "./use-skin"
-import { useRef } from "react"
-import { Action, Eyebrow } from "./primitives"
-import { RecipeControls, Extraction, ShotNumbers, Notice } from "./controls"
-import { RevisionHeader, RevisionProfiles, RevisionBottomBar } from "./chrome"
+import { format, type SkinSession } from "@/skin/use-skin"
+import { SquarePen } from "lucide-react"
+import { Action } from "@/skin/primitives"
+import { RecipeControls, Notice } from "@/skin/controls"
+import { CandidateProfiles } from "./profiles"
+import { CandidateHeader } from "./header"
+import { ProfileChart } from "./profile-chart"
+import type { TankCalibration } from "./tank"
 
-import Focus from "./focus"
-
-export default function FocusScreen({
+export default function CandidateHome({
   s,
   onSettings,
-  onConnections,
   onHistory,
   onBrowse,
   onEdit,
   onAssign,
+  tankCalibration,
 }: {
   s: SkinSession
+  tankCalibration: TankCalibration
   onHistory: () => void
   onSettings: () => void
-  onConnections: () => void
   onEdit: () => void
   onBrowse: () => void
   onAssign: (slot: number) => void
 }) {
-  const recipePanel = useRef<HTMLDivElement>(null)
-  const surface = useRef<HTMLDivElement>(null)
-  const showingShot = s.active || s.complete
-  const warning =
-    !s.connected ||
-    s.phase === "heating" ||
-    s.phase === "error" ||
-    !!s.notice ||
-    ((s.block || s.brewBlock) && !s.active && !s.operation)
   return (
-    <div
-      ref={surface}
-      className="focus-skin flex h-full flex-col bg-background"
-    >
-      <RevisionHeader
+    <div className="focus-skin flex h-full flex-col bg-background">
+      <CandidateHeader
+        key={s.snapshot.shotSequence}
+        tankCalibration={tankCalibration}
         s={s}
         onSettings={onSettings}
         onHistory={onHistory}
-        onConnections={onConnections}
       />
       <div className="focus-body flex min-h-0 flex-1">
-        <RevisionProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
+        <CandidateProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="focus-main flex min-w-0 flex-1 flex-col px-7 py-6">
-          <div className="focus-profile-heading min-h-[88px]">
-            <div className="flex items-start gap-3">
+          <div className="focus-profile-heading">
+            <div className="flex items-center gap-3">
               <h1
                 title={s.profile.name}
                 className="line-clamp-2 min-w-0 flex-1 text-[30px] leading-tight font-medium tracking-[-.045em]"
@@ -63,23 +53,16 @@ export default function FocusScreen({
                 }
                 onClick={onEdit}
               >
+                <SquarePen size={14} aria-hidden="true" />
                 Edit profile
               </Action>
             </div>
-            <p
-              title={s.profile.notes}
-              className="mt-3 line-clamp-2 text-[13px] text-muted-foreground"
-            >
-              {s.profile.notes}
-            </p>
           </div>
           <section
-            aria-label={showingShot ? "Shot readings" : "Recipe summary"}
+            aria-label="Recipe summary"
             className="mt-5 border-y border-border py-6"
           >
-            {showingShot ? (
-              <ShotNumbers s={s} />
-            ) : (
+            {
               <div className="grid grid-cols-3 gap-6">
                 {[
                   [
@@ -121,56 +104,17 @@ export default function FocusScreen({
                   </div>
                 ))}
               </div>
-            )}
+            }
           </section>
           <section className="focus-chart mt-6 min-h-0 flex-1">
-            <div className="mb-3 flex items-center justify-between">
-              <Eyebrow>
-                {s.complete
-                  ? "Shot record"
-                  : s.active
-                    ? "Extraction trace"
-                    : "Profile preview"}
-              </Eyebrow>
-              <span className="text-[12px] text-muted-foreground">
-                {s.complete
-                  ? "Complete"
-                  : s.active
-                    ? s.paused
-                      ? "Paused"
-                      : "Recording"
-                    : s.profile.kind}
-              </span>
-            </div>
-            <Extraction s={s} height={warning ? 145 : 205} />
+            <ProfileChart profile={s.rawProfile} />
           </section>
           <Notice s={s} />
         </main>
-        <aside
-          ref={recipePanel}
-          className="focus-controls-panel flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6"
-        >
-          {showingShot ? (
-            <Focus
-              s={s}
-              onAdjust={() => {
-                s.reset()
-                requestAnimationFrame(() =>
-                  recipePanel.current?.querySelector("button")?.focus()
-                )
-              }}
-            />
-          ) : (
-            <>
-              <div className="mb-6 flex items-center justify-between">
-                <Eyebrow>Profile settings</Eyebrow>
-              </div>
-              <RecipeControls s={s} vertical grind />
-            </>
-          )}
+        <aside className="focus-controls-panel flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6">
+          <RecipeControls s={s} vertical grind />
         </aside>
       </div>
-      <RevisionBottomBar s={s} container={surface} />
     </div>
   )
 }

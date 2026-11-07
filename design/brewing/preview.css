@@ -1,0 +1,139 @@
+@import "../../src/skin/brewing/brewing.css";
+.design-dock {
+  position: fixed;
+  bottom: 12px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+  background: oklch(0.178 0 0);
+  padding: 4px 4px 4px 14px;
+  border: 1px solid oklch(0.309 0 0);
+  border-radius: 8px;
+}
+.design-dock > span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: oklch(0.706 0 0);
+  margin-right: 8px;
+}
+.design-dock[data-home="true"] {
+  width: 216px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+.design-dock[data-home="true"] > span,
+.design-dock[data-home="true"] .design-tools > span {
+  display: none;
+}
+.design-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.design-dock:not([data-home="true"]) .design-tools svg {
+  display: none;
+}
+.design-dock[data-home="true"] .design-tools {
+  width: 44px;
+  padding-inline: 0;
+  flex-shrink: 0;
+}
+.design-dock[data-home="true"] .design-ghc {
+  flex: 1;
+  padding-inline: 6px;
+}
+.design-dock button {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.design-dock .design-ghc {
+  background: oklch(0.934 0 0);
+  color: oklch(0.178 0 0);
+  font-weight: 500;
+}
+.design-scenarios {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 380px;
+  padding: 20px;
+  z-index: 30;
+  background: oklch(0.2 0 0);
+  border: 1px solid oklch(0.333 0 0);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px oklch(0 0 0 / 0.533);
+  font-size: 13px;
+}
+.design-scenarios header {
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 0;
+}
+.design-scenarios header div {
+  flex: 1;
+}
+.design-scenarios header strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.design-scenarios header p {
+  margin-top: 6px;
+  color: oklch(0.738 0 0);
+  font-size: 11px;
+}
+.design-scenarios header button {
+  width: 44px;
+  min-height: 44px;
+  font-size: 22px;
+}
+.design-scenarios label {
+  display: block;
+  color: oklch(0.792 0 0);
+  margin-top: 12px;
+}
+.design-scenarios select {
+  display: block;
+  width: 100%;
+  height: 44px;
+  background: oklch(0.252 0 0);
+  border: 1px solid oklch(0.387 0 0);
+  border-radius: 6px;
+  margin-top: 6px;
+  padding: 0 8px;
+  color: oklch(0.949 0 0);
+  font-size: 13px;
+}
+.design-scenario-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 18px;
+}
+.design-scenario-actions button {
+  min-height: 44px;
+  border: 1px solid oklch(0.387 0 0);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+}
+.design-scenario-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.design-event-state {
+  margin-top: 16px;
+  color: oklch(0.738 0 0);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .design-dock *, .design-scenarios * { transition: none !important; animation: none !important; }
+}

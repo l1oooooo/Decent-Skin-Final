@@ -168,6 +168,7 @@ function machine() {
     pressure: state === "espresso" ? (elapsed < 7 ? 3 : 9) : 0,
     flow: state === "espresso" ? (elapsed < 7 ? 2 : 1.6) : 0,
     mixTemperature: state === "heating" ? 78 : 88,
+    targetPressure: elapsed < 7 ? 3 : 9,
     groupTemperature: 88, steamTemperature: advancedState.steamTemperature,
     profileFrame: elapsed < 7 ? 0 : elapsed < 18 ? 1 : 2,
   }
@@ -212,6 +213,7 @@ function emit(reason) {
     scale
       ? {
           timestamp: machine().timestamp,
+          weightFlow: advancedState.weightFlow ?? 2.1,
           weight: started
             ? Math.min(50, Math.max(0, ((elapsed - 7) / 23) * 50))
             : 0,
@@ -252,6 +254,7 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/__test/state") {
     if(data.advanced) merge(advancedState,data.advanced)
     if(data.extensions) merge(extensionState,data.extensions)
+    if ("shotId" in data) shotId = data.shotId
     state = data.state ?? state
     substate = data.substate ?? (state === "espresso" ? "pouring" : "idle")
     elapsed = data.elapsed ?? elapsed

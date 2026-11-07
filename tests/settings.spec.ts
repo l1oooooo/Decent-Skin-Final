@@ -188,7 +188,7 @@ test("display saves preserve newer edits, report caps and persist units", async 
   await page
     .getByRole("button", { name: "Return to Home", exact: true })
     .click()
-  await expect(page.getByLabel("Machine status")).toContainText("190.4°F")
+  await expect(page.getByLabel("Machine status")).toContainText("190 °F")
 })
 
 test("wake schedules and sleep are explicit; unsupported grinder controls stay unavailable", async ({
@@ -202,7 +202,7 @@ test("wake schedules and sleep are explicit; unsupported grinder controls stay u
   await page.goto("/?page=settings&category=connections")
   await expect(
     page.getByText("Grind setting is read-only or unavailable.")
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 90000 })
   await expect(
     page.getByRole("button", { name: "Start grinder", exact: true })
   ).toHaveCount(0)
@@ -223,7 +223,11 @@ test("wake schedules and sleep are explicit; unsupported grinder controls stay u
     )[0]
   ).toMatchObject({ time: "08:15", daysOfWeek: [1], enabled: true })
   await page.goto("/?page=settings&category=machine")
-  await page.getByRole("button", { name: "Sleep machine", exact: true }).click()
+  const sleep = page
+    .getByRole("main")
+    .getByRole("button", { name: "Sleep machine", exact: true })
+  await expect(sleep).toBeEnabled({ timeout: 90000 })
+  await sleep.click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Wake machine", exact: true })

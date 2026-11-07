@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../node_modules/.tmp/tsconfig.brewing.tsbuildinfo",
+    "types": ["vite/client", "node"],
+    "paths": { "@/*": ["../../src/*"] }
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"]
+}

@@ -81,6 +81,11 @@ export interface ShotSample {
   flow: number | null
   weight: number | null
   temperature: number | null
+  targetPressure?: number | null
+  groupTemperature?: number | null
+  weightFlow?: number | null
+  frame?: number
+  breakBefore?: boolean
 }
 export interface ShotEvent {
   event: string
@@ -99,7 +104,7 @@ export interface ShotRecord {
   annotations?: { actualYield?: number; [key: string]: unknown }
   measurements?: {
     machine: MachineSnapshot
-    scale?: { weight: number } | null
+    scale?: { weight: number; weightFlow?: number | null } | null
   }[]
 }
 export interface GatewaySnapshot {
@@ -112,13 +117,27 @@ export interface GatewaySnapshot {
   favoritesLoaded: boolean
   favoritesIssue: string
   observedShot: number
+  shotSequence: number
+  shotOutcome:
+    | "success"
+    | "manual"
+    | "blocked"
+    | "disconnected"
+    | "failed"
+    | "unknown"
+    | null
   devices: Device[]
   deviceError: string
   deviceErrorKind: string
   deviceNotice: string
   machine: MachineSnapshot | null
   machineReceived: number
-  scale: { weight: number; timestamp: string } | null
+  scale: {
+    weight: number
+    timestamp: string
+    weightFlow?: number | null
+  } | null
+  scaleReceived: number
   scaleConnected: boolean
   water: number | null
   settings: {

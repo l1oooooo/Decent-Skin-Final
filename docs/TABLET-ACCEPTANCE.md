@@ -21,14 +21,48 @@ before building. Do not remove someone else's development configuration;
 prepare the release in a clean checkout when necessary. The installed skin
 uses its serving hostname on API port 8080. It needs no Node process on Android.
 
-The archive is `artifacts/decent-skin-codex-0.2.2.zip`. Its inspection report is
+The current candidate archive is `artifacts/decent-skin-codex-0.3.0.zip`. Its inspection report is
 `artifacts/skin-release.json`: SHA-256, byte count, file inventory, manifest,
 source commit and tracked changes. Re-run verification after committing to
 associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
 
-### Recheck after the 0.2.5 update
+### Phase 5 / 0.3.0 acceptance
+
+This candidate promotes the approved Phase 4.1 presentation. Historical checks
+below describe earlier layouts; the approved Home now has direct Steam, Hot
+Water and Flush popovers in the top navigation, a read-only scale value and
+the Power / Sleep icon. There are no on-screen daily start/stop controls.
+
+1. Install only during an agreed supervised session. Record the actual Samsung
+   WebView viewport and confirm the Home and expanded chart fit, including long
+   profile names, touch targets, keypad and utility popovers.
+2. Compare each header measurement with Decaid. The user confirmed the standard
+   removable Decent tank; compare its mL estimate at several measured levels.
+   Confirm refill-kit machines and unavailable readings do not show an invented
+   volume. Verify sensor values clear on disconnection and stale data.
+3. Start espresso using the physical GHC. Check preparation, preinfusion and
+   extraction against real states. Compare all five unsmoothed traces with Decaid,
+   including group rather than mix temperature and scale weight flow.
+4. Complete a target-weight shot. Confirm a frozen final trace, an approximately
+   three-second hold, return to the same profile and one Shot completed toast.
+   Stop another shot physically. The installed API's `machineEnded` reason is
+   ambiguous; it must not produce a success toast without a classified outcome.
+5. Check quick consecutive shots, leaving/returning through navigation, scale
+   loss, machine disconnection, background/resume and reconnection. Verify no
+   command replay, duplicate start transition or stale completion timer.
+6. Adjust utilities without starting them; deliberately operate Steam, Hot Water
+   and Flush from the physical GHC. Verify the existing stop behavior, disabled
+   editing during activity and failure feedback. Test one-tap Sleep and wake.
+7. Observe a sustained session for chart responsiveness, animation, memory and
+   touch latency. Fixture results and a desktop capture do not accept WebView
+   performance or physical machine behavior.
+
+Keep the installed working skin until these checks are reviewed. Local rollback
+archives and source instructions are in [PHASE-5-INTEGRATION.md](PHASE-5-INTEGRATION.md).
+
+### Historical recheck after the 0.2.5 update
 
 1. Install **0.2.5**. With the machine idle, tap the top-right moon / Sleep
    button once. Confirm actual standby and the Sleeping screen, then use the
@@ -251,11 +285,9 @@ command gating, stop behavior, persistence, installation or lifecycle blocks
 release of the affected feature. Document optional unsupported capabilities;
 do not replace them with simulated success. Preserve the last working skin.
 
-Known local constraints remain: the locked red Stop label has a documented
-contrast shortfall, and the compiled JS triggers Vite's 500 kB advisory. Focus
-was intentionally not restyled. Do not claim WCAG AA or acceptable tablet
-performance without resolving/recording those results and obtaining a design
-decision for any visual change.
+The compiled JS still triggers Vite's 500 kB advisory. The approved appearance
+is preserved; do not claim WCAG AA or acceptable tablet performance without
+recording actual checks and obtaining a design decision for any visual change.
 
 Phase 9 is complete only when local evidence and the agreed device checks are
 recorded and reviewed. Until then this is a **release candidate**, not a
