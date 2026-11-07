@@ -124,12 +124,14 @@ export const BrewingChart = memo(function BrewingChart({
   width,
   height,
   plannedDuration,
+  plannedKeys,
   temperatureUnit = "C",
 }: {
   samples: Reading[]
   width: number
   height: number
   plannedDuration?: number
+  plannedKeys?: readonly SeriesKey[]
   temperatureUnit?: "C" | "F"
 }) {
   const id = useId().replaceAll(":", "")
@@ -139,7 +141,11 @@ export const BrewingChart = memo(function BrewingChart({
     ? { ...liveRange, duration: Math.max(1, plannedDuration) }
     : liveRange
   const visibleSeries = planned
-    ? series.filter((s) => s.key !== "targetPressure" && s.key !== "weightFlow")
+    ? series.filter((s) =>
+        (plannedKeys ?? ["pressure", "flow", "groupTemperature"]).includes(
+          s.key
+        )
+      )
     : series
   const w = Math.max(300, width),
     h = Math.max(100, height - 44)
@@ -208,7 +214,7 @@ export const BrewingChart = memo(function BrewingChart({
         role="img"
         aria-label={
           planned
-            ? "Smoothed illustration of configured pressure, flow and temperature; curves are visual interpolation, not exact machine transitions. Temperature is independently scaled. Gaps mean no configured target."
+            ? "Complete configured targets only. Curves are visual interpolation, not exact machine transitions. Temperature is independently scaled. Incomplete series are omitted."
             : `Five extraction traces. Shared numerical left axis: pressure in bar, flow in millilitres per second, weight flow in grams per second. Independent right axis: group temperature in degrees ${temperatureUnit === "F" ? "Fahrenheit" : "Celsius"}.`
         }
       >
@@ -358,14 +364,18 @@ export const BrewingChart = memo(function BrewingChart({
           {(planned
             ? (["groupTemperature", "pressure", "flow"] as const)
             : (["pressure", "flow"] as const)
-          ).map((key) => (
-            <path
-              key={`${key}-area`}
-              data-area={key}
-              d={drawing[key].area}
-              fill={`url(#${id}-${key})`}
-            />
-          ))}
+          )
+            .filter(
+              (key) => !planned || visibleSeries.some((s) => s.key === key)
+            )
+            .map((key) => (
+              <path
+                key={`${key}-area`}
+                data-area={key}
+                d={drawing[key].area}
+                fill={`url(#${id}-${key})`}
+              />
+            ))}
           {(
             [
               "groupTemperature",

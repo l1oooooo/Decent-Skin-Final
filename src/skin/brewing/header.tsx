@@ -1,6 +1,14 @@
-import { useState } from "react"
-import { Popover } from "@base-ui/react/popover"
-import { History, Settings, Power, Wind, Droplet, Waves, X } from "lucide-react"
+import { useId, useState } from "react"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
+  PopoverClose,
+} from "@/components/ui/popover"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { History, Settings, Power, Gauge, X } from "lucide-react"
 import type { SkinSession } from "@/skin/use-skin"
 import { format } from "@/skin/use-skin"
 import { Stepper } from "@/skin/controls"
@@ -9,23 +17,24 @@ import { tankMillilitres, type TankCalibration } from "./tank"
 type Utility = "Steam" | "Hot water" | "Flush"
 
 function UtilityCard({ s, utility }: { s: SkinSession; utility: Utility }) {
+  const switchId = useId()
   const steam = utility === "Steam"
+  const steamAvailable = Number.isFinite(s.steamTemperature)
   const water = utility === "Hot water"
   return (
     <section className="candidate-utility" aria-label={`${utility} settings`}>
       {steam && (
-        <button
-          type="button"
-          role="switch"
-          aria-label="Enable steam"
-          aria-checked={s.steamEnabled}
-          disabled={s.profileLocked}
-          onClick={() => void s.toggleSteam(!s.steamEnabled)}
-          className="utility-toggle"
-        >
-          <span>Steam function</span>
-          <span>{s.steamEnabled ? "On" : "Off"}</span>
-        </button>
+        <div className="utility-toggle">
+          <label htmlFor={switchId}>Steam function</label>
+          <Switch
+            id={switchId}
+            className="steam-switch"
+            aria-label="Enable steam"
+            checked={s.steamEnabled}
+            disabled={s.profileLocked || !steamAvailable}
+            onCheckedChange={(checked) => void s.toggleSteam(checked)}
+          />
+        </div>
       )}
       {(steam || water) && (
         <Stepper
@@ -72,7 +81,7 @@ export function CandidateHeader({
   onSettings: () => void
   onHistory: () => void
 }) {
-  const [utility, setUtility] = useState<Utility | null>(null)
+  const [open, setOpen] = useState(false)
   const tank = tankMillilitres(s.waterLevel, tankCalibration, s.connected)
   const temperature = (value: number | null | undefined) =>
     `${format(s.displayTemperature(s.connected ? (value ?? null) : null), 0)} °${s.temperatureUnit}`
@@ -121,55 +130,46 @@ export function CandidateHeader({
         </div>
       </div>
       <nav className="candidate-actions" aria-label="Machine navigation">
-        {(
-          [
-            ["Steam", Wind],
-            ["Hot water", Droplet],
-            ["Flush", Waves],
-          ] as const
-        ).map(([name, Icon]) => (
-          <Popover.Root
-            key={name}
-            open={utility === name}
-            onOpenChange={(next) =>
-              setUtility((current) =>
-                next ? name : current === name ? null : current
-              )
-            }
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger className="candidate-action">
+            <Gauge size={16} aria-hidden="true" />
+            Machine Setting
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="candidate-popover focus-skin !gap-0 !shadow-none !ring-0"
           >
-            <Popover.Trigger className="candidate-action" aria-label={name}>
-              <Icon size={16} aria-hidden="true" />
-              {name === "Hot water" ? "Hot Water" : name}
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Positioner
-                side="bottom"
-                align="end"
-                sideOffset={8}
-                collisionPadding={12}
-                className="candidate-popover-position"
-              >
-                <Popover.Popup
-                  className="candidate-popover focus-skin"
-                  aria-label={`${name} settings`}
-                >
-                  <div className="candidate-popover-title">
-                    <Popover.Title>
-                      {name}
-                      <span className="sr-only"> settings</span>
-                    </Popover.Title>
-                    <Popover.Close
-                      aria-label={`Close ${name.toLowerCase()} settings`}
-                    >
-                      <X size={18} />
-                    </Popover.Close>
-                  </div>
+            <div className="candidate-popover-title">
+              <PopoverTitle>Machine Setting</PopoverTitle>
+              <PopoverClose aria-label="Close machine settings">
+                <X size={18} />
+              </PopoverClose>
+            </div>
+            <Tabs defaultValue="Steam" className="candidate-tabs">
+              <TabsList variant="line" aria-label="Machine functions">
+                {(["Steam", "Hot water", "Flush"] as const).map((name) => (
+                  <TabsTrigger key={name} value={name}>
+                    {name === "Hot water" ? "Hot Water" : name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {(["Steam", "Hot water", "Flush"] as const).map((name) => (
+                <TabsContent key={name} value={name}>
                   <UtilityCard s={s} utility={name} />
-                </Popover.Popup>
-              </Popover.Positioner>
-            </Popover.Portal>
-          </Popover.Root>
-        ))}
+                </TabsContent>
+              ))}
+            </Tabs>
+            {!Number.isFinite(s.steamTemperature) && (
+              <p className="utility-note">Steam setting unavailable.</p>
+            )}
+            {s.notice && (
+              <p className="utility-note" role="alert">
+                {s.notice}
+              </p>
+            )}
+          </PopoverContent>
+        </Popover>
         <button
           className="candidate-action"
           aria-label="History"

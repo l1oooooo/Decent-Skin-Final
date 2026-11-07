@@ -141,9 +141,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
   ]) {
     await page.setViewportSize(viewport)
     for (const label of [
-      "Steam",
-      "Hot water",
-      "Flush",
+      "Machine Setting",
       "All profiles",
       "Increase temperature",
       "Decrease dose",
@@ -202,13 +200,15 @@ test("landscape Home fits every panel and touch target without scrolling", async
   await expect(
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
-  await page.getByRole("button", { name: "Steam", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Machine Setting", exact: true })
+    .click()
   await expect(
-    page.getByRole("dialog", { name: "Steam settings" })
+    page.getByRole("dialog", { name: "Machine Setting" })
   ).toBeInViewport({ ratio: 1 })
   await page
     .getByRole("button", {
-      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+      name: /Close (machine settings|utility card|steam settings|hot water settings|flush settings)/,
       exact: true,
     })
     .click()
@@ -350,5 +350,5 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.3.0", { exact: true })).toBeVisible()
+  await expect(page.getByText("0.3.1", { exact: true })).toBeVisible()
 })

@@ -40,7 +40,9 @@ test("Home has quiet footer, text-only scale, live steam reading and profile edi
     .getByRole("banner")
     .getByLabel("Steam temperature", { exact: true })
   await expect(steam).toHaveText(/Steam\s*50\s*°C/)
-  await page.getByRole("button", { name: "Steam", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Machine Setting", exact: true })
+    .click()
   await page
     .getByRole("button", { name: "Edit steam temperature", exact: true })
     .click()
@@ -53,7 +55,7 @@ test("Home has quiet footer, text-only scale, live steam reading and profile edi
   await expect(steam).toHaveText(/Steam\s*50\s*°C/)
   await page
     .getByRole("button", {
-      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+      name: /Close (machine settings|utility card|steam settings|hot water settings|flush settings)/,
     })
     .click()
   await page.getByRole("button", { name: "Edit profile", exact: true }).click()
@@ -292,7 +294,9 @@ test("keypad supports decimal correction and physical keys; integer utilities re
   await expect(dialog.getByRole("textbox")).toHaveValue("19.4")
   await page.keyboard.press("Enter")
   await expect(dialog).toHaveCount(0)
-  await page.getByRole("button", { name: "Steam", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Machine Setting", exact: true })
+    .click()
   await page
     .getByRole("button", { name: "Edit steam time", exact: true })
     .click()

@@ -45,14 +45,16 @@ test("header steam follows live readings even with heating off, with no header c
   await expect(steam).toHaveText(/Steam\s*87\s*°C/)
   await steam.click()
   await expect(page.getByRole("dialog")).toHaveCount(0)
-  await page.getByRole("button", { name: "Steam", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Machine Setting", exact: true })
+    .click()
   await page.getByRole("switch", { name: "Enable steam" }).click()
   await expect(
     page.getByRole("switch", { name: "Enable steam" })
   ).toHaveAttribute("aria-checked", "false")
   await page
     .getByRole("button", {
-      name: /Close (utility card|steam settings|hot water settings|flush settings)/,
+      name: /Close (machine settings|utility card|steam settings|hot water settings|flush settings)/,
     })
     .click()
   await expect(steam).toHaveText(/Steam\s*87\s*°C/)

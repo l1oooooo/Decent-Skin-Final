@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`preserves the approved live chart markup while refining Home 1`] = `"5ee7cca703c58b88fa0478d585a0f24dd315c5bdfa4aec5c9622b783cabd8653"`;
+
+exports[`preserves the approved live chart markup while refining Home 2`] = `"6bf98519ca12cc94d5ed4de945cf0d7c8fd9a84c3510d81fb9cf9defa43f8397"`;

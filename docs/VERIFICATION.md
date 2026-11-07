@@ -1,5 +1,22 @@
 # Focus release-candidate verification
 
+## 0.3.1 — Machine Setting and complete Home previews
+
+Local refinement candidate on `codex/focus-0.3.1-refinements`, based on the
+operator-tested v0.3.0. Deployment and replacement are not authorized by this
+refinement request. See [the changelog, investigation, validation evidence and
+tablet recheck](REFINEMENT-0.3.1.md).
+
+The candidate consolidates utility adjustments into one Base UI popover with
+line tabs, uses a controlled Steam switch, and omits incomplete Home target
+curves together with their legend entries. Live chart markup hashes still
+match v0.3.0 in both display temperature units. TypeScript, lint, 149 unit tests,
+static build, 18 preview model tests and the production-isolation audit passed.
+Seven preview and 18 unique focused production browser scenarios passed, with
+initial failures and reruns documented in the linked release note. Packaging
+and archive verification passed; the release note records the checksum. These checks use
+isolated fixtures, not the tablet or real hardware.
+
 ## 0.2.5 — one-touch Sleep and live steam temperature
 
 Device status: **update requires tablet acceptance**. The operator reports that

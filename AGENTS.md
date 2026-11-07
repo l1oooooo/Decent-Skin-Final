@@ -154,9 +154,15 @@ technical decisions, and the design history for previous iterations.
   their history is in `docs/design/HISTORY.md` and Git.
 - The approved Phase 4.1 Home/brewing presentation lives in `src/skin/brewing`.
   Five real favorites sit above artwork; the header shows machine readiness,
-  independent of the rolling shot-stage title. Steam/Hot Water/Flush settings,
-  History, Settings and Sleep occupy the top navigation. Scale is read-only.
-  Home's planned chart is configuration-based; only its illustration is smoothed.
+  independent of the rolling shot-stage title. Machine Setting opens one anchored
+  popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep
+  remain beside it. Steam enable reflects the acknowledged workflow setting;
+  tabs never send commands. Scale is read-only.
+  Home's planned chart shows only targets defined across the complete configured
+  timeline, with the same visible-series list driving its legend. Never fill
+  inactive pump channels or bridge missing targets; mixed pump modes may show
+  temperature alone. Temperature targets must share one sensor basis. Only the
+  Home illustration is smoothed; live chart visibility is independent.
   Live pressure/flow gradient areas and target pressure, group temperature and
   scale weight-flow lines retain exact received samples and missing-value gaps.
   The single App-owned live presentation holds confirmed completion for 3 seconds,

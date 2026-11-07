@@ -6,26 +6,13 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(new Date("2026-11-06T12:01:00Z"))
 })
 
-test("Home shares three chart styles and reads the selected configuration immediately", async ({
+test("Home shows complete target curves and updates its legend with the selected profile", async ({
   page,
 }) => {
   const chart = page.locator('[aria-label="Planned profile chart"]')
-  await expect(chart.locator("[data-series]")).toHaveCount(3)
-  await expect(chart.locator("[data-area]")).toHaveCount(3)
-  await expect(page.getByText("PROFILE SETTINGS", { exact: true })).toHaveCount(
-    0
-  )
-  await expect(chart.locator('[data-series="pressure"]')).toHaveAttribute(
-    "stroke",
-    "var(--brew-pressure)"
-  )
-  await expect(chart.locator('[data-series="flow"]')).toHaveAttribute(
-    "stroke",
-    "var(--brew-flow)"
-  )
-  await expect(
-    chart.locator('[data-series="groupTemperature"]')
-  ).toHaveAttribute("stroke", "var(--brew-temperature)")
+  await expect(chart.locator("[data-series]")).toHaveCount(1)
+  await expect(chart.locator("[data-area]")).toHaveCount(1)
+  await expect(chart.locator(".brew-legend")).toHaveText("Temperature")
   await page
     .getByRole("button", { name: "Select 80's Espresso", exact: true })
     .click({ force: true })
@@ -39,7 +26,8 @@ test("Home shares three chart styles and reads the selected configuration immedi
   const temperature = await chart
     .locator('[data-series="groupTemperature"]')
     .getAttribute("d")
-  await expect(chart.locator('[data-series="flow"]')).toHaveAttribute("d", "")
+  await expect(chart.locator('[data-series="flow"]')).toHaveCount(0)
+  await expect(chart.locator(".brew-legend")).toHaveText("PressureTemperature")
   await page
     .getByRole("button", { name: "Increase temperature", exact: true })
     .click({ force: true })
@@ -53,15 +41,12 @@ test("Home shares three chart styles and reads the selected configuration immedi
   await page
     .getByRole("button", { name: "Select Rao Allongé", exact: true })
     .click({ force: true })
-  await expect(chart.locator('[data-series="pressure"]')).toHaveAttribute(
-    "d",
-    ""
-  )
+  await expect(chart.locator('[data-series="pressure"]')).toHaveCount(0)
+  await expect(chart.locator('[data-series="flow"]')).toHaveAttribute("d", /C/)
+  await expect(chart.locator("[data-area]")).toHaveCount(2)
   await expect(chart).toHaveAttribute("data-duration", "32")
   await expect(chart.locator("svg text")).toHaveCount(0)
-  await expect(chart.locator(".brew-legend")).toHaveText(
-    "PressureFlowTemperature"
-  )
+  await expect(chart.locator(".brew-legend")).toHaveText("FlowTemperature")
   await expect(page.locator(".focus-profile-heading > p")).toHaveCount(0)
   await expect(page.locator(".focus-chart")).not.toContainText(
     "PROFILE PREVIEW"
@@ -139,7 +124,7 @@ test("Home shares three chart styles and reads the selected configuration immedi
   }
 })
 
-test("direct utility controls open settings, preserve focus and enforce brewing gates", async ({
+test("one utility popover keeps tabs stable, preserves focus and enforces brewing gates", async ({
   page,
 }) => {
   const writes: string[] = []
@@ -147,49 +132,47 @@ test("direct utility controls open settings, preserve focus and enforce brewing 
     if (r.method() !== "GET") writes.push(r.url())
   })
   const trigger = page.getByRole("button", {
-    name: "Steam",
+    name: "Machine Setting",
     exact: true,
   })
   await trigger.click({ force: true })
-  for (const name of ["Steam", "Hot water", "Flush"])
-    await expect(page.getByRole("button", { name, exact: true })).toBeVisible()
-  await expect(page.locator(".brew-preview")).toHaveAttribute(
-    "data-phase",
-    "home"
-  )
+  await page.clock.runFor(200)
+  const popover = page.getByRole("dialog", {
+    name: "Machine Setting",
+    exact: true,
+  })
+  const before = await popover.boundingBox()
+  for (const name of ["Steam", "Hot Water", "Flush"]) {
+    await page.getByRole("tab", { name, exact: true }).click({ force: true })
+    await page.clock.runFor(200)
+    await expect(popover).toBeVisible()
+    expect(await popover.boundingBox()).toEqual(before)
+  }
+  await expect(
+    page.getByRole("button", { name: "Edit flush time", exact: true })
+  ).toBeVisible()
+  await page
+    .getByRole("tab", { name: "Steam", exact: true })
+    .click({ force: true })
+  await page
+    .getByRole("switch", { name: "Enable steam" })
+    .click({ force: true })
+  await expect(
+    page.getByRole("switch", { name: "Enable steam" })
+  ).not.toBeChecked()
+  await page
+    .getByRole("switch", { name: "Enable steam" })
+    .click({ force: true })
+  await expect(page.getByRole("switch", { name: "Enable steam" })).toBeChecked()
   await page
     .getByRole("button", { name: "Increase steam temperature", exact: true })
     .click({ force: true })
   await expect(
     page.getByRole("button", { name: "Edit steam temperature", exact: true })
   ).toHaveText("141.0")
-  await page.getByRole("button", { name: "Steam", exact: true }).press("Escape")
+  await page.getByRole("tab", { name: "Steam", exact: true }).press("Escape")
   await page.clock.runFor(200)
   await expect(trigger).toBeFocused()
-  await expect(trigger).toHaveAttribute("aria-expanded", "false")
-  await page
-    .getByRole("button", { name: "Hot water", exact: true })
-    .click({ force: true })
-  await expect(
-    page.getByRole("button", { name: "Edit water temperature", exact: true })
-  ).toBeVisible()
-  await page
-    .getByRole("button", { name: "Flush", exact: true })
-    .click({ force: true })
-  await page.clock.runFor(200)
-  await expect(
-    page.getByRole("button", { name: "Edit flush time", exact: true })
-  ).toBeVisible()
-  await expect(
-    page.getByRole("button", { name: "Edit water temperature", exact: true })
-  ).toHaveCount(0)
-  await page
-    .getByRole("button", { name: "Close flush settings" })
-    .click({ force: true })
-  await page.clock.runFor(200)
-  await trigger.click({ force: true })
-  await trigger.click({ force: true })
-  await page.clock.runFor(200)
   await expect(trigger).toHaveAttribute("aria-expanded", "false")
   await trigger.click({ force: true })
   await page.clock.runFor(200)
