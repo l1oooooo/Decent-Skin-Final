@@ -8,7 +8,7 @@ test.beforeEach(async ({ request, page }) => {
   await request.post(`${fixture}/__test/reset`)
 })
 
-test("heating expires once per transition; preparation and shot completion share one Toaster", async ({
+test("heating and preparation stay quiet; shot completion uses the shared Toaster", async ({
   page,
   request,
 }) => {
@@ -21,7 +21,7 @@ test("heating expires once per transition; preparation and shot completion share
   await request.post(`${fixture}/__test/state`, { data: { state: "heating" } })
   await page.clock.runFor(200)
   const heat = page.locator(`${card}[data-notification-key="machine-heating"]`)
-  await expect(heat).toContainText("Heating to your brew temperature")
+  await expect(heat).toHaveCount(0)
   await page.mouse.move(0, 0)
   await page.clock.runFor(4200)
   await expect(heat).toHaveCount(0, { timeout: 15000 })
@@ -37,7 +37,7 @@ test("heating expires once per transition; preparation and shot completion share
     },
   })
   await page.clock.runFor(200)
-  await expect(heat).toContainText("Preparing for shot")
+  await expect(heat).toHaveCount(0)
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", substate: "pouring", elapsed: 12 },
   })
@@ -133,7 +133,7 @@ test("refill remains through repeated frames, Escape and machine loss, then reso
   ).toEqual([])
 })
 
-test("idle scale absence is quiet; explicit connection updates the pending card and failures expire", async ({
+test("idle scale absence and successful connection are quiet; failures expire", async ({
   page,
   request,
 }) => {
@@ -153,16 +153,11 @@ test("idle scale absence is quiet; explicit connection updates the pending card 
     await route.continue()
   })
   await page.getByRole("button", { name: "Connect", exact: true }).click()
-  const pending = page.locator(`${card}[data-type="loading"]`)
-  await expect(pending).toHaveCount(1)
-  const id = await pending.getAttribute("data-notification-key")
+  await expect(page.locator(`${card}[data-type="loading"]`)).toHaveCount(0)
   await expect.poll(() => !!release).toBe(true)
   release!()
-  const outcome = page.locator(`${card}[data-notification-key="${id}"]`)
-  await expect(outcome).toContainText("Connection confirmed.")
-  await expect(outcome).toHaveAttribute("data-type", "success")
-  await page.mouse.move(0, 0)
-  await expect(outcome).toHaveCount(0, { timeout: 15000 })
+  await expect(page.getByLabel("Scale weight 0.0 grams")).toBeVisible()
+  await expect(page.locator(`${card}[data-type="success"]`)).toHaveCount(0)
   await page.unroute("**/api/v1/devices/connect")
   await request.post(`${fixture}/__test/state`, {
     data: { scale: false, failPath: "/api/v1/devices/connect" },

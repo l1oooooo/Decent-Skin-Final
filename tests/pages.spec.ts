@@ -37,10 +37,12 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await expect(page).toHaveURL(/page=settings/)
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused()
+  expect(await page.locator(".focus-app > header").boundingBox()).toMatchObject(
+    { height: 72 }
+  )
   expect(
-    await page.locator(".focus-page > header").boundingBox()
-  ).toMatchObject({ height: 72 })
-  expect(await page.getByRole("navigation").boundingBox()).toMatchObject({
+    await page.getByRole("navigation", { name: "Skin pages" }).boundingBox()
+  ).toMatchObject({
     width: 220,
   })
   expect(
@@ -57,7 +59,7 @@ test("shared pages support direct entry, Back, reload, search and a single sessi
   await page.goBack()
   await expect(page).toHaveURL(/page=settings$/)
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Skin pages" })
     .getByRole("button", { name: "Profile library" })
     .click()
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -285,7 +287,7 @@ test("a physical start dismisses navigation prompts, updates machine status and 
   await state(request, { state: "idle", reason: "machineEnded" })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Skin pages" })
     .getByRole("button", { name: "Manage favorites" })
     .click()
   await expect(page.getByRole("listitem").nth(1)).toContainText(
@@ -411,7 +413,7 @@ test("Back cancellation keeps history usable and active-shot replay does not int
 }) => {
   await page.goto("/?page=settings")
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Skin pages" })
     .getByRole("button", { name: "Manage favorites" })
     .click()
   await page
@@ -523,7 +525,7 @@ test.afterEach(async ({ page, request }, info) => {
       })
       .click()
     await page
-      .getByRole("navigation")
+      .getByRole("navigation", { name: "Skin pages" })
       .getByRole("button", { name: "Manage favorites", exact: true })
       .click()
   }

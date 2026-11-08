@@ -13,6 +13,7 @@ import { DailySettingsPage } from "@/skin/daily-settings"
 import { useDailySettings } from "@/skin/use-daily-settings"
 import { settingsCategories } from "@/skin/pages"
 import type { SettingsCategory } from "@/gateway/daily-settings"
+import { CandidateHeader } from "@/skin/brewing/header"
 import { LiveBrewingScreen } from "@/skin/brewing/live-view"
 import { useLiveBrewing } from "@/skin/brewing/live-session"
 import { ProfileDetail, ProfileLibrary } from "@/skin/profile-library"
@@ -292,175 +293,196 @@ export default function App() {
     }
   }, [])
   return (
-    <div className="skin-viewport">
-      {page === "home" && s.snapshot.machine?.state.state === "sleeping" ? (
-        <div className="flex h-full flex-col items-center justify-center gap-6 bg-background">
-          <h1 className="text-[30px] font-medium tracking-[-.045em]">
-            Sleeping
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            The machine is resting.
-          </p>
-          <Action
-            disabled={s.snapshot.pending || !s.connected}
-            onClick={() => void s.perform(() => gateway.daily.power(false))}
-          >
-            Wake machine
-          </Action>
-          <Action
-            variant="outline"
-            onClick={() => navigate({ page: "settings", category: "machine" })}
-          >
-            Machine settings
-          </Action>
-        </div>
-      ) : page === "home" ? (
-        <LiveBrewingScreen
-          home={s}
-          onConnections={() =>
-            navigate({ page: "settings", category: "connections" })
-          }
-          state={brewing.state}
-          dispatch={brewing.dispatch}
+    <div className="skin-viewport focus-app">
+      {!(page === "home" && s.snapshot.machine?.state.state === "sleeping") && (
+        <CandidateHeader
+          s={s}
           tankCalibration={
             s.snapshot.refillKit === true ? null : "standard-de1"
           }
+          onConnections={() =>
+            navigate({ page: "settings", category: "connections" })
+          }
           onHistory={() => navigate({ page: "history" })}
           onSettings={() => navigate({ page: "settings" })}
-          onEdit={() => navigate({ page: "edit", id: s.selectedId })}
-          onBrowse={browse}
-          onAssign={assign}
         />
-      ) : (
-        <PageShell
-          s={s}
-          route={nav.route}
-          navigate={navigate}
-          title={title}
-          description={
-            page === "settings" &&
-            (editor.dirty || daily.dirty || transfer.selection)
-              ? "Your unsaved changes are retained. Return to their settings section, Manage favorites or Profile library to continue."
-              : page === "favorites"
-                ? "Five stable positions on Home. Replace, reorder or leave a position empty."
-                : page === "library" && assignment !== null
-                  ? "Choose a visible profile. An existing favorite swaps positions; Save applies your changes."
-                  : undefined
-          }
-          actions={
-            page === "shot" ? (
-              history.record?.id === nav.route.id ? (
-                <ShotActions history={history} />
-              ) : null
-            ) : page === "edit" ? (
-              <ProfileEditorActions editor={recipes} />
-            ) : page === "favorites" ? (
-              <>
+      )}
+      <div className="focus-app-content">
+        {page === "home" && s.snapshot.machine?.state.state === "sleeping" ? (
+          <div className="flex h-full flex-col items-center justify-center gap-6 bg-background">
+            <h1 className="text-[30px] font-medium tracking-[-.045em]">
+              Sleeping
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              The machine is resting.
+            </p>
+            <Action
+              disabled={s.snapshot.pending || !s.connected}
+              onClick={() => void s.perform(() => gateway.daily.power(false))}
+            >
+              Wake machine
+            </Action>
+            <Action
+              variant="outline"
+              onClick={() =>
+                navigate({ page: "settings", category: "machine" })
+              }
+            >
+              Machine settings
+            </Action>
+          </div>
+        ) : page === "home" ? (
+          <LiveBrewingScreen
+            embedded
+            home={s}
+            onConnections={() =>
+              navigate({ page: "settings", category: "connections" })
+            }
+            state={brewing.state}
+            dispatch={brewing.dispatch}
+            tankCalibration={
+              s.snapshot.refillKit === true ? null : "standard-de1"
+            }
+            onHistory={() => navigate({ page: "history" })}
+            onSettings={() => navigate({ page: "settings" })}
+            onEdit={() => navigate({ page: "edit", id: s.selectedId })}
+            onBrowse={browse}
+            onAssign={assign}
+          />
+        ) : (
+          <PageShell
+            route={nav.route}
+            navigate={navigate}
+            title={title}
+            description={
+              page === "settings" &&
+              (editor.dirty || daily.dirty || transfer.selection)
+                ? "Your unsaved changes are retained. Return to their settings section, Manage favorites or Profile library to continue."
+                : page === "favorites"
+                  ? "Five stable positions on Home. Replace, reorder or leave a position empty."
+                  : page === "library" && assignment !== null
+                    ? "Choose a visible profile. An existing favorite swaps positions; Save applies your changes."
+                    : undefined
+            }
+            actions={
+              page === "shot" ? (
+                history.record?.id === nav.route.id ? (
+                  <ShotActions history={history} />
+                ) : null
+              ) : page === "edit" ? (
+                <ProfileEditorActions editor={recipes} />
+              ) : page === "favorites" ? (
+                <>
+                  <Action
+                    variant="outline"
+                    disabled={editor.saving}
+                    onClick={editor.cancel}
+                  >
+                    Cancel changes
+                  </Action>
+                  <Action
+                    disabled={
+                      editor.saving ||
+                      s.libraryLoading ||
+                      (!s.snapshot.favoritesLoaded &&
+                        !s.snapshot.favoritesIssue)
+                    }
+                    onClick={editor.save}
+                  >
+                    {editor.saving ? "Saving…" : "Save favorites"}
+                  </Action>
+                </>
+              ) : page === "library" && assignment !== null ? (
                 <Action
                   variant="outline"
-                  disabled={editor.saving}
-                  onClick={editor.cancel}
+                  onClick={() => {
+                    nav.navigate({ page: "favorites" }, true)
+                  }}
                 >
-                  Cancel changes
+                  Cancel assignment
                 </Action>
-                <Action
-                  disabled={
-                    editor.saving ||
-                    s.libraryLoading ||
-                    (!s.snapshot.favoritesLoaded && !s.snapshot.favoritesIssue)
-                  }
-                  onClick={editor.save}
-                >
-                  {editor.saving ? "Saving…" : "Save favorites"}
-                </Action>
+              ) : undefined
+            }
+          >
+            {page === "settings" && (
+              <>
+                <SettingsPage
+                  category={nav.route.category}
+                  navigate={navigate}
+                />
+                {["extensions", "help"].includes(nav.route.category ?? "") && (
+                  <ExtensionsPage
+                    key={`extensions:${nav.route.category}`}
+                    s={s}
+                    h={extensions}
+                    route={nav.route}
+                    navigate={navigate}
+                  />
+                )}
+                {["calibration", "maintenance", "updates", "machine"].includes(
+                  nav.route.category ?? ""
+                ) && (
+                  <AdvancedPage
+                    key={`advanced:${nav.route.category}`}
+                    category={nav.route.category!}
+                    s={s}
+                    h={advanced}
+                    navigate={navigate}
+                  />
+                )}
+                {["connections", "brew", "machine", "display"].includes(
+                  nav.route.category ?? ""
+                ) && (
+                  <DailySettingsPage
+                    key={`daily:${nav.route.category}`}
+                    category={nav.route.category as SettingsCategory}
+                    s={s}
+                    editor={daily}
+                  />
+                )}
               </>
-            ) : page === "library" && assignment !== null ? (
-              <Action
-                variant="outline"
-                onClick={() => {
+            )}
+            {page === "favorites" && (
+              <FavoritesPage s={s} editor={editor} assign={assign} />
+            )}
+            {page === "library" && (
+              <ProfileLibrary
+                s={s}
+                navigate={navigate}
+                assignment={assignment}
+                transfer={transfer}
+                onAssign={(id) => {
+                  if (assignment !== null) editor.assign(assignment, id)
                   nav.navigate({ page: "favorites" }, true)
                 }}
-              >
-                Cancel assignment
-              </Action>
-            ) : undefined
-          }
-        >
-          {page === "settings" && (
-            <>
-              <SettingsPage category={nav.route.category} navigate={navigate} />
-              {["extensions", "help"].includes(nav.route.category ?? "") && (
-                <ExtensionsPage
-                  key={`extensions:${nav.route.category}`}
-                  s={s}
-                  h={extensions}
-                  route={nav.route}
-                  navigate={navigate}
-                />
-              )}
-              {["calibration", "maintenance", "updates", "machine"].includes(
-                nav.route.category ?? ""
-              ) && (
-                <AdvancedPage
-                  key={`advanced:${nav.route.category}`}
-                  category={nav.route.category!}
-                  s={s}
-                  h={advanced}
-                  navigate={navigate}
-                />
-              )}
-              {["connections", "brew", "machine", "display"].includes(
-                nav.route.category ?? ""
-              ) && (
-                <DailySettingsPage
-                  key={`daily:${nav.route.category}`}
-                  category={nav.route.category as SettingsCategory}
-                  s={s}
-                  editor={daily}
-                />
-              )}
-            </>
-          )}
-          {page === "favorites" && (
-            <FavoritesPage s={s} editor={editor} assign={assign} />
-          )}
-          {page === "library" && (
-            <ProfileLibrary
-              s={s}
-              navigate={navigate}
-              assignment={assignment}
-              transfer={transfer}
-              onAssign={(id) => {
-                if (assignment !== null) editor.assign(assignment, id)
-                nav.navigate({ page: "favorites" }, true)
-              }}
-            />
-          )}
-          {page === "history" && (
-            <HistoryPage history={history} navigate={navigate} />
-          )}
-          {page === "shot" && (
-            <ShotDetail
-              key={nav.route.id}
-              s={s}
-              history={history}
-              id={nav.route.id}
-              navigate={navigate}
-            />
-          )}
-          {page === "edit" && <ProfileEditor s={s} editor={recipes} />}
-          {page === "recipe" && <RecipePreferences catalog={catalog} />}
-          {page === "inventory" && <InventoryPage s={s} catalog={catalog} />}
-          {page === "profile" && (
-            <ProfileDetail
-              key={nav.route.id}
-              s={s}
-              id={nav.route.id}
-              navigate={navigate}
-            />
-          )}
-        </PageShell>
-      )}
+              />
+            )}
+            {page === "history" && (
+              <HistoryPage history={history} navigate={navigate} />
+            )}
+            {page === "shot" && (
+              <ShotDetail
+                key={nav.route.id}
+                s={s}
+                history={history}
+                id={nav.route.id}
+                navigate={navigate}
+              />
+            )}
+            {page === "edit" && <ProfileEditor s={s} editor={recipes} />}
+            {page === "recipe" && <RecipePreferences catalog={catalog} />}
+            {page === "inventory" && <InventoryPage s={s} catalog={catalog} />}
+            {page === "profile" && (
+              <ProfileDetail
+                key={nav.route.id}
+                s={s}
+                id={nav.route.id}
+                navigate={navigate}
+              />
+            )}
+          </PageShell>
+        )}
+      </div>
       {nav.pending && (
         <ConfirmNavigation
           stay={nav.stay}

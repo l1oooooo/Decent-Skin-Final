@@ -53,11 +53,7 @@ export function ExtensionsPage({
       {Object.values(h.loading).some(Boolean) && (
         <PageHint>Reading the current gateway data…</PageHint>
       )}
-      {reason && (
-        <NotificationMessage notificationKey={`extensions-60`}>
-          {reason}
-        </NotificationMessage>
-      )}
+      {reason && <PageHint>{reason}</PageHint>}
       {Object.entries(h.errors)
         .filter(
           ([key, error]) =>

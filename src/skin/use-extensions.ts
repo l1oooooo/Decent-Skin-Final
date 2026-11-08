@@ -99,7 +99,7 @@ export function useExtensions(gateway: DecaidGateway) {
         readLog
       )
       setLogs((p) => ({ ...p, [kind]: text }))
-      setMessage("Log read locally. Nothing has been submitted.")
+      setMessage("")
     })
   }
   return {

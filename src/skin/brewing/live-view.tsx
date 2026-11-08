@@ -1,3 +1,4 @@
+import { conciseNumber, elapsedTime } from "@/skin/format"
 import { useEffect, useRef, useState } from "react"
 import type { Dispatch } from "react"
 import CandidateHome from "./home"
@@ -22,7 +23,9 @@ export function LiveBrewingScreen({
   onBrowse,
   onEdit,
   onAssign,
+  embedded = false,
 }: {
+  embedded?: boolean
   state: ExperienceState
   dispatch: Dispatch<BrewEvent>
   home: SkinSession
@@ -107,25 +110,11 @@ export function LiveBrewingScreen({
   const value = (v: number | null | undefined) =>
     v == null || !Number.isFinite(v) ? "—" : v.toFixed(1)
   const machine = home.snapshot.machine
-  const displayHome: SkinSession = {
-    ...home,
-    status: !home.connected
-      ? "Disconnected"
-      : !home.machineFresh
-        ? "Waiting for data"
-        : home.phase === "heating"
-          ? "Heating"
-          : home.phase === "error"
-            ? "Needs attention"
-            : machine?.state.state === "sleeping"
-              ? "Sleeping"
-              : "Ready",
-    snapshot: { ...home.snapshot, machine: home.machineFresh ? machine : null },
-  }
   return (
     <div
       ref={root}
       className="brew-preview"
+      data-embedded={embedded}
       data-expanded={expanded}
       data-phase={s.phase}
       data-away={s.route === "away"}
@@ -134,7 +123,8 @@ export function LiveBrewingScreen({
         <CandidateHome
           sharedChart
           tankCalibration={tankCalibration}
-          s={displayHome}
+          s={home}
+          showHeader={!embedded}
           onSettings={onSettings}
           onConnections={onConnections}
           onHistory={onHistory}
@@ -172,11 +162,9 @@ export function LiveBrewingScreen({
           {[
             [
               "Time",
-              home.snapshot.elapsedKnown ? value(last?.elapsed) : "—",
-              "s",
+              home.snapshot.elapsedKnown ? elapsedTime(last?.elapsed) : "—",
+              "",
             ],
-            ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
-            ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
             [
               "In the cup",
               stale || !home.scaleConnected
@@ -184,11 +172,16 @@ export function LiveBrewingScreen({
                 : value(home.active ? home.scaleWeight : home.shot.weight),
               "g",
             ],
+            ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
+            ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
             [
-              "Group temperature",
+              "Temperature",
               stale
                 ? "—"
-                : value(home.displayTemperature(last?.groupTemperature)),
+                : conciseNumber(
+                    home.displayTemperature(last?.groupTemperature),
+                    1
+                  ),
               `°${home.temperatureUnit}`,
             ],
           ].map(([label, reading, unit]) => (

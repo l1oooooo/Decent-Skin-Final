@@ -82,13 +82,10 @@ export function useSkin(gateway: DecaidGateway) {
   async function perform(action: () => Promise<unknown>) {
     setNotice("")
     const notificationId = `skin-action-${++actionSequence}`
-    notifications.begin(notificationId, "Waiting for Decaid")
+    notifications.begin(notificationId, "Waiting for Decaid", 45000, true)
     try {
       await action()
-      notifications.finish(notificationId, {
-        title: "Request acknowledged",
-        type: "info",
-      })
+      notifications.finish(notificationId)
       return true
     } catch (error) {
       notifications.finish(notificationId, {

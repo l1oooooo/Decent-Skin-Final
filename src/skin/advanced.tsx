@@ -1,3 +1,4 @@
+import { PageHint } from "./pages"
 import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useEffectEvent, useState } from "react"
 import { machineId } from "@/gateway/advanced"
@@ -50,16 +51,11 @@ export function AdvancedPage({
           Refresh operation status
         </Action>
       </div>
-      {h.api.block() && (
-        <NotificationMessage notificationKey={`advanced-60`}>
-          {h.api.block()}
-        </NotificationMessage>
-      )}
-      {deviceId && h.identity !== deviceId && (
+      {h.api.block() && <PageHint>{h.api.block()}</PageHint>}
+      {deviceId && h.identity !== deviceId && !h.loading["machine/info"] && (
         <NotificationMessage notificationKey={`advanced-62`}>
-          {h.loading["machine/info"]
-            ? "Reading the connected machine’s identity…"
-            : "Machine identity is not verified. Refresh operation status before applying changes."}
+          Machine identity is not verified. Refresh operation status before
+          applying changes.
         </NotificationMessage>
       )}
       {Object.entries(h.errors)

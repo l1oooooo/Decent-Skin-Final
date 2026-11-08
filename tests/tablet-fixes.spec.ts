@@ -94,9 +94,7 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])
   await page.getByRole("button", { name: "Connect", exact: true }).click()
-  await expect(
-    page.getByText("Connection confirmed.", { exact: true })
-  ).toBeVisible()
+  await expect(page.getByLabel("Scale weight 0.0 grams")).toBeVisible()
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([

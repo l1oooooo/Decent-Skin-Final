@@ -155,6 +155,10 @@ technical decisions, and the design history for previous iterations.
   validated return address and no credential sharing. Feedback is explicitly
   reviewed text with automatic attachments disabled; account credentials and
   consent remain in native Decaid.
+- The approved header is owned by the App shell across routed pages; Home Sleep
+  is intentionally full-screen. Keep one gateway/session and one visible header.
+  Routine heating/preparation, successful quick edits and Sleep/Wake are quiet;
+  retain errors, watchdogs, shot outcomes and confirmed-state safety warnings.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
   feedback 150ms are fixed in `src/skin/skin.css`. Preserve the accepted 1:1
   Phase 4.1 layout and typography. Retired variants and appearance controls are removed;

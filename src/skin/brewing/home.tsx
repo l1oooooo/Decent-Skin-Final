@@ -17,8 +17,10 @@ export default function CandidateHome({
   onAssign,
   tankCalibration,
   sharedChart = false,
+  showHeader = true,
 }: {
   sharedChart?: boolean
+  showHeader?: boolean
   s: SkinSession
   tankCalibration: TankCalibration
   onHistory: () => void
@@ -30,14 +32,15 @@ export default function CandidateHome({
 }) {
   return (
     <div className="focus-skin flex h-full flex-col bg-background">
-      <CandidateHeader
-        key={s.snapshot.shotSequence}
-        tankCalibration={tankCalibration}
-        s={s}
-        onSettings={onSettings}
-        onConnections={onConnections}
-        onHistory={onHistory}
-      />
+      {showHeader && (
+        <CandidateHeader
+          tankCalibration={tankCalibration}
+          s={s}
+          onSettings={onSettings}
+          onConnections={onConnections}
+          onHistory={onHistory}
+        />
+      )}
       <div className="focus-body flex min-h-0 flex-1">
         <CandidateProfiles s={s} onBrowse={onBrowse} onAssign={onAssign} />
         <main className="focus-main flex min-w-0 flex-1 flex-col px-7 py-6">

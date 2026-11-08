@@ -1,5 +1,27 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.5 candidate review — pending
+
+This local candidate is not automatically published or installed. See
+[implementation and local checks](REFINEMENTS-v0.3.5.md) and the
+[notification audit](NOTIFICATIONS-v0.3.5.md). Its quiet-operation policy
+supersedes routine heating/preparation/acknowledgement feedback below.
+
+- Confirm the actual embedded WebView dimensions in System and help. The
+  reported browser viewport is 1007 × 601; the physical screenshot is 1340 × 800.
+- Check vertical nav centering and single-row fit, including disconnected Scale.
+- Visit Settings, history, profiles, editing and inventory; verify the same
+  header and working Back/draft protection. Full-screen Sleep remains separate.
+- Tap Grind +/− repeatedly, then Yield and Temperature. Check for the reported
+  full-screen flash, stable focus, saved values after profile reload and no
+  unexpected chart reset. The original tablet flash was not reproduced locally.
+- During a supervised shot, verify Time → In the cup → Pressure → Flow →
+  Temperature, MM:SS elapsed time and unchanged chart/transition behavior.
+- Verify quiet preparation, ordinary saves and Sleep/Wake; confirm failed saves
+  still report errors. Check refill warnings resolve only from actual machine
+  recovery and required-scale shot warnings still appear.
+- Record any Android font/compositing differences before approving release.
+
 ## v0.3.4 release recheck — pending
 
 Publication is authorized; tablet installation and hardware operation remain

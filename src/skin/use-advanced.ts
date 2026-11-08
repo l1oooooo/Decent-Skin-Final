@@ -131,7 +131,7 @@ export function useAdvanced(gateway: DecaidGateway) {
   ) {
     if (lock.current || cancelLock.current) return false
     lock.current = true
-    feedback.begin(name)
+    feedback.begin(name, name === "Saving machine settings")
     setBusy(name)
     setError("")
     setMessage("")
@@ -225,7 +225,7 @@ export function useAdvanced(gateway: DecaidGateway) {
           )
         ),
       }))
-      setMessage("Machine values read back. Review the returned values below.")
+      setMessage("")
     })
   }
   return {

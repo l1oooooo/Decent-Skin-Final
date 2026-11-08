@@ -32,9 +32,9 @@ export function useFeedback(label: string) {
     if (text && !current.current.pending)
       notifications.show(id, { title: text, type: "error" })
   }
-  function begin(title = label) {
+  function begin(title = label, quiet = false) {
     current.current = { pending: true, message: "", error: "", type: "info" }
-    notifications.begin(id, title)
+    notifications.begin(id, title, 45000, quiet)
   }
   function end() {
     const result = current.current

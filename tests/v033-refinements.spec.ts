@@ -72,9 +72,7 @@ test("Medium readouts fit the tablet and disconnected text opens explicit scale 
     node.click()
     node.click()
   })
-  await expect(
-    page.getByText("Connection confirmed.", { exact: true })
-  ).toBeVisible()
+  await expect(page.getByLabel("Scale weight 0.0 grams")).toBeVisible()
   expect(attempts).toBe(1)
   const writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(writes).toEqual([
@@ -117,11 +115,15 @@ test("a rejected scale connection remains disconnected and is never retried", as
   ).toHaveLength(1)
 })
 
-test("shared heating toast clears when Ready", async ({ page, request }) => {
+test("heating stays in the header without a routine toast", async ({
+  page,
+  request,
+}) => {
   await request.post(`${fixture}/__test/state`, { data: { state: "heating" } })
   await page.goto("/", { waitUntil: "networkidle" })
   const notice = page.locator('[data-notification-key="machine-heating"]')
-  await expect(notice).toContainText("Heating to your brew temperature")
+  await expect(notice).toHaveCount(0)
+  await expect(page.locator(".candidate-status")).toHaveText("DE1Heating")
   await expect(
     page.locator(
       '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'

@@ -42,37 +42,39 @@ function session(
 }
 afterEach(() => vi.useRealTimers())
 describe("notification lifecycle", () => {
-  it("announces each heating/preparation transition once, without resetting expiry on frames", async () => {
+  it("keeps heating, preparation and normal sleep quiet", async () => {
     const { update, add } = setup()
-    const heating = session(
-      {},
-      { machine: { state: { state: "heating", substate: "idle" } } }
-    )
-    for (let i = 0; i < 100; i++) update(heating)
+    for (const [state, substate] of [
+      ["heating", "idle"],
+      ["preheating", "idle"],
+      ["espresso", "preparingForShot"],
+      ["sleeping", "idle"],
+    ]) {
+      for (let i = 0; i < 100; i++)
+        update(
+          session(
+            { block: `Machine is ${state}.` },
+            { machine: { state: { state, substate } } }
+          )
+        )
+    }
     await flush()
-    expect(add).toHaveBeenCalledTimes(1)
-    expect(add.mock.calls[0][0]).toMatchObject({
-      id: "machine-heating",
-      timeout: 4000,
-      type: "info",
-    })
-    add.mock.calls[0][0].onClose()
-    update(heating)
+    expect(add).not.toHaveBeenCalled()
+  })
+  it("keeps routine pending requests quiet but warns when their outcome is overdue", async () => {
+    vi.useFakeTimers()
+    const { manager, add } = setup()
+    manager.begin("routine", "Waiting for Decaid", 45000, true)
     await flush()
-    expect(add).toHaveBeenCalledTimes(1)
-    update(session())
-    update(
-      session(
-        {},
-        {
-          machine: {
-            state: { state: "espresso", substate: "preparingForShot" },
-          },
-        }
-      )
-    )
-    await flush()
-    expect(add.mock.calls.at(-1)?.[0].title).toBe("Preparing for shot")
+    expect(add).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(45000)
+    expect(add.mock.calls.at(-1)?.[0].title).toBe("Still waiting for Decaid")
+    manager.finish("routine")
+    manager.begin("next", "Waiting for Decaid", 45000, true)
+    manager.finish("next")
+    add.mockClear()
+    await vi.advanceTimersByTimeAsync(45000)
+    expect(add).not.toHaveBeenCalled()
   })
   it("latches actual refill through missing readings and reconnect; clears only on fresh resolved machine state", async () => {
     const { update, add, close } = setup()

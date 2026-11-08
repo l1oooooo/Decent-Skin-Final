@@ -27,9 +27,9 @@ test("locked Focus layout and workflow controls use the actual gateway contract"
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])
-  expect(
-    await page.locator(".focus-skin > header").boundingBox()
-  ).toMatchObject({ x: 0, y: 0, width: 1340, height: 72 })
+  expect(await page.locator(".focus-app > header").boundingBox()).toMatchObject(
+    { x: 0, y: 0, width: 1340, height: 72 }
+  )
   expect(
     await page.locator(".focus-skin > div > aside").first().boundingBox()
   ).toMatchObject({ x: 0, y: 72, width: 220, height: 728 })

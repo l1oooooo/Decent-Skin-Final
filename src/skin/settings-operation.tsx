@@ -6,10 +6,10 @@ export function useOperation() {
   const { message, setMessage } = feedback
   const { error, setError } = feedback
   const pending = useRef(false)
-  async function run(action: () => Promise<unknown>, success = "Done.") {
+  async function run(action: () => Promise<unknown>, success = "") {
     if (pending.current) return
     pending.current = true
-    feedback.begin()
+    feedback.begin(undefined, true)
     setBusy(true)
     setError("")
     setMessage("")

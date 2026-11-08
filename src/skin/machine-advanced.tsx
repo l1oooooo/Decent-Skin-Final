@@ -194,7 +194,7 @@ export function MachineExtras({
                     )
                     h.clear("machine/cupWarmer")
                     await h.read("machine/cupWarmer")
-                    h.setMessage("Cup-warmer state read back.")
+                    h.setMessage("")
                   })
               )
             }}
@@ -287,7 +287,7 @@ export function MachineExtras({
                     )
                     h.clear("machine/cupWarmer/preheat")
                     await h.read("machine/cupWarmer/preheat")
-                    h.setMessage("Preheat state read back.")
+                    h.setMessage("")
                   })
               )
             }}

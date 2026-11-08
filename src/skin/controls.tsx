@@ -1,3 +1,4 @@
+import { conciseNumber } from "./format"
 import { useState } from "react"
 import { NumberEditor } from "./number-editor"
 import {
@@ -62,7 +63,9 @@ export function Stepper({
   text,
   onEdit,
   saveError,
+  concise = false,
 }: {
+  concise?: boolean
   label: string
   value: number
   unit?: string
@@ -93,6 +96,7 @@ export function Stepper({
         <Action
           variant="outline"
           aria-label={`Decrease ${label.toLowerCase()}`}
+          focusableWhenDisabled
           disabled={
             disabled ||
             (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
@@ -125,7 +129,10 @@ export function Stepper({
             disabled={disabled}
             onClick={onEdit ?? (() => setEditing(true))}
           >
-            {text || format(value, unit === "s" ? 0 : 1)}
+            {text ||
+              (concise
+                ? conciseNumber(value)
+                : format(value, unit === "s" ? 0 : 1))}
           </button>
           <span className="ml-1 text-[13px] font-normal tracking-normal text-muted-foreground">
             {text === "Off" || text === "Not set" ? "" : unit}
@@ -134,6 +141,7 @@ export function Stepper({
         <Action
           variant="outline"
           aria-label={`Increase ${label.toLowerCase()}`}
+          focusableWhenDisabled
           disabled={
             disabled ||
             (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
@@ -208,11 +216,14 @@ export function RecipeControls({
         <Stepper
           key={`${s.selectedId}-${key}`}
           {...{ label, value, unit, step, min, max, large }}
+          concise={key !== "dose"}
           disabled={s.locked}
           saveError={s.notice}
           text={
             key === "grind"
-              ? s.grindText
+              ? Number.isFinite(s.grind)
+                ? conciseNumber(s.grind)
+                : s.grindText
               : key === "dose" && !Number.isFinite(value)
                 ? "Not set"
                 : key === "yield" && value === 0

@@ -22,7 +22,7 @@ export function useRecipeEditor(gateway: DecaidGateway) {
   async function run(action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
-    feedback.begin()
+    feedback.begin(undefined, true)
     setBusy(true)
     setMessage("")
     try {

@@ -49,7 +49,7 @@ export function WakeLock({ s }: { s: SkinSession }) {
                 !state?.wakeLockOverride
               )) as DisplayState
             )
-          }, "Wake-lock state updated.")
+          }, "")
         }
       >
         {state?.wakeLockOverride

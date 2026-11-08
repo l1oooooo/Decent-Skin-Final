@@ -97,7 +97,7 @@ export function Connections({ s }: { s: SkinSession }) {
             void op.run(async () => {
               await s.gateway.sync()
               await refresh()
-            }, "Inventory refreshed.")
+            }, "")
           }
         >
           Refresh inventory
@@ -107,12 +107,7 @@ export function Connections({ s }: { s: SkinSession }) {
           disabled={
             op.busy || !!settingsBlock(s.gateway, true) || !s.scaleConnected
           }
-          onClick={() =>
-            void op.run(
-              () => s.gateway.daily.tare(),
-              "Scale tare acknowledged."
-            )
-          }
+          onClick={() => void op.run(() => s.gateway.daily.tare(), "")}
         >
           Tare scale
         </Action>
@@ -167,7 +162,7 @@ export function Connections({ s }: { s: SkinSession }) {
                       })
                     : void op.run(
                         () => s.gateway.daily.device("connect", d.id),
-                        "Connection confirmed."
+                        ""
                       )
                 }
               >
@@ -184,7 +179,7 @@ export function Connections({ s }: { s: SkinSession }) {
                         [key]: preferences[key] === d.id ? null : d.id,
                       })
                       setPreferences(next)
-                    }, "Device preference saved.")
+                    }, "")
                   }
                 >
                   {preferences[key] === d.id
@@ -294,7 +289,7 @@ export function Connections({ s }: { s: SkinSession }) {
                 setDiagnostics(
                   await s.gateway.request("/api/v1/diagnostics/ble")
                 ),
-              "Diagnostics refreshed."
+              ""
             )
           }
         >

@@ -104,10 +104,7 @@ export function DailySettingsPage({
               }
               onClick={() =>
                 s.snapshot.machine?.state.state === "sleeping"
-                  ? void operation.run(
-                      () => s.gateway.daily.power(false),
-                      "Wake requested."
-                    )
+                  ? void operation.run(() => s.gateway.daily.power(false), "")
                   : setConfirmSleep(true)
               }
             >
@@ -116,7 +113,7 @@ export function DailySettingsPage({
                 : "Sleep machine"}
             </Action>
           </div>
-            </SettingsGroup>
+        </SettingsGroup>
       )}
       {block && <PageHint>{block} You can review and edit drafts.</PageHint>}
       {(
@@ -233,10 +230,7 @@ export function DailySettingsPage({
           cancel={() => setConfirmSleep(false)}
           confirm={() => {
             setConfirmSleep(false)
-            void operation.run(
-              () => s.gateway.daily.power(true),
-              "Sleep requested."
-            )
+            void operation.run(() => s.gateway.daily.power(true), "")
           }}
         />
       )}

@@ -306,9 +306,16 @@ test("load-cell results and supported accessories follow the reported capabiliti
     .getByRole("button", { name: "Save cup warmer", exact: true })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(
-    page.getByText("Cup-warmer state read back.", { exact: true })
-  ).toBeVisible()
+  await expect
+    .poll(
+      async () =>
+        (
+          await (
+            await request.get(`${fixture}/api/v1/machine/cupWarmer`)
+          ).json()
+        ).enabled
+    )
+    .toBe(true)
   expect(
     (await (await request.get(`${fixture}/api/v1/machine/cupWarmer`)).json())
       .enabled
@@ -321,9 +328,16 @@ test("load-cell results and supported accessories follow the reported capabiliti
     .getByRole("button", { name: "Save mat preheat", exact: true })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(
-    page.getByText("Preheat state read back.", { exact: true })
-  ).toBeVisible()
+  await expect
+    .poll(
+      async () =>
+        (
+          await (
+            await request.get(`${fixture}/api/v1/machine/cupWarmer/preheat`)
+          ).json()
+        ).leadMinutes
+    )
+    .toBe(30)
   expect(
     await (
       await request.get(`${fixture}/api/v1/machine/cupWarmer/preheat`)
@@ -335,12 +349,13 @@ test("load-cell results and supported accessories follow the reported capabiliti
   await page.getByLabel("Front strip — awake", { exact: true }).fill("#336699")
   await page.getByRole("button", { name: "Save lighting", exact: true }).click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(
-    page.getByText(
-      "Machine values read back. Review the returned values below.",
-      { exact: true }
+  await expect
+    .poll(
+      async () =>
+        (await (await request.get(`${fixture}/api/v1/machine/ledStrip`)).json())
+          .frontStrip.awake
     )
-  ).toBeVisible()
+    .toBe("330066009900")
   const palette = await (
     await request.get(`${fixture}/api/v1/machine/ledStrip`)
   ).json()

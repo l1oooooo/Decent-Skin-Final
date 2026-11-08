@@ -133,10 +133,10 @@ export function createNotifications(sink: Pick<typeof toast, "add" | "close">) {
         show(id, value)
     }
   }
-  function begin(id: string, title: string, waitMs = 45000) {
+  function begin(id: string, title: string, waitMs = 45000, quiet = false) {
     const prior = watchdogs.get(id)
     if (prior) clearTimeout(prior)
-    show(id, { title, type: "loading" })
+    if (!quiet) show(id, { title, type: "loading" })
     watchdogs.set(
       id,
       setTimeout(() => {

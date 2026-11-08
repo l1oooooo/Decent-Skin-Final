@@ -11,7 +11,6 @@ import {
   Coffee,
   History,
 } from "lucide-react"
-import { RevisionHeader } from "./chrome"
 import { GroupHeadGuidance } from "./controls"
 import { Action } from "./primitives"
 import type { Route } from "./navigation"
@@ -95,7 +94,6 @@ export const settingsCategories = [
 ]
 
 export function PageShell({
-  s,
   route,
   navigate,
   title,
@@ -103,7 +101,6 @@ export function PageShell({
   children,
   actions,
 }: {
-  s: SkinSession
   route: Route
   navigate: (route: Route) => void
   title: string
@@ -117,14 +114,6 @@ export function PageShell({
   }, [route.page, route.id, route.category, route.slot])
   return (
     <div className="focus-page flex h-full flex-col bg-background">
-      <RevisionHeader
-        s={s}
-        onSettings={() => navigate({ page: "settings" })}
-        onHistory={() => navigate({ page: "history" })}
-        onConnections={() =>
-          navigate({ page: "settings", category: "connections" })
-        }
-      />
       <div className="focus-body flex min-h-0 flex-1">
         <nav
           aria-label="Skin pages"

@@ -57,11 +57,13 @@ select:focus-visible {
   outline: 2px solid oklch(0.8 0 0);
   outline-offset: 4px;
 }
-.focus-skin button:disabled {
+.focus-skin button:disabled,
+.focus-skin .focus-stepper button[data-disabled] {
   opacity: 1;
   color: var(--muted-foreground);
 }
-.focus-skin button[data-slot="button"]:disabled {
+.focus-skin button[data-slot="button"]:disabled,
+.focus-skin .focus-stepper button[data-slot="button"][data-disabled] {
   background: var(--card);
   border-color: var(--border);
 }
@@ -102,11 +104,13 @@ html {
   .focus-skin {
     --focus-row-height: 72px;
   }
-  :is(.focus-skin, .focus-page) > header {
+  :is(.focus-skin, .focus-page) > header:not(.candidate-header) {
     height: 56px;
     padding-right: 8px;
   }
-  :is(.focus-skin, .focus-page) > header > div:first-child {
+  :is(.focus-skin, .focus-page)
+    > header:not(.candidate-header)
+    > div:first-child {
     width: 156px;
   }
   :is(.focus-skin, .focus-page) > header > button {
@@ -267,7 +271,7 @@ html {
   .focus-controls-panel .motion-panel > div:last-child {
     margin-top: 8px;
   }
-  .focus-page nav {
+  .focus-page nav[aria-label="Skin pages"] {
     width: 176px;
   }
 }

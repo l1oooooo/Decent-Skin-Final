@@ -30,7 +30,7 @@ export function useCatalog(gateway: DecaidGateway) {
   async function run(action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
-    feedback.begin()
+    feedback.begin(undefined, true)
     setBusy(true)
     setMessage("")
     try {
@@ -146,10 +146,6 @@ export function useCatalog(gateway: DecaidGateway) {
   ) {
     await run(async () => {
       await gateway.recipes.assignInventory(nextKind, id)
-      setMessage(
-        "Active recipe selection saved. No device command was sent.",
-        "success"
-      )
     })
   }
   async function openPreference(profile: ProfileRecord) {

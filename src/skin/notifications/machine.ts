@@ -11,7 +11,6 @@ export function createMachineNotifications(
   return (s: SkinSession) => {
     const snap = s.snapshot
     const state = snap.machine?.state.state
-    const substate = snap.machine?.state.substate
     const fresh = s.connected && s.machineFresh && !!state
     if (fresh) {
       if (state === "needsWater") refill = true
@@ -80,20 +79,6 @@ export function createMachineNotifications(
         },
       },
     })
-    const heating =
-      fresh &&
-      (substate === "preparingForShot"
-        ? "preparing"
-        : ["heating", "preheating", "booting"].includes(state!)
-          ? "heating"
-          : null)
-    manager.condition("machine-heating", heating || null, {
-      title:
-        heating === "preparing"
-          ? "Preparing for shot"
-          : "Heating to your brew temperature",
-      type: "info",
-    })
     const requiresScale =
       s.active && (!!snap.settings?.blockOnNoScale || s.yieldTarget > 0)
     const scaleRisk = requiresScale && (snap.scaleLost || !s.scaleConnected)
@@ -119,6 +104,7 @@ export function createMachineNotifications(
       type: "error",
     })
     const normalState = [
+      "sleeping",
       "error",
       "needsWater",
       "espresso",
@@ -133,15 +119,6 @@ export function createMachineNotifications(
     manager.condition("machine-gate", gate || null, {
       title: gate,
       type: s.machineFresh ? "info" : "warning",
-      action:
-        state === "sleeping"
-          ? {
-              children: "Wake",
-              onClick: () => {
-                void s.wake()
-              },
-            }
-          : undefined,
     })
   }
 }

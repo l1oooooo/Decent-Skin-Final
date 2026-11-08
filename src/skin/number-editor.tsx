@@ -31,7 +31,7 @@ export function NumberEditor({
   const replace = useRef(true)
   const id = useId()
   const [draft, setDraft] = useState(
-    Number.isFinite(value) ? String(Math.round(value * 10) / 10) : ""
+    Number.isFinite(value) ? String(value) : ""
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")

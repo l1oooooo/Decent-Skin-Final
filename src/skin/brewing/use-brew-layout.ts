@@ -34,8 +34,8 @@ export function useBrewLayout(
     const layout = (animate: boolean) => {
       const parent = container.getBoundingClientRect()
       const home = anchor.getBoundingClientRect()
-      const headerHeight = header.getBoundingClientRect().height
-      const top = headerHeight + (parent.height <= 650 ? 136 : 160)
+      const headerHeight = header?.getBoundingClientRect().height ?? 0
+      const top = headerHeight + (window.innerHeight <= 650 ? 136 : 160)
       const full = {
         left: 28,
         top,
@@ -128,7 +128,7 @@ export function useBrewLayout(
       [
         container.clientWidth,
         container.clientHeight,
-        header.offsetHeight,
+        header?.offsetHeight ?? 0,
         anchor.offsetLeft,
         anchor.offsetTop,
         anchor.offsetWidth,
@@ -146,7 +146,7 @@ export function useBrewLayout(
       layout(false)
     })
     observer.observe(container)
-    observer.observe(header)
+    if (header) observer.observe(header)
     observer.observe(anchor)
     const settle = () => layout(false)
     const hidden = () => {

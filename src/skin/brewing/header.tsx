@@ -83,16 +83,30 @@ export function CandidateHeader({
   onSettings: () => void
   onHistory: () => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [openSequence, setOpenSequence] = useState<number | null>(null)
+  const open = openSequence === s.snapshot.shotSequence
+  const setOpen = (value: boolean) =>
+    setOpenSequence(value ? s.snapshot.shotSequence : null)
+  const status = !s.connected
+    ? "Disconnected"
+    : !s.machineFresh
+      ? "Waiting for data"
+      : s.phase === "heating"
+        ? "Heating"
+        : s.phase === "error"
+          ? "Needs attention"
+          : s.snapshot.machine?.state.state === "sleeping"
+            ? "Sleeping"
+            : "Ready"
   const tank = tankMillilitres(s.waterLevel, tankCalibration, s.connected)
   const temperature = (value: number | null | undefined) =>
-    `${format(s.displayTemperature(s.connected ? (value ?? null) : null), 0)} °${s.temperatureUnit}`
+    `${format(s.displayTemperature(s.connected && s.machineFresh ? (value ?? null) : null), 0)} °${s.temperatureUnit}`
   return (
     <header className="candidate-header">
       <div className="candidate-readouts" aria-label="Machine status">
         <div
           className="candidate-status"
-          title={s.status}
+          title={status}
           role="status"
           aria-label="Machine state"
           tabIndex={-1}
@@ -100,7 +114,7 @@ export function CandidateHeader({
           data-operation={s.active ? "espresso" : (s.operation ?? "idle")}
         >
           <span>DE1</span>
-          <strong>{s.status}</strong>
+          <strong>{status}</strong>
         </div>
         <div
           className="scale-readout"
@@ -180,6 +194,7 @@ export function CandidateHeader({
           className="candidate-action"
           aria-label="History"
           onClick={() => {
+            setOpen(false)
             s.setSettings(null)
             onHistory()
           }}
@@ -187,7 +202,13 @@ export function CandidateHeader({
           <History size={16} aria-hidden="true" />
           Shot history
         </button>
-        <button className="candidate-action" onClick={onSettings}>
+        <button
+          className="candidate-action"
+          onClick={() => {
+            setOpen(false)
+            onSettings()
+          }}
+        >
           <Settings size={16} aria-hidden="true" />
           Settings
         </button>
