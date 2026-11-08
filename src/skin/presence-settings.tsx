@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useCallback, useEffect, useState } from "react"
 import {
   settingsBlock,
@@ -7,8 +8,8 @@ import {
 import type { SkinSession } from "./use-skin"
 import type { DailySettingsEditor } from "./use-daily-settings"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
-import { useOperation, OperationStatus } from "./settings-operation"
+import { PageHint } from "./pages"
+import { useOperation } from "./settings-operation"
 import {
   ConfirmAction,
   inputClass,
@@ -55,7 +56,6 @@ export function WakeLock({ s }: { s: SkinSession }) {
           ? "Release override"
           : "Keep awake temporarily"}
       </Action>
-      <OperationStatus operation={op} />
     </SettingsGroup>
   )
 }
@@ -99,7 +99,11 @@ export function Schedules({
       title="Wake schedules"
       description="Enable presence above to activate schedules. Times use Decaid's local clock. Select no weekdays for every day. A hold of 0 uses normal idle sleep."
     >
-      {loadError && <PageMessage error>{loadError}</PageMessage>}
+      {loadError && (
+        <NotificationMessage notificationKey={`presence-settings-102`} error>
+          {loadError}
+        </NotificationMessage>
+      )}
       {schedules.map((schedule) => (
         <div
           key={schedule.id}
@@ -137,7 +141,7 @@ export function Schedules({
         </div>
       ))}
       {!schedules.length && !loadError && (
-        <PageMessage>No wake schedules.</PageMessage>
+        <PageHint>No wake schedules.</PageHint>
       )}
       {!draft ? (
         <div className="mt-4 flex gap-3">
@@ -251,7 +255,6 @@ export function Schedules({
           </div>
         </form>
       )}
-      <OperationStatus operation={op} />
       {remove && (
         <ConfirmAction
           title="Delete wake schedule?"

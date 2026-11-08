@@ -1,3 +1,4 @@
+import { useMachineNotifications } from "@/skin/notifications/use-machine-notifications"
 import { useEffect } from "react"
 import type { Dispatch } from "react"
 import type { TankCalibration } from "./tank"
@@ -38,15 +39,6 @@ export function BrewingExperience({
     )
     return () => clearTimeout(timer)
   }, [s.shotId, s.phase, s.route, s.autoReturn, dispatch])
-  useEffect(() => {
-    if (!s.toast || !s.shotId) return
-    const id = s.shotId
-    const timer = setTimeout(
-      () => dispatch({ type: "clearToast", shotId: id }),
-      2400
-    )
-    return () => clearTimeout(timer)
-  }, [s.shotId, s.toast, dispatch])
   const displayHome: SkinSession = {
     ...home,
     active: isRunning(s),
@@ -109,6 +101,7 @@ export function BrewingExperience({
     waterLevel: stale ? null : home.waterLevel,
   }
 
+  useMachineNotifications(displayHome)
   if (s.route === "away")
     return (
       <div className="brew-preview" data-away="true">

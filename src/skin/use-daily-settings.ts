@@ -1,3 +1,4 @@
+import { notifications } from "./notifications/manager"
 import { useCallback, useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import {
@@ -43,6 +44,15 @@ export function useDailySettings(gateway: DecaidGateway) {
       ...current.current,
       [owner]: fn(current.current[owner] ?? empty()),
     }
+    const previous = current.current[owner]
+    const changed = next[owner]!
+    const key = `daily-${owner}`
+    if (changed.saving && !previous?.saving)
+      notifications.begin(key, `Saving ${ownerLabels[owner].toLowerCase()}`)
+    if (changed.error && changed.error !== previous?.error)
+      notifications.finish(key, { title: changed.error, type: "error" })
+    else if (changed.message && changed.message !== previous?.message)
+      notifications.finish(key, { title: changed.message, type: "success" })
     current.current = next
     setSections(next)
   }

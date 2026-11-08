@@ -1,3 +1,4 @@
+import { notifications } from "./notifications/manager"
 import {
   useEffect,
   useMemo,
@@ -23,6 +24,7 @@ const operations: Record<string, MachineCommand> = {
   "Hot water": "hotWater",
   Flush: "flush",
 }
+let actionSequence = 0
 export function useSkin(gateway: DecaidGateway) {
   const snapshot = useSyncExternalStore(gateway.subscribe, gateway.getSnapshot)
   const [expiredMachineReading, setExpiredMachineReading] = useState(0)
@@ -79,10 +81,23 @@ export function useSkin(gateway: DecaidGateway) {
   }, [gateway, snapshot.connection])
   async function perform(action: () => Promise<unknown>) {
     setNotice("")
+    const notificationId = `skin-action-${++actionSequence}`
+    notifications.begin(notificationId, "Waiting for Decaid")
     try {
       await action()
+      notifications.finish(notificationId, {
+        title: "Request acknowledged",
+        type: "info",
+      })
       return true
     } catch (error) {
+      notifications.finish(notificationId, {
+        title:
+          error instanceof Error
+            ? error.message
+            : "Decaid could not complete this action",
+        type: "error",
+      })
       setNotice(
         error instanceof Error
           ? error.message
@@ -327,23 +342,7 @@ export function useSkin(gateway: DecaidGateway) {
         ? "Cannot reach Decaid. Check the connection, then retry."
         : ""),
     reloadLibrary,
-    notice:
-      notice ||
-      (snapshot.refillKit === false &&
-      snapshot.water !== null &&
-      snapshot.preferences?.refillWarningMm &&
-      snapshot.water < snapshot.preferences.refillWarningMm
-        ? `Low water · ${snapshot.water.toFixed(0)} mm. Refill the tank.`
-        : "") ||
-      snapshot.message ||
-      snapshot.deviceNotice ||
-      (snapshot.scaleLost
-        ? "Scale disconnected during this shot. Stop-at-weight is unavailable; stop the extraction manually."
-        : ""),
-    dismissNotice: () => {
-      setNotice("")
-      gateway.clearMessage()
-    },
+    notice,
     change,
     selectProfile,
     perform,
@@ -352,7 +351,7 @@ export function useSkin(gateway: DecaidGateway) {
         gateway.recipes.adjust(matchedProfileId, "grinderSetting", value)
       ),
     reset: gateway.dismissShot,
-    reconnect: () => gateway.sync(),
+    reconnect: () => perform(() => gateway.sync()),
     wake: () => perform(() => gateway.command("idle")),
     sleep: () => perform(() => gateway.daily.power(true)),
     liveSteamTemperature:

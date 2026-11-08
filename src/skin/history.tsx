@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useRef, useState } from "react"
 import {
   annotationFields,
@@ -11,7 +12,7 @@ import {
 import { Action } from "./primitives"
 import { EditorField } from "./editor-fields"
 import { ConfirmAction, SettingSelect } from "./settings-controls"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { Extraction } from "./trace"
 import { format, type SkinSession } from "./use-skin"
 import type { Route } from "./navigation"
@@ -96,11 +97,12 @@ export function HistoryPage({
           </Action>
         </div>
       </form>
-      {h.message && <PageMessage>{h.message}</PageMessage>}
-      {h.loading && <PageMessage>Loading shots…</PageMessage>}
+      {h.loading && <PageHint>Loading shots…</PageHint>}
       {h.listError && (
         <>
-          <PageMessage error>{h.listError}</PageMessage>
+          <NotificationMessage notificationKey={`history-103`} error>
+            {h.listError}
+          </NotificationMessage>
           <Action
             variant="outline"
             disabled={h.loading}
@@ -150,10 +152,10 @@ export function HistoryPage({
             ))}
           </div>
           {!h.items.length && (
-            <PageMessage>
+            <PageHint>
               No shots match these filters. Change the filters or refresh
               history.
-            </PageMessage>
+            </PageHint>
           )}
           <div className="mt-5 flex gap-3">
             <Action
@@ -198,18 +200,19 @@ export function ShotDetail({
   const record = h.record?.id === id ? h.record : null
   if (!id)
     return (
-      <PageMessage error>
+      <NotificationMessage notificationKey={`history-201`} error>
         No shot ID was supplied. Open a record from history.
-      </PageMessage>
+      </NotificationMessage>
     )
   if (!record)
     return (
       <>
-        <PageMessage error={!!h.detailError}>
-          {h.detailLoading
-            ? "Loading shot…"
-            : h.detailError || "Shot unavailable."}
-        </PageMessage>
+        <NotificationMessage notificationKey="history-detail-read" error>
+          {h.detailError}
+        </NotificationMessage>
+        <PageHint>
+          {h.detailLoading ? "Loading shot…" : "Shot unavailable."}
+        </PageHint>
         <Action
           disabled={h.detailLoading}
           variant="outline"
@@ -277,24 +280,20 @@ export function ShotDetail({
       <p className="mb-3 text-sm text-muted-foreground">
         {date(record.timestamp)} · {record.id}
       </p>
-      <PageMessage>
+      <PageHint>
         Repeat loads the recorded profile and coffee/equipment context. It does
         not start a shot or change utility settings. Save or cancel annotations
         before repeating or deleting.
-      </PageMessage>
-      {repeatError && <PageMessage>{repeatError}</PageMessage>}
-      {h.detailError && (
-        <PageMessage error>
-          {h.detailError} The last loaded record is still shown.
-        </PageMessage>
+      </PageHint>
+      {repeatError && (
+        <NotificationMessage notificationKey={`history-285`}>
+          {repeatError}
+        </NotificationMessage>
       )}
-      {h.message && (
-        <PageMessage>
-          {h.message}
-          {h.dirty && h.message === "Annotations saved."
-            ? " Newer edits are still unsaved."
-            : ""}
-        </PageMessage>
+      {h.detailError && (
+        <NotificationMessage notificationKey={`history-287`} error>
+          {h.detailError} The last loaded record is still shown.
+        </NotificationMessage>
       )}
       <section
         aria-label="Recorded shot"
@@ -351,10 +350,10 @@ export function ShotDetail({
             </p>
           </>
         ) : (
-          <PageMessage>
+          <PageHint>
             No usable recorded measurements are available. A recipe preview is
             not substituted.
-          </PageMessage>
+          </PageHint>
         )}
       </section>
       <section aria-label="Recorded recipe stages" className="mb-6">
@@ -387,7 +386,7 @@ export function ShotDetail({
           })}
         </ol>
         {!Array.isArray(profile.steps) || !profile.steps.length ? (
-          <PageMessage>No executable stages were recorded.</PageMessage>
+          <PageHint>No executable stages were recorded.</PageHint>
         ) : null}
       </section>
       {h.draft && (

@@ -113,41 +113,6 @@
 .brew-chart text.brew-temp-tick {
   fill: oklch(0.717 0.055 17.086);
 }
-.brew-toast {
-  position: absolute;
-  left: 50%;
-  bottom: 28px;
-  transform: translate(-50%, 8px);
-  opacity: 0;
-  transition:
-    opacity 180ms ease-out,
-    transform 180ms ease-out;
-  padding: 12px 20px;
-  border: 1px solid var(--border);
-  background: oklch(0.213 0 0);
-  border-radius: 8px;
-  pointer-events: none;
-  font-size: 14px;
-  z-index: 4;
-}
-.brew-toast[data-visible="true"] {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-.brew-alert,
-.brew-scale-note {
-  position: absolute;
-  bottom: 14px;
-  left: 28px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 13px;
-  color: oklch(0.729 0.088 18.506);
-  z-index: 3;
-  max-width: calc(100% - 530px);
-}
-.brew-alert button,
 .brew-away button {
   min-height: 44px;
   padding: 0 16px;
@@ -506,15 +471,6 @@
   }
 }
 
-.brew-operation-notice {
-  position: absolute;
-  bottom: 60px;
-  left: 28px;
-  right: 28px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  z-index: 4;
-}
 
 .candidate-tabs [data-slot="tabs-list"] {
   width: 100%;
@@ -542,11 +498,6 @@
 }
 .steam-switch::after {
   inset: -13px -8px;
-}
-.utility-note {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--muted-foreground);
 }
 .planned-empty {
   position: absolute;

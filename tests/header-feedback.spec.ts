@@ -137,7 +137,9 @@ test("header Sleep reports failed writes on shared pages and stays blocked durin
   await page.goto("/?page=library", { waitUntil: "networkidle" })
   const sleep = page.getByRole("button", { name: "Sleep machine" })
   await sleep.click()
-  await expect(page.getByRole("alert")).toContainText("Section write rejected")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("Section write rejected")
   await expect(sleep).toBeEnabled()
   await request.post(`${fixture}/__test/state`, {
     data: { state: "steam", failPath: null },

@@ -46,11 +46,6 @@ export function GrindEditor({ s }: { s: SkinSession }) {
             maxLength={40}
           />
         </label>
-        {s.notice && (
-          <p role="alert" className="mt-4 text-sm">
-            {s.notice}
-          </p>
-        )}
         <Action
           type="submit"
           className="mt-6 w-full"

@@ -128,7 +128,10 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
       hold,
       final: bounds(),
       phase: root.getAttribute("data-phase"),
-      toast: document.querySelector(".brew-toast")!.textContent,
+      toast:
+        document.querySelector(
+          '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+        )?.textContent ?? "",
     }
   })
   console.log(
@@ -267,7 +270,10 @@ test("restart during the return retargets from current bounds and navigation can
     })
     await wait(800)
     const settled = surface.getBoundingClientRect().width
-    const toast = document.querySelector(".brew-toast")!.textContent
+    const toast =
+      document.querySelector(
+        '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+      )?.textContent ?? ""
     click("Navigate away")
     await wait(100)
     return {

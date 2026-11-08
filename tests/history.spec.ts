@@ -91,7 +91,11 @@ test("annotations retain failed and newer edits, clear canonical notes and never
   await page
     .getByRole("button", { name: "Save annotations", exact: true })
     .click()
-  await expect(page.getByText(/500: Section write rejected/)).toBeVisible()
+  await expect(
+    page
+      .locator('[data-slot="toast-title"]')
+      .filter({ hasText: /500: Section write rejected/ })
+  ).toBeVisible()
   await expect(
     page.getByLabel("Enjoyment (0–10)", { exact: true })
   ).toHaveValue("9")
@@ -110,9 +114,14 @@ test("annotations retain failed and newer edits, clear canonical notes and never
   await page.getByLabel("Shot notes", { exact: true }).fill("Newer note")
   release()
   await expect(
-    page.getByText("Annotations saved. Newer edits are still unsaved.", {
-      exact: true,
-    })
+    page
+      .locator('[data-slot="toast"]')
+      .getByText(
+        "Submitted annotations saved. Review newer edits before leaving.",
+        {
+          exact: true,
+        }
+      )
   ).toBeVisible()
   await page.getByRole("button", { name: "Refresh shot", exact: true }).click()
   await expect(page.getByLabel("Shot notes", { exact: true })).toHaveValue(
@@ -127,7 +136,9 @@ test("annotations retain failed and newer edits, clear canonical notes and never
     page.getByRole("button", { name: "Save annotations", exact: true })
   ).toBeDisabled()
   await expect(
-    page.getByText("Annotations saved.", { exact: true })
+    page
+      .locator('[data-slot="toast"]')
+      .getByText("Annotations saved.", { exact: true })
   ).toBeVisible()
   await page.reload()
   await expect(page.getByLabel("Shot notes", { exact: true })).toHaveValue("")
@@ -193,7 +204,11 @@ test("repeat loads only the recorded recipe; export and confirmed deletion repor
   })
   await page.getByRole("button", { name: "Delete shot", exact: true }).click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/500: Section write rejected/)).toBeVisible()
+  await expect(
+    page
+      .locator('[data-slot="toast-title"]')
+      .filter({ hasText: /500: Section write rejected/ })
+  ).toBeVisible()
   await request.post(`${fixture}/__test/state`, { data: { failPath: null } })
   await page.getByRole("button", { name: "Delete shot", exact: true }).click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()

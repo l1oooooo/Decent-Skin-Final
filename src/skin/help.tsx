@@ -3,7 +3,7 @@ import type { ExtensionsState } from "./use-extensions"
 import type { SkinSession } from "./use-skin"
 import type { Route } from "./navigation"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { EditorField, EditorChoice } from "./editor-fields"
 import { SettingInput } from "./settings-controls"
 import { Section, Facts, type Ask } from "./advanced-shared"
@@ -51,14 +51,14 @@ export function HelpPage({
               settings.gatewayMode ?? s.snapshot.settings?.gatewayMode,
           }}
         />
-        <PageMessage>
+        <PageHint>
           Focus is a client of Decaid. Decaid owns connections, execution,
           stop-at-weight and stored shots. Other builds may differ; a desktop
           preview does not establish Samsung WebView or hardware acceptance.
           Tracking or disabled gateway mode is required for Focus operations;
           choose the mode in native Decaid. This page never changes it
           automatically.
-        </PageMessage>
+        </PageHint>
       </Section>
       <Section title="Screen and viewport">
         <Facts
@@ -70,12 +70,12 @@ export function HelpPage({
             "Reported screen (CSS pixels)": `${viewport.screenWidth} × ${viewport.screenHeight}`,
           }}
         />
-        <PageMessage>
+        <PageHint>
           Read these values inside Decaid on the tablet, in landscape with the
           keyboard closed. The layout viewport is the space available to this
           skin; a Mac browser reports the Mac's viewport instead. Send the
           layout viewport and device pixel ratio when reporting a fit issue.
-        </PageMessage>
+        </PageHint>
       </Section>
       <Section title="System preferences">
         <form
@@ -155,12 +155,12 @@ export function HelpPage({
         </form>
       </Section>
       <Section title="Diagnostics and logs">
-        <PageMessage>
+        <PageHint>
           These reads stay on your configured Decaid gateway and do not scan or
           send machine commands. Logs and device details may contain identifiers
           or credentials; review and redact before sharing. Nothing is uploaded
           automatically.
-        </PageMessage>
+        </PageHint>
         <div className="flex flex-wrap gap-3">
           <Action
             variant="outline"
@@ -221,11 +221,11 @@ export function HelpPage({
             </pre>
           </details>
         ))}
-        <PageMessage>
+        <PageHint>
           Android permissions, WebView composition, Bluetooth transport policy
           and native diagnostic switches are managed in Decaid or Android
           settings. Unsupported endpoints remain explicitly unavailable here.
-        </PageMessage>
+        </PageHint>
       </Section>
       <Section title="Quick start and troubleshooting">
         <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
@@ -295,27 +295,27 @@ export function HelpPage({
         >
           Refresh account status
         </Action>
-        <PageMessage>
+        <PageHint>
           Sign in, manage credentials, account consent and support conversations
           in native Decaid’s Account screen. The public status endpoint does not
           provide login or account-management controls. Scoped account proxy
           access requires native consent and credentials; Focus does not
           request, store or share those tokens.
-        </PageMessage>
+        </PageHint>
       </Section>
       <Section title="Send feedback">
-        <PageMessage>
+        <PageHint>
           Decaid sends your reviewed text as an issue to the Decaid GitHub
           repository (normally decentespresso/decaid). Treat it as public. It
           may also link the issue to your Decent support account. Focus sends no
           log, screenshot or system-info attachments. For private account help
           or support packages, use native Decaid.
-        </PageMessage>
+        </PageHint>
         {account?.loggedIn !== true && (
-          <PageMessage>
+          <PageHint>
             Sign in through native Decaid and refresh account status before
             submitting.
-          </PageMessage>
+          </PageHint>
         )}
         <form
           onSubmit={(e) => {

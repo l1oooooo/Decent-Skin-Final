@@ -39,7 +39,9 @@ test("daily settings visits are read-only and discovery never auto-connects", as
     .getByRole("button", { name: "Scan for devices", exact: true })
     .click()
   await expect(
-    page.getByRole("status").filter({ hasText: "Discovery requested" })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Discovery requested" })
   ).toBeVisible()
   expect((await writes(request)).map((r: { path: string }) => r.path)).toEqual([
     "/api/v1/devices/scan",
@@ -59,7 +61,9 @@ test("utility patches agree with Home and failed sections retain drafts", async 
     .getByRole("button", { name: "Save utility recipe", exact: true })
     .click()
   await expect(
-    page.getByRole("status").filter({ hasText: "Utility recipe saved." })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Utility recipe saved." })
   ).toBeVisible()
   const workflow = await (
     await request.get(`${fixture}/api/v1/workflow`)
@@ -83,7 +87,9 @@ test("utility patches agree with Home and failed sections retain drafts", async 
   await page
     .getByRole("button", { name: "Save Decaid preferences", exact: true })
     .click()
-  await expect(page.getByRole("alert")).toContainText("Section write rejected")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("Section write rejected")
   await expect(
     page.getByRole("switch", {
       name: "Require a scale before brewing",
@@ -116,7 +122,9 @@ test("utility patches agree with Home and failed sections retain drafts", async 
     .getByRole("button", { name: "Save Decaid preferences", exact: true })
     .click()
   await expect(
-    page.getByRole("status").filter({ hasText: "Decaid preferences saved." })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Decaid preferences saved." })
   ).toBeVisible()
   await page
     .getByRole("button", { name: "Return to Home", exact: true })
@@ -160,7 +168,9 @@ test("display saves preserve newer edits, report caps and persist units", async 
   await brightness.fill("90")
   release()
   await expect(
-    page.getByRole("status").filter({ hasText: "Display brightness saved." })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Display brightness saved." })
   ).toBeVisible()
   await expect(brightness).toHaveValue("90")
   await expect(
@@ -179,7 +189,9 @@ test("display saves preserve newer edits, report caps and persist units", async 
     .getByRole("button", { name: "Save Focus preferences", exact: true })
     .click()
   await expect(
-    page.getByRole("status").filter({ hasText: "Focus preferences saved." })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Focus preferences saved." })
   ).toBeVisible()
   await page.reload()
   await expect(
@@ -217,7 +229,9 @@ test("wake schedules and sleep are explicit; unsupported grinder controls stay u
   await page.getByRole("button", { name: "Mon", exact: true }).click()
   await page.getByRole("button", { name: "Save schedule", exact: true }).click()
   await expect(
-    page.getByRole("status").filter({ hasText: "Wake schedule saved." })
+    page
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Wake schedule saved." })
   ).toBeVisible()
   expect(
     (

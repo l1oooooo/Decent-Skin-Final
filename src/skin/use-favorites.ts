@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useFeedback } from "./notifications/feedback"
+import { useRef, useState } from "react"
 import type { FavoriteSlots, GatewaySnapshot } from "@/gateway/types"
 import type { DecaidGateway } from "@/gateway/client"
 import { assignFavorite } from "@/gateway/model"
@@ -8,19 +9,23 @@ export function useFavorites(
   snapshot: GatewaySnapshot
 ) {
   const [draft, setDraft] = useState<FavoriteSlots | null>(null)
+  const latestDraft = useRef<FavoriteSlots | null>(null)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
+  const feedback = useFeedback("Saving favorites")
+  const { message, setMessage } = feedback
+  const { error, setError } = feedback
   const slots = draft ?? snapshot.favorites
   const dirty =
     draft !== null &&
     JSON.stringify(draft) !== JSON.stringify(snapshot.favorites)
   function change(next: FavoriteSlots) {
+    latestDraft.current = next
     setDraft(next)
     setError("")
     setMessage("")
   }
   function cancel() {
+    latestDraft.current = null
     setDraft(null)
     setError("")
     setMessage("")
@@ -28,6 +33,7 @@ export function useFavorites(
   async function save() {
     if (saving) return
     const submitted = [...slots]
+    feedback.begin()
     setSaving(true)
     setError("")
     setMessage("")
@@ -36,12 +42,22 @@ export function useFavorites(
       setDraft((current) =>
         JSON.stringify(current) === JSON.stringify(submitted) ? null : current
       )
-      setMessage("Favorites saved.")
+      const newerEdits =
+        latestDraft.current !== null &&
+        JSON.stringify(latestDraft.current) !== JSON.stringify(submitted)
+      if (!newerEdits) latestDraft.current = null
+      setMessage(
+        newerEdits
+          ? "Submitted favorites saved. Newer edits are still unsaved."
+          : "Favorites saved.",
+        newerEdits ? "info" : "success"
+      )
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Could not save favorites"
       )
     } finally {
+      feedback.end()
       setSaving(false)
     }
   }

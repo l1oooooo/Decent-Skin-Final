@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import {
@@ -32,12 +33,14 @@ export function useShotHistory(gateway: DecaidGateway) {
   const [errors, setErrors] = useState<Partial<Record<AnnotationKey, string>>>(
     {}
   )
-  const [message, setMessage] = useState("")
+  const feedback = useFeedback("Updating shot history")
+  const { message, setMessage } = feedback
   const [busy, setBusy] = useState(false)
   const lock = useRef(false),
     detailRevision = useRef(0),
     activeId = useRef<string | null>(null)
   const baseRef = useRef<AnnotationDraft | null>(null)
+  const editRevision = useRef(0)
   const dirty = !!draft && JSON.stringify(draft) !== JSON.stringify(base)
   async function list(next = applied, start = offset) {
     const revision = ++listRevision.current
@@ -116,14 +119,18 @@ export function useShotHistory(gateway: DecaidGateway) {
   async function run(action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
+    feedback.begin()
     setBusy(true)
     setMessage("")
     try {
       await action()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Request failed.")
+      feedback.setError(
+        error instanceof Error ? error.message : "Request failed."
+      )
     } finally {
       lock.current = false
+      feedback.end()
       setBusy(false)
     }
   }
@@ -137,6 +144,7 @@ export function useShotHistory(gateway: DecaidGateway) {
     const { patch, errors } = annotationPatch(base, draft)
     setErrors(errors)
     if (Object.keys(errors).length || !Object.keys(patch).length) return
+    const submittedRevision = editRevision.current
     const submitted = draft,
       id = record.id
     await run(async () => {
@@ -164,7 +172,12 @@ export function useShotHistory(gateway: DecaidGateway) {
             ) as AnnotationDraft)
           : nextBase
       )
-      setMessage("Annotations saved.")
+      setMessage(
+        editRevision.current === submittedRevision
+          ? "Annotations saved."
+          : "Submitted annotations saved. Review newer edits before leaving.",
+        "success"
+      )
     })
   }
   async function repeat() {
@@ -196,7 +209,7 @@ export function useShotHistory(gateway: DecaidGateway) {
       }
       setItems((current) => current.filter((r) => r.id !== id))
       setLoaded(false)
-      setMessage("Shot deleted.")
+      setMessage("Shot deleted.", "success")
       success = true
     })
     return success
@@ -248,6 +261,7 @@ export function useShotHistory(gateway: DecaidGateway) {
     remove,
     exportRecords,
     change: (key: AnnotationKey, value: string) => {
+      editRevision.current++
       setDraft((current) => (current ? { ...current, [key]: value } : current))
       setErrors((current) => ({ ...current, [key]: undefined }))
     },

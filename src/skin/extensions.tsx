@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useEffectEvent, useState } from "react"
 import { asData } from "@/gateway/advanced"
 import { pluginLaunch, type Plugin } from "@/gateway/extensions"
@@ -6,7 +7,7 @@ import type { SkinSession } from "./use-skin"
 import type { ExtensionsState } from "./use-extensions"
 import type { Route } from "./navigation"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { EditorField, EditorChoice } from "./editor-fields"
 import { ConfirmAction, SettingInput, inputClass } from "./settings-controls"
 import { Section, Facts, shown, type Ask } from "./advanced-shared"
@@ -49,19 +50,14 @@ export function ExtensionsPage({
         Refresh{" "}
         {route.category === "extensions" ? "extensions" : "system status"}
       </Action>
-      {h.busy && (
-        <PageMessage>
-          {h.busy}… Keep this page open until the outcome is reported.
-        </PageMessage>
-      )}
       {Object.values(h.loading).some(Boolean) && (
-        <PageMessage>Reading the current gateway data…</PageMessage>
+        <PageHint>Reading the current gateway data…</PageHint>
       )}
-      {reason && <PageMessage>{reason}</PageMessage>}
-      {h.error && (
-        <PageMessage error>{h.error} No automatic retry was sent.</PageMessage>
+      {reason && (
+        <NotificationMessage notificationKey={`extensions-60`}>
+          {reason}
+        </NotificationMessage>
       )}
-      {h.message && <PageMessage>{h.message}</PageMessage>}
       {Object.entries(h.errors)
         .filter(
           ([key, error]) =>
@@ -71,10 +67,14 @@ export function ExtensionsPage({
               : !key.startsWith("plugin"))
         )
         .map(([key, error]) => (
-          <PageMessage key={key} error>
+          <NotificationMessage
+            notificationKey={`extension-read-${key}`}
+            key={key}
+            error
+          >
             {key}: {error} Refresh this section to retry; unavailable endpoints
             are not replaced with sample data.
-          </PageMessage>
+          </NotificationMessage>
         ))}
       {route.category === "extensions" ? (
         <PluginArea
@@ -144,12 +144,12 @@ function PluginArea({
     }
   return (
     <>
-      <PageMessage>
+      <PageHint>
         DYE2, shot upload, Home Assistant, assisted dial-in and other extensions
         appear when installed. Select an extension to review its settings,
         permissions and update status. Running plugins with their own page can
         open in a separate tab.
-      </PageMessage>
+      </PageHint>
       <div className="mt-4 flex flex-wrap gap-3">
         {selected && (
           <Action
@@ -185,22 +185,22 @@ function PluginArea({
         </Action>
       </div>
       {pluginDirty && (
-        <PageMessage>
+        <PageHint>
           Save or cancel plugin drafts before enabling, removing or updating
           plugins.
-        </PageMessage>
+        </PageHint>
       )}
       {!h.plugins && !h.errors.plugins && (
-        <PageMessage>Loading installed extensions…</PageMessage>
+        <PageHint>Loading installed extensions…</PageHint>
       )}
       {h.plugins?.length === 0 && (
-        <PageMessage>No plugins are installed.</PageMessage>
+        <PageHint>No plugins are installed.</PageHint>
       )}
       {selected && !plugin && h.plugins && (
-        <PageMessage error>
+        <NotificationMessage notificationKey={`extensions-200`} error>
           This plugin is no longer installed. Its unsaved settings are retained
           until you cancel them.
-        </PageMessage>
+        </NotificationMessage>
       )}
       {(selected ? (plugin ? [plugin] : []) : (h.plugins ?? [])).map((p) => (
         <Section key={p.id} title={p.name}>
@@ -218,15 +218,15 @@ function PluginArea({
             }}
           />
           {!!asData(p.source).lastError && (
-            <PageMessage error>
+            <NotificationMessage notificationKey={`extensions-221`} error>
               {String(asData(p.source).lastError)}
-            </PageMessage>
+            </NotificationMessage>
           )}
           <p className="my-3 text-sm break-words text-muted-foreground">
             Permissions: {p.permissions.join(", ") || "None declared"}
           </p>
           {p.pendingUpdate != null && (
-            <PageMessage>
+            <PageHint>
               Pending version {shown(asData(p.pendingUpdate).version)} · Added
               permissions:{" "}
               {Array.isArray(asData(p.pendingUpdate).addedPermissions)
@@ -234,7 +234,7 @@ function PluginArea({
                     ", "
                   )
                 : "Unavailable; refresh before approval"}
-            </PageMessage>
+            </PageHint>
           )}
           <div className="flex flex-wrap gap-3">
             {!selected && (
@@ -304,7 +304,11 @@ function PluginArea({
       ))}
       {plugin && (
         <>
-          {launchError && <PageMessage error>{launchError}</PageMessage>}
+          {launchError && (
+            <NotificationMessage notificationKey={`extensions-307`} error>
+              {launchError}
+            </NotificationMessage>
+          )}
           {launch && !blocked && !h.errors.plugins && (
             <a
               href={launch}
@@ -316,11 +320,11 @@ function PluginArea({
             </a>
           )}
           {launch && (
-            <PageMessage>
+            <PageHint>
               Opens a separate plugin-owned page. Return here using its Return
               link, or close that tab. Focus stays open with your drafts. No
               credentials are added to the link.
-            </PageMessage>
+            </PageHint>
           )}
           <PluginSettings
             plugin={plugin}
@@ -362,14 +366,12 @@ function PluginSettings({
   )
   return (
     <Section title="Plugin settings">
-      <PageMessage>
+      <PageHint>
         Only changed settings are saved. Hidden and unsupported fields stay
         untouched. Saving may reload a running plugin.
-      </PageMessage>
+      </PageHint>
       {!saved && (
-        <PageMessage>
-          Settings have not loaded. Refresh before editing.
-        </PageMessage>
+        <PageHint>Settings have not loaded. Refresh before editing.</PageHint>
       )}
       <form
         onSubmit={(e) => {
@@ -395,10 +397,10 @@ function PluginSettings({
               (field.secure === true && field.type !== "string")
             )
               return (
-                <PageMessage key={name}>
+                <PageHint key={name}>
                   {label}: this declaration is not supported here. Use the
                   plugin’s own UI or native Decaid.
-                </PageMessage>
+                </PageHint>
               )
             if (field.secure === true)
               return (
@@ -437,9 +439,7 @@ function PluginSettings({
                     Clear {label} on Save
                   </Action>
                   {edited && draft[name] === null && (
-                    <PageMessage>
-                      Will remove this credential on Save.
-                    </PageMessage>
+                    <PageHint>Will remove this credential on Save.</PageHint>
                   )}
                 </div>
               )
@@ -479,10 +479,10 @@ function PluginSettings({
           })}
         </fieldset>
         {!fields.length && (
-          <PageMessage>
+          <PageHint>
             No settings are exposed by this manifest. Use its declared UI when
             available.
-          </PageMessage>
+          </PageHint>
         )}
         <div className="mt-4 flex gap-3">
           <Action
@@ -519,12 +519,12 @@ function PluginInstall({
     source = String(d.source ?? "github-release")
   return (
     <Section title="Install an extension">
-      <PageMessage>
+      <PageHint>
         Install only from a repository you trust. Plugins can request device,
         network and account access and may run after installation. Local
         ZIP/folder installs use native Decaid; arbitrary URL installation is
         unsupported.
-      </PageMessage>
+      </PageHint>
       <form
         onSubmit={(e) => {
           e.preventDefault()

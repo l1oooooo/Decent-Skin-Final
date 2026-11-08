@@ -1,9 +1,10 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useState } from "react"
 import { asData, numberInput } from "@/gateway/advanced"
 import type { Advanced } from "./use-advanced"
 import { Action } from "./primitives"
 import { EditorField, EditorChoice } from "./editor-fields"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { Section, Facts, Prepared, shown, type Ask } from "./advanced-shared"
 import type { SkinSession } from "./use-skin"
 import type { Route } from "./navigation"
@@ -86,9 +87,9 @@ export function Calibration({
           attempt requires new measurements.
         </p>
         {!de1 ? (
-          <PageMessage>
+          <PageHint>
             DE1 sensor calibration is unavailable for this model.
-          </PageMessage>
+          </PageHint>
         ) : (
           <>
             <EditorChoice
@@ -133,7 +134,7 @@ export function Calibration({
                   onChange={(v) => h.change(path, "measured", v)}
                 />
               </fieldset>
-              <PageMessage>{prediction}</PageMessage>
+              <PageHint>{prediction}</PageHint>
               <Prepared
                 label="I recorded stable paired measurements and checked the instrument."
                 value={prepared}
@@ -189,16 +190,16 @@ export function Calibration({
         {de1 ? (
           <FlowCalibration h={h} blocked={blocked} ask={ask} />
         ) : (
-          <PageMessage>
+          <PageHint>
             Machine flow calibration is unavailable for this model.
-          </PageMessage>
+          </PageHint>
         )}
       </Section>
       <Section title="Integrated scale calibration">
         {!scaleSupported ? (
-          <PageMessage>
+          <PageHint>
             No supported load-cell calibration capability is reported.
-          </PageMessage>
+          </PageHint>
         ) : (
           <>
             <p className="mb-4 text-sm text-muted-foreground">
@@ -431,13 +432,13 @@ export function Maintenance({
         }}
       />
       {h.procedure && (
-        <PageMessage>
+        <NotificationMessage notificationKey={`calibration-maintenance-434`}>
           {!h.busy.includes("cycle") &&
           live &&
           ["cleaning", "descaling", "airPurge"].includes(state?.state ?? "")
             ? `Machine procedure: ${state?.state} / ${state?.substate}. Observed from the machine; use Stop maintenance to cancel.`
             : h.procedure}
-        </PageMessage>
+        </NotificationMessage>
       )}
       {(["cleaning", "descaling", "airPurge"].includes(state?.state ?? "") ||
         h.busy.includes("cycle")) && (
@@ -446,10 +447,14 @@ export function Maintenance({
         </Action>
       )}
       {!live && (
-        <PageMessage error>
+        <NotificationMessage
+          notificationKey={`calibration-maintenance-449`}
+          persistent
+          error
+        >
           Procedure status is unknown while readings are unavailable. Reconnect
           before starting or sending Stop.
-        </PageMessage>
+        </NotificationMessage>
       )}
       {procedures.map(([kind, title, prep]) => (
         <Section key={kind} title={title}>

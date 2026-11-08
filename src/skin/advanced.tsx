@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useEffectEvent, useState } from "react"
 import { machineId } from "@/gateway/advanced"
 import type { Advanced } from "./use-advanced"
@@ -5,7 +6,6 @@ import type { SkinSession } from "./use-skin"
 import type { Route } from "./navigation"
 import { Action } from "./primitives"
 import { ConfirmAction } from "./settings-controls"
-import { PageMessage } from "./pages"
 import { Calibration, Maintenance } from "./calibration-maintenance"
 import { MachineExtras } from "./machine-advanced"
 import { Updates } from "./updates-data"
@@ -50,20 +50,17 @@ export function AdvancedPage({
           Refresh operation status
         </Action>
       </div>
-      {h.busy && (
-        <PageMessage>
-          {h.busy}… Keep this page open until an outcome is reported.
-        </PageMessage>
+      {h.api.block() && (
+        <NotificationMessage notificationKey={`advanced-60`}>
+          {h.api.block()}
+        </NotificationMessage>
       )}
-      {h.error && <PageMessage error>{h.error}</PageMessage>}
-      {h.message && <PageMessage>{h.message}</PageMessage>}
-      {h.api.block() && <PageMessage>{h.api.block()}</PageMessage>}
       {deviceId && h.identity !== deviceId && (
-        <PageMessage>
+        <NotificationMessage notificationKey={`advanced-62`}>
           {h.loading["machine/info"]
             ? "Reading the connected machine’s identity…"
             : "Machine identity is not verified. Refresh operation status before applying changes."}
-        </PageMessage>
+        </NotificationMessage>
       )}
       {Object.entries(h.errors)
         .filter(
@@ -80,9 +77,13 @@ export function AdvancedPage({
               : path.startsWith("machine/"))
         )
         .map(([path, error]) => (
-          <PageMessage key={path} error>
+          <NotificationMessage
+            notificationKey={`advanced-read-${path}`}
+            key={path}
+            error
+          >
             {path.replace("machine/", "")}: {error} Refresh to retry.
-          </PageMessage>
+          </NotificationMessage>
         ))}
       {category === "calibration" && (
         <Calibration

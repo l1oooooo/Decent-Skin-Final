@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import type {
@@ -11,7 +12,8 @@ export function useCatalog(gateway: DecaidGateway) {
   const [data, setData] = useState<Inventory | null>(null)
   const [busy, setBusy] = useState(false)
   const lock = useRef(false)
-  const [message, setMessage] = useState("")
+  const feedback = useFeedback("Updating inventory")
+  const { message, setMessage } = feedback
   const [kind, setKind] = useState<InventoryKind>("beans")
   const [record, setRecord] = useState<InventoryRecord | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown> | null>(null)
@@ -28,14 +30,18 @@ export function useCatalog(gateway: DecaidGateway) {
   async function run(action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
+    feedback.begin()
     setBusy(true)
     setMessage("")
     try {
       await action()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Request failed.")
+      feedback.setError(
+        error instanceof Error ? error.message : "Request failed."
+      )
     } finally {
       lock.current = false
+      feedback.end()
       setBusy(false)
     }
   }
@@ -82,7 +88,7 @@ export function useCatalog(gateway: DecaidGateway) {
           typeof submitted[key] !== "string" || !String(submitted[key]).trim()
       )
     ) {
-      setMessage(`Enter ${required.join(" and ")}.`)
+      setMessage(`Enter ${required.join(" and ")}.`, "warning")
       return
     }
     await run(async () => {
@@ -106,7 +112,10 @@ export function useCatalog(gateway: DecaidGateway) {
             }
           : current
       )
-      setMessage("Inventory record saved. Historical shots are unchanged.")
+      setMessage(
+        "Inventory record saved. Historical shots are unchanged.",
+        "success"
+      )
     })
   }
   async function archive(nextKind: InventoryKind, next: InventoryRecord) {
@@ -137,7 +146,10 @@ export function useCatalog(gateway: DecaidGateway) {
   ) {
     await run(async () => {
       await gateway.recipes.assignInventory(nextKind, id)
-      setMessage("Active recipe selection saved. No device command was sent.")
+      setMessage(
+        "Active recipe selection saved. No device command was sent.",
+        "success"
+      )
     })
   }
   async function openPreference(profile: ProfileRecord) {
@@ -171,7 +183,10 @@ export function useCatalog(gateway: DecaidGateway) {
     await run(async () => {
       await gateway.recipes.savePreference(recipeId, submitted)
       setPreferenceBase(submitted)
-      setMessage("Recipe preferences saved. Load this profile to apply them.")
+      setMessage(
+        "Recipe preferences saved. Load this profile to apply them.",
+        "success"
+      )
     })
   }
   return {

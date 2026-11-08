@@ -63,7 +63,10 @@ test("real fixture events drive five traces, a frozen completion and one automat
   })
   const completion = await page.evaluate(async (origin) => {
     const root = document.querySelector(".brew-preview")!
-    const toast = document.querySelector(".brew-toast")!
+    const toast = () =>
+      document.querySelector(
+        '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+      )?.textContent ?? ""
     const chart = document.querySelector(".brew-chart-live")!
     const phases: { phase: string; time: number }[] = []
     const toasts: string[] = []
@@ -77,12 +80,12 @@ test("real fixture events drive five traces, a frozen completion and one automat
         traces.add(
           chart.querySelector("[data-series=pressure]")!.getAttribute("d")!
         )
-      const text = toast.textContent ?? ""
+      const text = toast() ?? ""
       if (text && text !== previousToast) toasts.push(text)
       previousToast = text
     }
     const observer = new MutationObserver(observe)
-    observer.observe(root, {
+    observer.observe(document.body, {
       subtree: true,
       attributes: true,
       childList: true,
@@ -107,7 +110,7 @@ test("real fixture events drive five traces, a frozen completion and one automat
         const timer = setInterval(() => {
           if (
             root.getAttribute("data-phase") === "home" &&
-            toast.textContent === "Shot completed"
+            toast() === "Shot completed"
           ) {
             clearInterval(timer)
             clearTimeout(timeout)
@@ -122,7 +125,7 @@ test("real fixture events drive five traces, a frozen completion and one automat
         phases,
         toasts,
         traceCount: traces.size,
-        finalToast: toast.textContent,
+        finalToast: toast(),
       }
     } finally {
       observer.disconnect()
@@ -207,9 +210,15 @@ test("rapid restart cancels the old hold; missing scale and disconnect never inv
   await request.post(`${fixture}/__test/state`, {
     data: { elapsed: 12, scale: false },
   })
-  await expect(page.locator(".brew-scale-note")).toBeVisible()
+  await expect(
+    page.locator('[data-notification-key="shot-scale"]')
+  ).toBeVisible()
   await expect(page.locator(".brew-metrics")).toContainText("—g")
-  await expect(page.locator(".brew-toast")).toHaveText("")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveCount(0)
   await request.post(`${fixture}/__test/state`, { data: { connected: false } })
   await expect(page.locator(".candidate-status")).toHaveText("DE1Disconnected")
   await expect(page.locator(".rolling-window")).toHaveText("Connection lost")

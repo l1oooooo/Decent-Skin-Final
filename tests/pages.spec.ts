@@ -118,7 +118,9 @@ test("favorite assignment swaps, reorders and saves without changing workflow", 
     .getByRole("button", { name: "Clear favorite 3", exact: true })
     .click()
   await page.getByRole("button", { name: "Save favorites" }).click()
-  await expect(page.getByRole("status").last()).toContainText("Favorites saved")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="success"]').last()
+  ).toContainText("Favorites saved")
   expect(await saved(request)).toEqual([
     "profile:0",
     "profile:1",
@@ -171,7 +173,9 @@ test("all-empty favorites survive reload; ordinary navigation protects drafts an
       .getByRole("button", { name: `Clear favorite ${i}`, exact: true })
       .click()
   await page.getByRole("button", { name: "Save favorites" }).click()
-  await expect(page.getByRole("status").last()).toContainText("Favorites saved")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="success"]').last()
+  ).toContainText("Favorites saved")
   expect(await saved(request)).toEqual([null, null, null, null, null])
   await page.getByRole("button", { name: "Return to Home" }).click()
   await page.reload()
@@ -203,9 +207,9 @@ test("failed saves retain draft and acknowledged rail; edits made during Save su
     .click()
   await state(request, { error: "Favorites write rejected" })
   await page.getByRole("button", { name: "Save favorites" }).click()
-  await expect(page.getByRole("alert")).toContainText(
-    "Favorites write rejected"
-  )
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("Favorites write rejected")
   await page.getByRole("button", { name: "Return to Home" }).click()
   await page.getByRole("button", { name: "Discard and leave" }).click()
   await expect(
@@ -304,7 +308,9 @@ test("unavailable, duplicate and malformed assignments remain explicit and recov
   ).toBeEnabled({ timeout: 90000 })
   await page.getByRole("button", { name: "Unavailable favorite 1" }).click()
   await page.getByRole("button", { name: "Cancel assignment" }).click()
-  await expect(page.getByRole("alert")).toContainText("Duplicate assignments")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("Duplicate assignments")
   await expect(page.getByRole("listitem").nth(0)).toContainText("missing-id")
   await expect(page.getByRole("listitem").nth(2)).toContainText(
     "Empty position"
@@ -315,7 +321,9 @@ test("unavailable, duplicate and malformed assignments remain explicit and recov
     .toEqual(["missing-id", "profile:1", null, null, null])
   await state(request, { favorites: { broken: true } })
   await page.reload()
-  await expect(page.getByRole("alert")).toContainText("malformed")
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("malformed")
   expect(await saved(request)).toEqual({ broken: true })
   await page.getByRole("button", { name: "Save favorites" }).click()
   await expect
@@ -450,10 +458,9 @@ test("library errors retry, empty states stay honest, and duplicate titles load 
     { times: 1 }
   )
   await page.goto("/?page=library")
-  await expect(page.getByRole("alert")).toContainText(
-    "Library temporarily unavailable",
-    { timeout: 90000 }
-  )
+  await expect(
+    page.locator('[data-slot="toast"][data-type="error"]')
+  ).toContainText("Library temporarily unavailable", { timeout: 90000 })
   await page.getByRole("button", { name: "Retry", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Details D-Flow / default", exact: true })

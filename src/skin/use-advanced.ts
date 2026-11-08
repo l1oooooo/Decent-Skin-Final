@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import {
@@ -16,8 +17,9 @@ export function useAdvanced(gateway: DecaidGateway) {
   const [busy, setBusy] = useState("")
   const [cancelling, setCancelling] = useState(false)
   const cancelLock = useRef(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const feedback = useFeedback("Waiting for operation")
+  const { message, setMessage } = feedback
+  const { error, setError } = feedback
   const [firmware, setFirmware] = useState<Data>({})
   const [scale, setScale] = useState<Data>({})
   const [procedure, setProcedure] = useState("")
@@ -129,6 +131,7 @@ export function useAdvanced(gateway: DecaidGateway) {
   ) {
     if (lock.current || cancelLock.current) return false
     lock.current = true
+    feedback.begin(name)
     setBusy(name)
     setError("")
     setMessage("")
@@ -142,6 +145,7 @@ export function useAdvanced(gateway: DecaidGateway) {
         setError(e instanceof Error ? e.message : "Operation failed.")
       } finally {
         lock.current = false
+        feedback.end()
         setBusy("")
         controller.current = null
       }

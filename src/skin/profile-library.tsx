@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import {
   Select,
@@ -11,7 +12,7 @@ import { previewSamples } from "@/gateway/model"
 import type { ProfileTransfer } from "./use-profile-transfer"
 import { Action } from "./primitives"
 import { format, type SkinSession } from "./use-skin"
-import { PageMessage, SearchField } from "./pages"
+import { PageHint, SearchField } from "./pages"
 import { Extraction } from "./trace"
 import type { Route } from "./navigation"
 
@@ -48,7 +49,7 @@ export function ProfileLibrary({
   const [view, setView] = useState("visible")
   const [sort, setSort] = useState("name")
   const [favoritesOnly, setFavoritesOnly] = useState(false)
-  const { selection, operation, error, result } = transfer
+  const { selection, operation, result } = transfer
   const busy = operation !== null
   const file = useRef<HTMLInputElement>(null)
   const items = s.allProfiles
@@ -131,7 +132,7 @@ export function ProfileLibrary({
         </section>
       )}
       {result && (
-        <PageMessage>
+        <PageHint>
           {result.imported} imported · {result.skipped} skipped ·{" "}
           {result.failed} failed
           {result.errors.length > 0 && (
@@ -139,9 +140,8 @@ export function ProfileLibrary({
               {result.errors.join("\n")}
             </span>
           )}
-        </PageMessage>
+        </PageHint>
       )}
-      {error && <PageMessage error>{error}</PageMessage>}
       <div className="mb-5 flex items-end gap-4">
         <SearchField
           label="Search profiles"
@@ -230,9 +230,16 @@ export function ProfileLibrary({
       </div>
       {s.libraryLoading || s.libraryError ? (
         <>
-          <PageMessage error={!!s.libraryError}>
-            {s.libraryLoading ? "Loading profiles…" : s.libraryError}
-          </PageMessage>
+          <PageHint>
+            {s.libraryLoading
+              ? "Loading profiles…"
+              : "Profiles are unavailable."}
+          </PageHint>
+          {s.libraryError && (
+            <NotificationMessage notificationKey="profile-library-read" error>
+              {s.libraryError}
+            </NotificationMessage>
+          )}
           <Action
             variant="outline"
             disabled={s.libraryLoading}
@@ -298,11 +305,11 @@ export function ProfileLibrary({
             </div>
           ))}
           {!items.length && (
-            <PageMessage>
+            <PageHint>
               {s.allProfiles.length
                 ? "No matching profiles. Try another search or visibility filter."
                 : "No profiles saved. Import a Decaid profile export to get started."}
-            </PageMessage>
+            </PageHint>
           )}
         </div>
       )}
@@ -322,14 +329,14 @@ export function ProfileDetail({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const p = s.allProfiles.find((p) => p.id === id)
-  if (s.libraryLoading) return <PageMessage>Loading profile…</PageMessage>
+  if (s.libraryLoading) return <PageHint>Loading profile…</PageHint>
   if (!p || s.libraryError)
     return (
       <>
-        <PageMessage error>
+        <NotificationMessage notificationKey={`profile-library-329`} error>
           {s.libraryError ||
             "This profile is unavailable. Its favorite assignment has been preserved."}
-        </PageMessage>
+        </NotificationMessage>
         <Action variant="outline" onClick={s.reloadLibrary}>
           Retry
         </Action>
@@ -387,7 +394,11 @@ export function ProfileDetail({
           Recipe preferences
         </Action>
       </div>
-      {error && <PageMessage error>{error}</PageMessage>}
+      {error && (
+        <NotificationMessage notificationKey={`profile-library-390`} error>
+          {error}
+        </NotificationMessage>
+      )}
       <dl className="my-6 grid grid-cols-[120px_1fr] gap-x-5 gap-y-3 border-y border-border py-5 text-sm">
         <dt className="text-muted-foreground">Author</dt>
         <dd>{p.by || "Not provided"}</dd>
@@ -432,10 +443,10 @@ export function ProfileDetail({
           </li>
         ))}
       </ol>
-      <PageMessage>
+      <PageHint>
         Preview uses profile targets. Hiding a profile preserves its favorite
         position as unavailable and does not change the loaded recipe.
-      </PageMessage>
+      </PageHint>
     </>
   )
 }

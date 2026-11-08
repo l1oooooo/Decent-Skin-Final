@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import { ExtensionsGateway, readLog, type Plugin } from "@/gateway/extensions"
@@ -10,8 +11,9 @@ export function useExtensions(gateway: DecaidGateway) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState("")
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const feedback = useFeedback("Waiting for operation")
+  const { message, setMessage } = feedback
+  const { error, setError } = feedback
   const [logs, setLogs] = useState<Record<string, string>>({})
   const [receipt, setReceipt] = useState<Data>({})
   const revision = useRef<Record<string, number>>({}),
@@ -60,6 +62,7 @@ export function useExtensions(gateway: DecaidGateway) {
   async function run(name: string, action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
+    feedback.begin(name)
     setBusy(name)
     setMessage("")
     setError("")
@@ -69,6 +72,7 @@ export function useExtensions(gateway: DecaidGateway) {
       setError(e instanceof Error ? e.message : "Operation failed.")
     } finally {
       lock.current = false
+      feedback.end()
       setBusy("")
     }
   }

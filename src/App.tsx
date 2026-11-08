@@ -1,3 +1,4 @@
+import { useMachineNotifications } from "@/skin/notifications/use-machine-notifications"
 import { useExtensions } from "@/skin/use-extensions"
 import { ExtensionsPage } from "@/skin/extensions"
 import { useAdvanced } from "@/skin/use-advanced"
@@ -35,6 +36,7 @@ import "@/skin/brewing/brewing.css"
 export default function App() {
   const [gateway] = useState(() => new DecaidGateway(gatewayUrl()))
   const s = useSkin(gateway)
+  useMachineNotifications(s)
   const advanced = useAdvanced(gateway)
   const extensions = useExtensions(gateway)
   const history = useShotHistory(gateway)
@@ -311,11 +313,6 @@ export default function App() {
           >
             Machine settings
           </Action>
-          {s.notice && (
-            <p role="alert" className="max-w-lg text-sm text-muted-foreground">
-              {s.notice}
-            </p>
-          )}
         </div>
       ) : page === "home" ? (
         <LiveBrewingScreen
@@ -359,14 +356,6 @@ export default function App() {
               <ProfileEditorActions editor={recipes} />
             ) : page === "favorites" ? (
               <>
-                {(editor.error || editor.message) && (
-                  <p
-                    role={editor.error ? "alert" : "status"}
-                    className="max-w-[380px] text-[13px] text-muted-foreground"
-                  >
-                    {editor.error || editor.message}
-                  </p>
-                )}
                 <Action
                   variant="outline"
                   disabled={editor.saving}

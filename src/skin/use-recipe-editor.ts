@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import type { Profile, ProfileRecord } from "@/gateway/types"
@@ -12,7 +13,8 @@ export function useRecipeEditor(gateway: DecaidGateway) {
   const lock = useRef(false)
   const origin = useRef<string | null | undefined>(undefined)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [message, setMessage] = useState("")
+  const feedback = useFeedback("Updating profile")
+  const { message, setMessage } = feedback
   const [pending, setPending] = useState<ProfileSave | null>(null)
   const [lineage, setLineage] = useState<ProfileRecord[]>([])
   const [json, setJson] = useState<string | null>(null)
@@ -20,14 +22,18 @@ export function useRecipeEditor(gateway: DecaidGateway) {
   async function run(action: () => Promise<void>) {
     if (lock.current) return
     lock.current = true
+    feedback.begin()
     setBusy(true)
     setMessage("")
     try {
       await action()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Request failed.")
+      feedback.setError(
+        error instanceof Error ? error.message : "Request failed."
+      )
     } finally {
       lock.current = false
+      feedback.end()
       setBusy(false)
     }
   }
@@ -79,14 +85,14 @@ export function useRecipeEditor(gateway: DecaidGateway) {
     const errors = validateProfile(draft)
     setErrors(errors)
     if (Object.keys(errors).length) {
-      setMessage("Correct the marked fields before saving.")
+      setMessage("Correct the marked fields before saving.", "warning")
       return
     }
     const submitted = draft
     await run(async () => {
       const result = await gateway.recipes.save(source, submitted, mode)
       setPending(result.pending)
-      setMessage(result.message)
+      setMessage(result.message, result.pending ? "warning" : "success")
       if (result.record && !result.pending) {
         setSource(result.record)
         setBaseline(JSON.stringify(result.record.profile))
@@ -101,7 +107,7 @@ export function useRecipeEditor(gateway: DecaidGateway) {
     await run(async () => {
       const result = await gateway.recipes.retry()
       setPending(result.pending)
-      setMessage(result.message)
+      setMessage(result.message, result.pending ? "warning" : "success")
       if (result.record && !result.pending) {
         setSource(result.record)
         setBaseline(JSON.stringify(result.record.profile))
@@ -118,7 +124,10 @@ export function useRecipeEditor(gateway: DecaidGateway) {
       const errors = validateProfile(value)
       setErrors(errors)
       if (Object.keys(errors).length) {
-        setMessage("Correct the structured profile before applying it.")
+        setMessage(
+          "Correct the structured profile before applying it.",
+          "warning"
+        )
         return
       }
       setDraft(value)
@@ -127,7 +136,7 @@ export function useRecipeEditor(gateway: DecaidGateway) {
         "Structured changes applied to the draft. Save to persist them."
       )
     } catch {
-      setMessage("Enter a valid profile JSON object.")
+      setMessage("Enter a valid profile JSON object.", "error")
     }
   }
   async function cancelPending() {

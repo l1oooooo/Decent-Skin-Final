@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useCallback, useEffect, useState } from "react"
 import {
   settingsBlock,
@@ -8,8 +9,8 @@ import {
 import { object } from "@/gateway/model"
 import type { SkinSession } from "./use-skin"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
-import { useOperation, OperationStatus } from "./settings-operation"
+import { PageHint } from "./pages"
+import { useOperation } from "./settings-operation"
 import {
   ConfirmAction,
   inputClass,
@@ -116,18 +117,14 @@ export function Connections({ s }: { s: SkinSession }) {
           Tare scale
         </Action>
       </div>
-      {s.snapshot.deviceError && (
-        <PageMessage error>{s.snapshot.deviceError}</PageMessage>
-      )}
-      <OperationStatus operation={op} />
       <SettingsGroup
         title="Devices"
         description="Device preferences belong to Decaid. Selecting a preferred device can affect its future automatic connections."
       >
         {!s.snapshot.devices.length && (
-          <PageMessage>
+          <PageHint>
             No known devices. Start an explicit scan to discover nearby devices.
-          </PageMessage>
+          </PageHint>
         )}
         {s.snapshot.devices.map((d) => {
           const key =
@@ -217,7 +214,14 @@ export function Connections({ s }: { s: SkinSession }) {
         title="Manual Wi-Fi scales"
         description="Register a scale by IP address or hostname, then explicitly connect it from Devices."
       >
-        {wifiError && <PageMessage error>{wifiError}</PageMessage>}
+        {wifiError && (
+          <NotificationMessage
+            notificationKey={`connection-settings-220`}
+            error
+          >
+            {wifiError}
+          </NotificationMessage>
+        )}
         {wifi.map((h) => (
           <div
             key={h}
@@ -372,8 +376,12 @@ function Grinder({ s }: { s: SkinSession }) {
       title="Connected grinder"
       description="Recipe grind text and device readings are separate. Commands are explicit; no automatic synchronization is enabled."
     >
-      {!id && <PageMessage>No connected grinder.</PageMessage>}
-      {error && <PageMessage error>{error}</PageMessage>}
+      {!id && <PageHint>No connected grinder.</PageHint>}
+      {error && (
+        <NotificationMessage notificationKey={`connection-settings-376`} error>
+          {error}
+        </NotificationMessage>
+      )}
       {info && (
         <>
           <p className="my-4 text-sm text-muted-foreground">
@@ -426,9 +434,7 @@ function Grinder({ s }: { s: SkinSession }) {
               </Action>
             </form>
           ) : (
-            <PageMessage>
-              Grind setting is read-only or unavailable.
-            </PageMessage>
+            <PageHint>Grind setting is read-only or unavailable.</PageHint>
           )}
           {info.capabilities.includes("rpmControl") &&
             info.controls?.rpmControl && (
@@ -526,8 +532,6 @@ function Grinder({ s }: { s: SkinSession }) {
           )}
         </>
       )}
-      <OperationStatus operation={op} />
-      <OperationStatus operation={stopOp} />
     </SettingsGroup>
   )
 }

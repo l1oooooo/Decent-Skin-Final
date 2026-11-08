@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import {
   ArrowDown,
@@ -166,7 +167,6 @@ export function PageShell({
               </p>
             )}
           </header>
-          {s.notice && <PageMessage error>{s.notice}</PageMessage>}
           {children}
         </main>
       </div>
@@ -180,7 +180,7 @@ export function PageShell({
   )
 }
 
-export function PageMessage({
+export function PageHint({
   children,
   error = false,
 }: {
@@ -189,7 +189,7 @@ export function PageMessage({
 }) {
   return (
     <p
-      role={error ? "alert" : "status"}
+      role={error ? "alert" : undefined}
       className="my-4 text-[14px] leading-relaxed [overflow-wrap:anywhere] text-muted-foreground"
     >
       {children}
@@ -267,9 +267,9 @@ export function SettingsPage({
             Open coffee and equipment
           </Action>
         ) : ![4, 7, 8].includes(selected.phase) ? (
-          <PageMessage>
+          <PageHint>
             These controls are not available yet. Manage them in Decaid for now.
-          </PageMessage>
+          </PageHint>
         ) : null}
       </>
     )
@@ -302,7 +302,7 @@ export function SettingsPage({
         ))}
       </div>
       {!items.length && (
-        <PageMessage>No matching settings. Try a different search.</PageMessage>
+        <PageHint>No matching settings. Try a different search.</PageHint>
       )}
     </>
   )
@@ -319,13 +319,17 @@ export function FavoritesPage({
   return (
     <>
       {s.snapshot.favoritesIssue && (
-        <PageMessage error>
+        <NotificationMessage notificationKey={`pages-322`} error>
           {s.snapshot.favoritesIssue} The Home rail will change only after you
           explicitly Save.
-        </PageMessage>
+        </NotificationMessage>
       )}
-      {s.libraryLoading && <PageMessage>Loading profiles…</PageMessage>}
-      {s.libraryError && <PageMessage error>{s.libraryError}</PageMessage>}
+      {s.libraryLoading && <PageHint>Loading profiles…</PageHint>}
+      {s.libraryError && (
+        <NotificationMessage notificationKey={`pages-328`} error>
+          {s.libraryError}
+        </NotificationMessage>
+      )}
       <Action
         variant="outline"
         onClick={s.reloadLibrary}

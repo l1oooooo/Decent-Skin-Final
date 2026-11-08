@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { NumberEditor } from "./number-editor"
 import {
-  AlertCircle,
   Flame,
   Droplets,
   Waves,
@@ -251,11 +250,6 @@ export function UtilitySettings({ s }: { s: SkinSession }) {
           <X size={18} />
         </Action>
       </div>
-      {s.notice && (
-        <p role="alert" className="mb-4 text-sm">
-          {s.notice}
-        </p>
-      )}
       <div className="space-y-6">
         {steam && (
           <button
@@ -404,45 +398,6 @@ export function GroupHeadGuidance({
           on the group-head controller
         </p>
       </div>
-    </div>
-  )
-}
-export function Notice({ s }: { s: SkinSession }) {
-  const message =
-    s.notice ||
-    (!s.connected
-      ? "Machine disconnected. Check the connection in Decaid."
-      : s.phase === "heating"
-        ? "Heating to your brew temperature."
-        : !s.active && !s.operation
-          ? s.block || s.brewBlock
-          : "")
-  if (!message) return null
-  return (
-    <div
-      role="status"
-      className="flex items-center gap-3 rounded-lg border border-border bg-muted px-4 py-2 text-[13px]"
-    >
-      <AlertCircle size={16} className="shrink-0" />
-      <span>{message}</span>
-      {s.snapshot.machine?.state.state === "sleeping" ? (
-        <Action variant="ghost" className="ml-auto !px-2" onClick={s.wake}>
-          Wake
-        </Action>
-      ) : !s.connected ? (
-        <Action variant="ghost" className="ml-auto !px-2" onClick={s.reconnect}>
-          Reconnect
-        </Action>
-      ) : s.notice ? (
-        <Action
-          variant="ghost"
-          className="ml-auto !px-2"
-          aria-label="Dismiss notice"
-          onClick={s.dismissNotice}
-        >
-          <X size={16} />
-        </Action>
-      ) : null}
     </div>
   )
 }

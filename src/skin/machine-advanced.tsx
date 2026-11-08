@@ -3,7 +3,7 @@ import type { Advanced } from "./use-advanced"
 import { Action } from "./primitives"
 import { EditorField } from "./editor-fields"
 import { SettingInput } from "./settings-controls"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { Section, Facts, type Ask } from "./advanced-shared"
 const advancedFields = [
   { key: "heaterPh1Flow", label: "Heater warmup flow (ml/s)", min: 0, max: 10 },
@@ -254,7 +254,7 @@ export function MachineExtras({
             </Action>
           </form>
         ) : (
-          <PageMessage>Cup warming is unavailable on this machine.</PageMessage>
+          <PageHint>Cup warming is unavailable on this machine.</PageHint>
         )}
       </Section>
       <Section title="Scheduled mat preheat">
@@ -349,9 +349,9 @@ export function MachineExtras({
             </Action>
           </form>
         ) : (
-          <PageMessage>
+          <PageHint>
             Scheduled mat preheat is unavailable on this machine.
-          </PageMessage>
+          </PageHint>
         )}
       </Section>
       <Section title="Machine lighting">
@@ -421,9 +421,9 @@ export function MachineExtras({
             </div>
           </>
         ) : (
-          <PageMessage>
+          <PageHint>
             Configurable lighting is unavailable on this machine.
-          </PageMessage>
+          </PageHint>
         )}
       </Section>
     </>

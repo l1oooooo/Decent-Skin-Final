@@ -1,7 +1,7 @@
 import { format, type SkinSession } from "@/skin/use-skin"
 import { SquarePen } from "lucide-react"
 import { Action } from "@/skin/primitives"
-import { RecipeControls, Notice } from "@/skin/controls"
+import { RecipeControls } from "@/skin/controls"
 import { CandidateProfiles } from "./profiles"
 import { CandidateHeader } from "./header"
 import { ProfileChart } from "./profile-chart"
@@ -118,7 +118,6 @@ export default function CandidateHome({
               <ProfileChart profile={s.rawProfile} />
             )}
           </section>
-          <Notice s={s} />
         </main>
         <aside className="focus-controls-panel flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6">
           <RecipeControls s={s} vertical grind />

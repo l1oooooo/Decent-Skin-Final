@@ -6,7 +6,7 @@ import { useBrewLayout } from "./use-brew-layout"
 import { RollingStatus, machineStatusTone } from "./rolling-status"
 import type { TankCalibration } from "./tank"
 import type { SkinSession } from "@/skin/use-skin"
-import { Notice } from "@/skin/controls"
+import { notifications } from "@/skin/notifications/manager"
 import { BrewingChart } from "./chart"
 import { isRunning, outcomeLabel } from "./model"
 import type { BrewEvent, ExperienceState } from "./model"
@@ -34,6 +34,45 @@ export function LiveBrewingScreen({
   onEdit: () => void
   onAssign: (slot: number) => void
 }) {
+  useEffect(
+    () => () => {
+      if (s.shotId) notifications.close(`shot-result-${s.shotId}`)
+    },
+    [s.shotId]
+  )
+  useEffect(() => {
+    if (!s.toast || !s.shotId) return
+    notifications.show(`shot-result-${s.shotId}`, {
+      title: s.toast,
+      type: s.outcome === "success" ? "success" : "info",
+    })
+    dispatch({ type: "clearToast", shotId: s.shotId })
+  }, [s.toast, s.shotId, s.outcome, dispatch])
+  const review =
+    s.phase === "interrupted" || (s.phase === "complete" && !s.autoReturn)
+  useEffect(() => {
+    notifications.condition(
+      "shot-review",
+      review ? `${s.shotId}-${s.outcome}` : null,
+      {
+        title:
+          s.outcome === "disconnected"
+            ? "Last received trace · machine state is unknown."
+            : s.outcome === "blocked"
+              ? "Brewing was blocked."
+              : "Review this shot before returning home.",
+        type: "warning",
+        persistent: true,
+        action: {
+          children: "Back to Home",
+          onClick: () => dispatch({ type: "dismiss" }),
+        },
+      }
+    )
+    return () => {
+      if (review) notifications.condition("shot-review", null, { title: "" })
+    }
+  }, [review, s.shotId, s.outcome, dispatch])
   const root = useRef<HTMLDivElement>(null)
   const chart = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 1284, height: 484 })
@@ -181,35 +220,6 @@ export function LiveBrewingScreen({
             temperatureUnit={home.temperatureUnit}
           />
         </div>
-      </div>
-      {expanded &&
-        (s.phase === "interrupted" ||
-          (s.phase === "complete" && !s.autoReturn)) && (
-          <div className="brew-alert" role="alert">
-            <span>
-              {s.outcome === "disconnected"
-                ? "Last received trace · machine state is unknown."
-                : s.outcome === "blocked"
-                  ? "Brewing was blocked."
-                  : "Review this shot before returning home."}
-            </span>
-            <button onClick={() => dispatch({ type: "dismiss" })}>
-              Back to Home
-            </button>
-          </div>
-        )}
-      {expanded && !home.scaleConnected && s.phase === "active" && (
-        <p className="brew-scale-note" role="status">
-          Scale unavailable · weight flow and cup weight are unavailable
-        </p>
-      )}
-      {expanded && home.notice && (
-        <div className="brew-operation-notice">
-          <Notice s={home} />
-        </div>
-      )}
-      <div className="brew-toast" role="status" data-visible={!!s.toast}>
-        {s.toast}
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import { useFeedback } from "./notifications/feedback"
 import { useRef, useState } from "react"
 import type { DecaidGateway } from "@/gateway/client"
 import type { ImportResult } from "@/gateway/types"
@@ -11,7 +12,8 @@ export function useProfileTransfer(
     name: string
   } | null>(null)
   const [operation, setOperation] = useState<"import" | "export" | null>(null)
-  const [error, setError] = useState("")
+  const feedback = useFeedback("Transferring profiles")
+  const { error, setError } = feedback
   const [result, setResult] = useState<ImportResult | null>(null)
   const selectionRevision = useRef(0)
   async function choose(file: File) {
@@ -38,20 +40,28 @@ export function useProfileTransfer(
   }
   async function importProfiles() {
     if (!selection || operation) return
+    feedback.begin("Importing profiles")
     setOperation("import")
     setError("")
     try {
-      setResult(await gateway.importProfiles(selection.records))
+      const imported = await gateway.importProfiles(selection.records)
+      setResult(imported)
+      feedback.setMessage(
+        `${imported.imported} imported · ${imported.skipped} skipped · ${imported.failed} failed`,
+        imported.failed ? "warning" : "success"
+      )
       setSelection(null)
       await refresh()
     } catch (error) {
       setError(error instanceof Error ? error.message : "Import failed")
     } finally {
+      feedback.end()
       setOperation(null)
     }
   }
   async function exportProfiles() {
     if (operation) return
+    feedback.begin("Exporting profiles")
     setOperation("export")
     setError("")
     try {
@@ -65,10 +75,12 @@ export function useProfileTransfer(
       link.href = url
       link.download = "focus-profiles.json"
       link.click()
+      feedback.setMessage("Profile export prepared.", "success")
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Export failed")
     } finally {
+      feedback.end()
       setOperation(null)
     }
   }

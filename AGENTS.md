@@ -71,11 +71,18 @@ technical decisions, and the design history for previous iterations.
   machine settings, display/presence and Focus KV preferences. Save only the
   current section's changed fields; retain failed/newer edits and reject drafts
   for a replaced machine. No write is retried automatically.
-- Scale connection warnings are dismissible by event identity, separate from
-  machine command gates. Preserve Decaid's explicit blockOnNoScale policy for
-  brewing; scale absence alone must not block recipe editing or utilities.
+- All notifications use the shared Base UI Toast manager/Toaster. Keep field
+  validation, confirmation copy and permanent page guidance inline. Heating and
+  preparation announce once per state transition, not each telemetry frame.
+  Critical water/fault/connection warnings have no timeout or manual dismissal;
+  clear them only from confirmed machine state, never missing/stale readings.
+  Pending actions update one ID and have a UI-only unconfirmed-outcome watchdog;
+  never use it to cancel, retry or infer a successful hardware operation.
+- Ordinary scale absence uses the header only. Preserve Decaid's explicit
+  blockOnNoScale command policy and active scale-dependent shot warnings.
   Home scale weight is read-only; Disconnected opens Settings → Connections
-  for explicit device selection. Never silently choose the first remembered scale. No automatic discovery or connection retry.
+  for explicit device selection. Never silently choose the first remembered scale.
+  No automatic discovery or connection retry.
 - Home fits its content without panel scrolling in landscape CSS viewports down
   to 800 × 480. Compact spacing and chart geometry apply only
   below the desktop reference size; touch targets remain at least 44px. Do not

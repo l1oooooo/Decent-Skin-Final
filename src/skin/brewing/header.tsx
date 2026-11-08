@@ -174,11 +174,6 @@ export function CandidateHeader({
             {!Number.isFinite(s.steamTemperature) && (
               <p className="utility-note">Steam setting unavailable.</p>
             )}
-            {s.notice && (
-              <p className="utility-note" role="alert">
-                {s.notice}
-              </p>
-            )}
           </PopoverContent>
         </Popover>
         <button

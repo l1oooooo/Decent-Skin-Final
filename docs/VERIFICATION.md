@@ -1,5 +1,29 @@
 # Focus release-candidate verification
 
+## 0.3.4 — unified notifications
+
+Release authorized after local candidate review. This release also includes the
+unpublished v0.3.3 stop-lifecycle and header refinements described below.
+See [the full notification inventory, policy matrix and QA](NOTIFICATIONS-v0.3.4.md).
+
+- One Base UI Toast manager replaces the old Notice and custom shot-toast UI.
+  Routine feedback expires; pending actions update the same toast; critical
+  water, fault, connection and active scale-dependent warnings follow real state.
+- Ordinary idle scale absence remains in the header, with explicit Connections
+  navigation. Machine command gates and physical-only daily controls remain.
+- Final `npm run check`: TypeScript, ESLint, 179 gateway/unit tests and build passed.
+- `npm run check:brewing`: 18 model tests and production isolation passed;
+  2,458 modules checked with no preview/simulator content.
+- Eight focused browser checks passed: four notification scenarios, three save
+  regressions and one preview restart/navigation/F6-accessibility scenario.
+  This is not a full application E2E suite result.
+- Static package and verification passed: 11 files, 623,081 bytes; SHA-256
+  `6b3962ae45bca8540669cb40d634389a91bbecb5ac509aa19615e26571aee358`.
+- Existing Vite bundle-size advisory remains. Samsung WebView, TalkBack, physical
+  GHC, refill recognition and Bluetooth reconnection still require tablet testing.
+  No hardware commands or installation were performed.
+
+
 ## 0.3.3 — confirmed stop returns, header weight and scale selection
 
 Local review candidate on `codex/focus-0.3.3-refinements`; not pushed, published,

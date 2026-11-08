@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { InventoryKind, InventoryRecord } from "@/gateway/recipes"
 import { Action } from "./primitives"
-import { PageMessage, SearchField } from "./pages"
+import { PageHint, SearchField } from "./pages"
 import { EditorChoice, EditorField } from "./editor-fields"
 import { ConfirmAction, SettingSelect } from "./settings-controls"
 import type { Catalog } from "./use-catalog"
@@ -84,17 +84,16 @@ export function InventoryPage({
         : `${c.data?.beans.find((b) => b.id === r.beanId)?.name ?? "Unavailable bean"} · ${String(r.roastDate ?? "Undated").slice(0, 10)}`
   return (
     <>
-      <PageMessage>
+      <PageHint>
         Keep coffee, roast batches and equipment records with your recipe.
         Grinder records are separate from connected devices. Archiving preserves
         historical shot context.
-      </PageMessage>
-      {c.message && <PageMessage>{c.message}</PageMessage>}
+      </PageHint>
       {!c.data && (
         <>
-          <PageMessage>
+          <PageHint>
             {c.busy ? "Loading inventory…" : "Inventory unavailable."}
-          </PageMessage>
+          </PageHint>
           <Action disabled={c.busy} onClick={c.refresh}>
             Retry inventory
           </Action>
@@ -337,7 +336,7 @@ export function InventoryPage({
               (r) =>
                 !!r.archived === archived &&
                 String(name(tab, r)).toLowerCase().includes(query.toLowerCase())
-            ) && <PageMessage>No matching records.</PageMessage>}
+            ) && <PageHint>No matching records.</PageHint>}
         </>
       )}
       {confirm && (
@@ -360,18 +359,17 @@ export function RecipePreferences({ catalog: c }: { catalog: Catalog }) {
   const p = c.preference
   return (
     <>
-      <PageMessage>
+      <PageHint>
         Saved adjustments apply when you load this profile. Blank fields use the
         profile target; a blank dose stays Not set. A blank grind retains the
         current setting. These preferences never move a connected grinder.
-      </PageMessage>
-      {c.message && <PageMessage>{c.message}</PageMessage>}
+      </PageHint>
       {!p ? (
-        <PageMessage>
+        <PageHint>
           {c.busy
             ? "Loading recipe preferences…"
             : "Recipe preferences unavailable. Reopen this page to retry."}
-        </PageMessage>
+        </PageHint>
       ) : (
         <form
           onSubmit={(e) => {

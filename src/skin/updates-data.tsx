@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useState, useEffect, useEffectEvent } from "react"
 import {
   asData,
@@ -8,7 +9,7 @@ import {
 import type { Advanced } from "./use-advanced"
 import { Action } from "./primitives"
 import { EditorField, EditorChoice } from "./editor-fields"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { Section, Facts, Prepared, shown, type Ask } from "./advanced-shared"
 import type { SkinSession } from "./use-skin"
 import { finite } from "@/gateway/model"
@@ -138,9 +139,7 @@ export function Updates({
               </div>
             ))
           ) : (
-            <PageMessage>
-              Firmware catalog unavailable. Refresh to retry.
-            </PageMessage>
+            <PageHint>Firmware catalog unavailable. Refresh to retry.</PageHint>
           )}
           <Action
             className="mt-4"
@@ -170,7 +169,11 @@ export function Updates({
                 : undefined,
             }}
           />
-          {!!app.error && <PageMessage error>{String(app.error)}</PageMessage>}
+          {!!app.error && (
+            <NotificationMessage notificationKey={`updates-data-173`} error>
+              {String(app.error)}
+            </NotificationMessage>
+          )}
           <p className="mb-4 text-sm whitespace-pre-wrap text-muted-foreground">
             {shown(app.releaseNotes)}
           </p>
@@ -525,12 +528,22 @@ export function Updates({
                     skipped
                   </p>
                   {row.errors.map((e, i) => (
-                    <PageMessage error key={i}>
+                    <NotificationMessage
+                      notificationKey={`updates-data-${row.section}-error-${i}`}
+                      error
+                      key={i}
+                    >
                       {e}
-                    </PageMessage>
+                    </NotificationMessage>
                   ))}
                   {row.warnings.map((w, i) => (
-                    <PageMessage key={i}>{w}</PageMessage>
+                    <NotificationMessage
+                      notificationKey={`updates-data-${row.section}-warning-${i}`}
+                      type="warning"
+                      key={i}
+                    >
+                      {w}
+                    </NotificationMessage>
                   ))}
                 </div>
               ))}
@@ -544,12 +557,12 @@ export function Updates({
               </details>
             </div>
           )}
-          <PageMessage>
+          <PageHint>
             Legacy Decaid ZIPs without metadata are accepted by the server when
             they contain recognized sections. de1app/Tcl migration and
             unsupported legacy formats require Decaid’s native data-management
             flow; this skin does not reinterpret them.
-          </PageMessage>
+          </PageHint>
         </Section>
       )}
     </>

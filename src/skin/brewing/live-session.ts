@@ -164,13 +164,5 @@ export function useLiveBrewing(
     )
     return () => clearTimeout(timer)
   }, [state.shotId, state.phase, state.autoReturn, home])
-  useEffect(() => {
-    if (!state.toast || !state.shotId) return
-    const timer = setTimeout(
-      () => dispatch({ type: "clearToast", shotId: state.shotId! }),
-      2400
-    )
-    return () => clearTimeout(timer)
-  }, [state.toast, state.shotId])
   return { state, dispatch }
 }

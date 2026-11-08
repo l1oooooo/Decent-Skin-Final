@@ -3,7 +3,7 @@ import type { Profile, ProfileStep } from "@/gateway/types"
 import { newStep, validateProfile } from "@/gateway/profile-data"
 import { previewSamples } from "@/gateway/model"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
+import { PageHint } from "./pages"
 import { EditorChoice, EditorField } from "./editor-fields"
 import { ConfirmAction, inputClass } from "./settings-controls"
 import type { RecipeEditor } from "./use-recipe-editor"
@@ -23,10 +23,10 @@ export function ProfileEditor({
   if (!p)
     return (
       <>
-        <PageMessage>
-          {editor.message ||
-            "This profile is unavailable. Return to the library or retry loading it."}
-        </PageMessage>
+        <PageHint>
+          This profile is unavailable. Return to the library or retry loading
+          it.
+        </PageHint>
         <Action
           variant="outline"
           disabled={editor.busy}
@@ -72,12 +72,12 @@ export function ProfileEditor({
     { id?: string; profile?: Profile } | undefined
   return (
     <>
-      <PageMessage>
+      <PageHint>
         {editor.source?.isDefault
           ? "Bundled defaults are read-only. Change a stage or target, then Save as new to create your own recipe."
           : "Edit the stored recipe here. Saving does not change the active workflow or start the machine."}{" "}
         Temperatures in this editor use °C.
-      </PageMessage>
+      </PageHint>
       <div className="mb-5 flex flex-wrap gap-3">
         <Action
           variant="outline"
@@ -100,16 +100,9 @@ export function ProfileEditor({
         </Action>
       </div>
       {editor.json !== null && view === "form" && (
-        <PageMessage>
+        <PageHint>
           Apply or discard your structured JSON before editing the stage forms.
-        </PageMessage>
-      )}
-      {editor.message && (
-        <PageMessage
-          error={!!editor.pending || Object.keys(editor.errors).length > 0}
-        >
-          {editor.message}
-        </PageMessage>
+        </PageHint>
       )}
       {editor.pending && (
         <div className="mb-5 flex items-center gap-4">
@@ -267,7 +260,7 @@ export function ProfileEditor({
               </section>
               <h2 className="mt-6 text-lg">Stages</h2>
               {editor.errors.steps && (
-                <PageMessage error>{editor.errors.steps}</PageMessage>
+                <PageHint error>{editor.errors.steps}</PageHint>
               )}
               {p.steps.map((item, index) => {
                 const prefix = `steps.${index}.`

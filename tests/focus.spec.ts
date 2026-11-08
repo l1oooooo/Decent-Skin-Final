@@ -128,7 +128,11 @@ test("physical starts roll real stages, the footer stays quiet, completion has n
     "false"
   )
   await page.screenshot({ path: "artifacts/fidelity/test-completed.png" })
-  await expect(page.locator(".brew-toast")).toHaveText("Shot completed")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveText("Shot completed")
   await expect(
     page.getByRole("button", { name: "Decrease grind size" })
   ).toBeVisible()
@@ -312,10 +316,13 @@ test("mid-shot attachment uses live stages, reduced motion works, long labels ca
       "—s"
     )
     await page.evaluate(async (origin) => {
-      const toast = document.querySelector(".brew-toast")!
+      const toast = () =>
+        document.querySelector(
+          '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+        )?.textContent ?? ""
       await new Promise<void>((resolve, reject) => {
         const observer = new MutationObserver(() => {
-          if (toast.textContent === "Shot completed") {
+          if (toast() === "Shot completed") {
             clearTimeout(timeout)
             observer.disconnect()
             resolve()
@@ -327,7 +334,7 @@ test("mid-shot attachment uses live stages, reduced motion works, long labels ca
             new Error("Mid-shot attachment did not complete and return Home")
           )
         }, 15000)
-        observer.observe(toast, {
+        observer.observe(document.body, {
           childList: true,
           subtree: true,
           characterData: true,

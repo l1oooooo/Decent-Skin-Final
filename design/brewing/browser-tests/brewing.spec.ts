@@ -83,9 +83,17 @@ test("preserves Home, streams five traces, holds completion and returns once", a
       exact: true,
     })
   ).toBeVisible()
-  await expect(page.locator(".brew-toast")).toHaveText("Shot completed")
-  await page.clock.runFor(2500)
-  await expect(page.locator(".brew-toast")).toHaveText("")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveText("Shot completed")
+  await page.clock.runFor(4200)
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveCount(0)
   expect(requests).toEqual([])
 })
 test("manual stops, duplicate ends, rapid restart and navigation stay distinct", async ({
@@ -108,7 +116,16 @@ test("manual stops, duplicate ends, rapid restart and navigation stay distinct",
     "returning"
   )
   await page.clock.runFor(600)
-  await expect(page.locator(".brew-toast")).toHaveText("Shot stopped manually")
+  await expect(page.locator(".brew-preview")).toHaveAttribute(
+    "data-phase",
+    "home"
+  )
+  await page.clock.runFor(20)
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveText("Shot stopped manually")
   await page
     .getByRole("button", { name: "Test scenarios" })
     .click({ force: true })
@@ -133,7 +150,11 @@ test("manual stops, duplicate ends, rapid restart and navigation stay distinct",
     "data-phase",
     "active"
   )
-  await expect(page.locator(".brew-toast")).toHaveText("")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveCount(0)
   await page
     .getByRole("button", { name: "Navigate away" })
     .click({ force: true })
@@ -147,10 +168,20 @@ test("manual stops, duplicate ends, rapid restart and navigation stay distinct",
   await page
     .getByRole("button", { name: "Return to brewing preview" })
     .click({ force: true })
+  await page.clock.runFor(20)
+  const reviewAction = page.locator(
+    '[data-notification-key="shot-review"] [data-slot="toast-action"]'
+  )
+  await expect(reviewAction).toBeVisible()
+  await page.keyboard.press("F6")
   await expect(
     page.getByRole("button", { name: "Back to Home", exact: true })
   ).toBeVisible()
-  await expect(page.locator(".brew-toast")).toHaveText("")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveCount(0)
 })
 test("disconnect retains trace, blanks current readings and never auto-returns", async ({
   page,
@@ -174,9 +205,9 @@ test("disconnect retains trace, blanks current readings and never auto-returns",
     "interrupted"
   )
   await expect(page.locator(".brew-metrics")).toContainText("—")
-  await expect(page.locator(".brew-alert")).toContainText(
-    "machine state is unknown"
-  )
+  await expect(
+    page.locator('[data-notification-key="shot-review"]')
+  ).toContainText("machine state is unknown")
   await expect(page.locator('[aria-label="Steam temperature"]')).toContainText(
     "—"
   )
@@ -200,7 +231,9 @@ test("missing scale breaks its trace, outliers expand axes, reduced motion disab
     .getByRole("button", { name: "Start new shot" })
     .click({ force: true })
   await page.clock.runFor(15000)
-  await expect(page.locator(".brew-scale-note")).toBeVisible()
+  await expect(
+    page.locator('[data-notification-key="shot-scale"]')
+  ).toBeVisible()
   const d = await page.locator('[data-series="weightFlow"]').getAttribute("d")
   await page.clock.runFor(1000)
   expect(

@@ -1,5 +1,25 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.4 release recheck — pending
+
+Publication is authorized; tablet installation and hardware operation remain
+with the operator. The v0.3.4 notification policy supersedes the older notice
+expectations in the historical candidate checklists below.
+
+- Update through Decaid or install the release's `decent-focus.zip`; confirm 0.3.4.
+- Heating/preparation should appear once and expire after about four seconds.
+- Confirm one result after normal, manual and neutral shot endings, including a
+  rapid restart. Keep the existing three-second hold and Home transition.
+- At idle, scale absence should use the header only. Explicit connection should
+  show pending then success/error feedback. Active scale-dependent risk remains visible.
+- Verify refill-required stays visible through missing readings/disconnection
+  and clears only when the machine recognizes resolution. Check configured low-water warnings.
+- Check simultaneous critical warnings, failed saves, touch dismissal of routine
+  feedback, keyboard F6 access, TalkBack and reduced motion at the actual WebView viewport.
+- Retain v0.3.2 as the previous published recovery release. Do not infer device
+  acceptance from the isolated local tests.
+
+
 ## v0.3.3 candidate recheck — pending
 
 - Confirm the embedded Decaid viewport; 1340 × 800 is the full screenshot
@@ -42,7 +62,7 @@ before building. Do not remove someone else's development configuration;
 prepare the release in a clean checkout when necessary. The installed skin
 uses its serving hostname on API port 8080. It needs no Node process on Android.
 
-The current pending-review candidate archive is `artifacts/decent-skin-codex-0.3.2.zip`. Its inspection report is
+The current release archive is `artifacts/decent-skin-codex-0.3.4.zip`. Its inspection report is
 `artifacts/skin-release.json`: SHA-256, byte count, file inventory, manifest,
 source commit and tracked changes. Re-run verification after committing to
 associate the report with the committed source. Rebuilding may change ZIP

@@ -117,15 +117,16 @@ test("a rejected scale connection remains disconnected and is never retried", as
   ).toHaveLength(1)
 })
 
-test("persistent Home notice identifies heating and clears when Ready", async ({
-  page,
-  request,
-}) => {
+test("shared heating toast clears when Ready", async ({ page, request }) => {
   await request.post(`${fixture}/__test/state`, { data: { state: "heating" } })
   await page.goto("/", { waitUntil: "networkidle" })
-  const notice = page.locator('.focus-main > [role="status"]')
-  await expect(notice).toContainText("Heating to your brew temperature.")
-  await expect(page.locator(".brew-toast")).toHaveText("")
+  const notice = page.locator('[data-notification-key="machine-heating"]')
+  await expect(notice).toContainText("Heating to your brew temperature")
+  await expect(
+    page.locator(
+      '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+    )
+  ).toHaveCount(0)
   await page.screenshot({ path: "artifacts/v033/heating-notice-1340.png" })
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", elapsed: 1 },
@@ -147,7 +148,10 @@ for (const [reason, substate, toast] of [
     const result = await page.evaluate(
       async ({ fixture, reason, substate, toast }) => {
         const root = document.querySelector(".brew-preview")!
-        const toastNode = document.querySelector(".brew-toast")!
+        const toastNode = () =>
+          document.querySelector(
+            '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+          )?.textContent ?? ""
         const phases: { name: string | null; time: number }[] = []
         const toasts: string[] = []
         const traces = new Set<string>()
@@ -156,7 +160,7 @@ for (const [reason, substate, toast] of [
           const name = root.getAttribute("data-phase")
           if (phases.at(-1)?.name !== name)
             phases.push({ name, time: performance.now() })
-          const text = toastNode.textContent ?? ""
+          const text = toastNode() ?? ""
           if (text && text !== lastToast) toasts.push(text)
           lastToast = text
           if (name === "complete")
@@ -167,7 +171,7 @@ for (const [reason, substate, toast] of [
             )
         }
         const observer = new MutationObserver(observe)
-        observer.observe(root, {
+        observer.observe(document.body, {
           subtree: true,
           attributes: true,
           childList: true,
@@ -184,7 +188,7 @@ for (const [reason, substate, toast] of [
           while (!predicate()) {
             if (performance.now() > deadline)
               throw new Error(
-                `Timed out: ${root.getAttribute("data-phase")} / ${toastNode.textContent}`
+                `Timed out: ${root.getAttribute("data-phase")} / ${toastNode()}`
               )
             await new Promise((resolve) => setTimeout(resolve, 20))
           }
@@ -199,9 +203,9 @@ for (const [reason, substate, toast] of [
           await until(() => root.getAttribute("data-phase") === "active")
           await update({ elapsed: 1 })
           await update({ state: "idle", elapsed: 2, reason })
-          await until(() => toastNode.textContent === toast)
+          await until(() => toastNode() === toast)
           await update({ elapsed: 3, reason })
-          await until(() => toastNode.textContent === "")
+          await until(() => toastNode() === "")
           observe()
           return { phases, toasts, traces: traces.size }
         } finally {

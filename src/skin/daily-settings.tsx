@@ -1,3 +1,4 @@
+import { NotificationMessage } from "./notifications/feedback"
 import { useEffect, useState } from "react"
 import {
   fields,
@@ -13,8 +14,8 @@ import { object } from "@/gateway/model"
 import type { SkinSession } from "./use-skin"
 import type { DailySettingsEditor } from "./use-daily-settings"
 import { Action } from "./primitives"
-import { PageMessage } from "./pages"
-import { useOperation, OperationStatus } from "./settings-operation"
+import { PageHint } from "./pages"
+import { useOperation } from "./settings-operation"
 import { ConfirmAction, SettingInput, SettingsGroup } from "./settings-controls"
 import { Connections } from "./connection-settings"
 import { WakeLock, Schedules } from "./presence-settings"
@@ -83,7 +84,11 @@ export function DailySettingsPage({
                   · {String(info[key] ?? "Unavailable")}
                 </p>
               ))}
-            {infoError && <PageMessage error>{infoError}</PageMessage>}
+            {infoError && (
+              <NotificationMessage notificationKey={`daily-settings-86`} error>
+                {infoError}
+              </NotificationMessage>
+            )}
             <p>State · {s.snapshot.machine?.state.state ?? "Disconnected"}</p>
           </div>
           <div className="flex gap-3">
@@ -111,12 +116,9 @@ export function DailySettingsPage({
                 : "Sleep machine"}
             </Action>
           </div>
-          <OperationStatus operation={operation} />
-        </SettingsGroup>
+            </SettingsGroup>
       )}
-      {block && (
-        <PageMessage>{block} You can review and edit drafts.</PageMessage>
-      )}
+      {block && <PageHint>{block} You can review and edit drafts.</PageHint>}
       {(
         Object.entries(fields[category]) as [
           SettingsOwner,
@@ -142,11 +144,11 @@ export function DailySettingsPage({
             }
           >
             {!section?.value && (
-              <PageMessage>
+              <PageHint>
                 {section?.loading
                   ? "Loading settings…"
                   : "Settings are unavailable."}
-              </PageMessage>
+              </PageHint>
             )}
             <form
               noValidate
@@ -183,10 +185,6 @@ export function DailySettingsPage({
                     : ""}
                 </p>
               )}
-              {section?.error && (
-                <PageMessage error>{section.error}</PageMessage>
-              )}
-              {section?.message && <PageMessage>{section.message}</PageMessage>}
               <div className="mt-4 flex justify-end gap-3">
                 <Action
                   variant="ghost"

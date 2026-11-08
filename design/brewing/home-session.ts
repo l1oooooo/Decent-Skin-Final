@@ -315,7 +315,6 @@ export function homeSession(
     libraryError: "",
     reloadLibrary: async () => {},
     notice: "",
-    dismissNotice: () => {},
     change: async (key, value) => {
       change(key, value)
       return true
@@ -328,7 +327,7 @@ export function homeSession(
     perform: noAction,
     setGrindText: noAction,
     reset: () => {},
-    reconnect: async () => {},
+    reconnect: noAction,
     wake: noAction,
     sleep: noAction,
     liveSteamTemperature: 50,
