@@ -13,8 +13,9 @@
   must say “Shot ended”; explicit API/app intent says “Shot stopped manually”.
 - Check a normal target completion, a restart during hold/return, navigation away,
   connection loss and one toast per confirmed return.
-- Record the exact text of the reported chart-area notice. Persistent warnings
-  remain intentionally visible while their conditions require attention.
+- The user identified the chart-area notice as heating. Verify it clears when
+  the machine becomes Ready. Persistent warnings remain intentionally visible
+  while their conditions require attention.
 
 No hardware commands, tablet installation or deployment are authorized by the
 candidate request. Follow the existing supervised acceptance procedure below.

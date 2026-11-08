@@ -6,8 +6,10 @@ Local review candidate on `codex/focus-0.3.3-refinements`; not pushed, published
 installed or merged. See [investigation, behavior and evidence](REFINEMENT-0.3.3.md).
 
 - Persistent Home `Notice` source, priorities, messages and dismissal rules
-  documented; important warnings retained. Exact text of the user's occurrence
-  was not supplied, so its individual triggering event remains unconfirmed.
+  documented; important warnings retained. The user confirmed the reported
+  message concerned heating, identifying the phase-derived “Heating to your
+  brew temperature.” notice. The underlying machine state at that moment was
+  not recorded.
 - Verified installed Decaid source: physical GHC and autonomous endings can both
   use `machineEnded`. Confirmed non-abort endings return with neutral “Shot ended”;
   explicit API/app stops use “Shot stopped manually”. Both share the existing

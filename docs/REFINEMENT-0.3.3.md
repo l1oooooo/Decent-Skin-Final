@@ -10,8 +10,13 @@ The matching visible source is `Notice` in `src/skin/controls.tsx`, mounted by
 `CandidateHome` immediately after the profile-chart section in the center panel.
 It is a Focus-owned persistent status panel, not a Decaid-native notification,
 chart tooltip, debug overlay or the shot-result toast. In compact layouts its
-12px text is near the bottom of the chart. Without the exact text from the
-reported occurrence, its specific triggering condition cannot be identified.
+12px text is near the bottom of the chart. The user subsequently confirmed the
+message was about heating, identifying the “Heating to your brew temperature.”
+branch. It appears when connected and `useSkin().phase` is `heating`, unless a
+higher-priority notice replaces it. That phase covers machine states `heating`,
+`preheating` or `booting`, or substate `preparingForShot` (after connection/error
+checks). It disappears when the heating phase clears; it has no dismissal timer.
+The specific underlying machine state at the reported moment was not recorded.
 
 `Notice` selects the first nonempty message in this order:
 
