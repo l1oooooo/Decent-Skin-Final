@@ -157,7 +157,7 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
   expect(returning.time - complete.time).toBeGreaterThanOrEqual(2900)
   expect(result.phase).toBe("home")
   expect(result.final).toEqual(result.initial)
-  expect(result.toast).toBe("Shot stopped")
+  expect(result.toast).toBe("Shot stopped manually")
   await page.screenshot({ path: "artifacts/v032/returned-1007.png" })
 })
 

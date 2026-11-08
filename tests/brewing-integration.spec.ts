@@ -195,14 +195,14 @@ test("rapid restart cancels the old hold; missing scale and disconnect never inv
     await update({ elapsed: 2 })
     await until(() => root.getAttribute("data-phase") === "active")
     await update({ state: "idle", elapsed: 3, reason: "apiStop" })
-    await until(() => status.textContent === "Shot stopped")
+    await until(() => status.textContent === "Shot stopped manually")
     const stopped = status.textContent
     const stopTime = performance.now()
     await update({ state: "espresso", elapsed: 4, shotId: "second" })
     await until(() => root.getAttribute("data-phase") === "active")
     return { stopped, restartDelay: performance.now() - stopTime }
   }, fixture)
-  expect(restart.stopped).toBe("Shot stopped")
+  expect(restart.stopped).toBe("Shot stopped manually")
   expect(restart.restartDelay).toBeLessThan(3000)
   await request.post(`${fixture}/__test/state`, {
     data: { elapsed: 12, scale: false },

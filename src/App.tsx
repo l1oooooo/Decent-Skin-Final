@@ -320,6 +320,9 @@ export default function App() {
       ) : page === "home" ? (
         <LiveBrewingScreen
           home={s}
+          onConnections={() =>
+            navigate({ page: "settings", category: "connections" })
+          }
           state={brewing.state}
           dispatch={brewing.dispatch}
           tankCalibration={

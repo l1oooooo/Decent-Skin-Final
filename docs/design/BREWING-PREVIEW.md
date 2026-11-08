@@ -24,7 +24,10 @@ individual unit labels. A missing value creates a gap, never a zero.
 
 Success freezes the final trace for three seconds, contracts it toward its Home
 position, restores Home and shows “Shot completed” once for 2.4 seconds. There
-is no completion settings button. A GHC manual stop says “Shot stopped”. Errors,
+is no completion settings button. The simulator's explicit manual stop says
+“Shot stopped manually”. In production, a confirmed `machineEnded` event uses
+neutral “Shot ended”: installed Decaid does not distinguish physical GHC stops
+from autonomous endings. Both use the same hold and return lifecycle. Errors,
 blocked starts and disconnects stay visible until explicitly dismissed or a new
 shot is observed. Disconnect blanks current readings and labels the retained
 trace as last received, without implying the machine has stopped.

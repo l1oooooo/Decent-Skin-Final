@@ -1,5 +1,33 @@
 # Focus release-candidate verification
 
+## 0.3.3 — confirmed stop returns, header weight and scale selection
+
+Local review candidate on `codex/focus-0.3.3-refinements`; not pushed, published,
+installed or merged. See [investigation, behavior and evidence](REFINEMENT-0.3.3.md).
+
+- Persistent Home `Notice` source, priorities, messages and dismissal rules
+  documented; important warnings retained. Exact text of the user's occurrence
+  was not supplied, so its individual triggering event remains unconfirmed.
+- Verified installed Decaid source: physical GHC and autonomous endings can both
+  use `machineEnded`. Confirmed non-abort endings return with neutral “Shot ended”;
+  explicit API/app stops use “Shot stopped manually”. Both share the existing
+  completion hold/animation. Faults and unclassified stops remain explicit.
+- Header labels/values use Medium; Disconnected opens explicit device selection
+  through the existing guarded connection API without restyling the status.
+- TypeScript, ESLint, 172 gateway/unit tests and static build passed.
+- 18 development-model tests and the production isolation audit passed.
+- 13 focused browser checks passed (six isolated production, seven preview).
+  Includes 1007 × 601 and 1340 × 800 framing, wrap threshold, 44px scale hit area,
+  connection success/rejection/duplicate taps, notices, completion/manual/neutral
+  endings, duplicate events, restart, navigation, reduced motion and transitions.
+  These are focused checks, not a full application E2E suite pass.
+- ZIP verification passed: 11 files, 614348 bytes; SHA-256
+  `253884e63a3cfa2d59f587b73d11ebc04faba2f6d98dc2ca007d1c4bb8601551`.
+- Host callback delays and the existing bundle-size advisory are documented.
+  Actual WebView timing, physical GHC and Bluetooth reconnection remain pending;
+  no hardware commands were issued.
+
+
 
 ## 0.3.2 — responsive header, target segments and coordinated motion
 

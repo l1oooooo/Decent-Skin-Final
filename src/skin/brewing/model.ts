@@ -13,7 +13,13 @@ export interface Reading {
   breakBefore?: boolean
 }
 export type Outcome =
-  "success" | "manual" | "blocked" | "disconnected" | "failed" | "unknown"
+  | "success"
+  | "manual"
+  | "ended"
+  | "blocked"
+  | "disconnected"
+  | "failed"
+  | "unknown"
 export type Phase =
   "home" | "preparing" | "active" | "complete" | "interrupted" | "returning"
 export interface ExperienceState {
@@ -52,11 +58,25 @@ export const isRunning = (s: ExperienceState) =>
   s.phase === "preparing" || s.phase === "active"
 export const outcomeLabel: Record<Outcome, string> = {
   success: "Shot complete",
-  manual: "Shot stopped",
+  manual: "Shot stopped manually",
+  ended: "Shot ended",
   blocked: "Shot blocked",
   disconnected: "Connection lost",
   failed: "Shot interrupted",
   unknown: "Shot ended · outcome unconfirmed",
+}
+export function finishExperience(
+  s: ExperienceState,
+  result: Outcome
+): ExperienceState {
+  const outcome = result === "success" && !s.samples.length ? "unknown" : result
+  return {
+    ...s,
+    outcome,
+    phase: ["success", "manual", "ended"].includes(outcome)
+      ? "complete"
+      : "interrupted",
+  }
 }
 export function reduceExperience(
   s: ExperienceState,
@@ -102,19 +122,7 @@ export function reduceExperience(
     }
     case "end": {
       if (!isRunning(s)) return s
-      // A success classification without extraction samples is not a successful shot.
-      const outcome =
-        event.outcome === "success" && !s.samples.length
-          ? "unknown"
-          : event.outcome
-      return {
-        ...s,
-        outcome,
-        phase:
-          outcome === "success" || outcome === "manual"
-            ? "complete"
-            : "interrupted",
-      }
+      return finishExperience(s, event.outcome)
     }
     case "holdElapsed":
       return s.phase === "complete" && s.route === "home" && s.autoReturn
@@ -125,7 +133,12 @@ export function reduceExperience(
         ? {
             ...s,
             phase: "home",
-            toast: s.outcome === "success" ? "Shot completed" : "Shot stopped",
+            toast:
+              s.outcome === "success"
+                ? "Shot completed"
+                : s.outcome === "manual"
+                  ? "Shot stopped manually"
+                  : "Shot ended",
           }
         : s
     case "clearToast":

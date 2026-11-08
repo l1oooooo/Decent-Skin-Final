@@ -10,6 +10,7 @@ import type { TankCalibration } from "./tank"
 export default function CandidateHome({
   s,
   onSettings,
+  onConnections,
   onHistory,
   onBrowse,
   onEdit,
@@ -21,6 +22,7 @@ export default function CandidateHome({
   s: SkinSession
   tankCalibration: TankCalibration
   onHistory: () => void
+  onConnections: () => void
   onSettings: () => void
   onEdit: () => void
   onBrowse: () => void
@@ -33,6 +35,7 @@ export default function CandidateHome({
         tankCalibration={tankCalibration}
         s={s}
         onSettings={onSettings}
+        onConnections={onConnections}
         onHistory={onHistory}
       />
       <div className="focus-body flex min-h-0 flex-1">

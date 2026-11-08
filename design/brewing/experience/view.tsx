@@ -132,6 +132,7 @@ export function BrewingExperience({
       dispatch={dispatch}
       home={displayHome}
       tankCalibration={tankCalibration}
+      onConnections={navigate}
       onSettings={navigate}
       onHistory={navigate}
       onBrowse={navigate}

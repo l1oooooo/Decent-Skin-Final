@@ -2,7 +2,12 @@ import { BREW_TRANSITION_MS } from "./use-brew-layout"
 import { useEffect, useMemo, useReducer } from "react"
 import type { GatewaySnapshot } from "@/gateway/types"
 import { connected } from "@/gateway/model"
-import { initialState, isRunning, reduceExperience } from "./model"
+import {
+  finishExperience,
+  initialState,
+  isRunning,
+  reduceExperience,
+} from "./model"
 import type { BrewEvent, ExperienceState, Reading } from "./model"
 
 export function readings(
@@ -98,15 +103,27 @@ export function liveReducer(
     snapshot.shotOutcome !== "unknown"
   ) {
     // Machine idle can precede the authoritative shot decision on another socket.
-    const outcome = snapshot.shotOutcome
-    next = {
-      ...next,
-      outcome,
-      phase:
-        ["success", "manual"].includes(outcome) && next.samples.length
-          ? "complete"
-          : "interrupted",
-    }
+    next = finishExperience(
+      next,
+      !connected(snapshot)
+        ? "disconnected"
+        : snapshot.machine?.state.state === "error"
+          ? "failed"
+          : snapshot.shotOutcome
+    )
+  } else if (next.phase === "complete" || next.phase === "returning") {
+    const outcome = !connected(snapshot)
+      ? "disconnected"
+      : snapshot.machine?.state.state === "error"
+        ? "failed"
+        : snapshot.shotOutcome
+    if (outcome && ["failed", "disconnected", "blocked"].includes(outcome))
+      next = finishExperience(next, outcome)
+    else if (
+      next.outcome === "ended" &&
+      (outcome === "manual" || outcome === "success")
+    )
+      next = { ...next, outcome }
   }
   return next
 }

@@ -1,3 +1,4 @@
+import { shotOutcome } from "./shot-outcome"
 import { RecipeGateway } from "./recipes"
 import { ShotHistoryGateway } from "./shot-history"
 import type { ProfileRecord } from "./types"
@@ -758,17 +759,7 @@ export class DecaidGateway {
       const decision = event.decision
       if (decision && ["stop", "abort", "terminal"].includes(decision.kind)) {
         const outcome =
-          decision.reason === "disconnected"
-            ? "disconnected"
-            : decision.reason === "noScale"
-              ? "blocked"
-              : decision.reason === "error" || decision.kind === "abort"
-                ? "failed"
-                : ["apiStop", "appStop"].includes(decision.reason)
-                  ? "manual"
-                  : ["targetWeight", "targetVolume"].includes(decision.reason)
-                    ? "success"
-                    : "unknown"
+          shotOutcome(decision, this.snapshot.shotOutcome) ?? "unknown"
         this.emit({
           shotOutcome: outcome,
           stopped: outcome !== "success" && outcome !== "unknown",

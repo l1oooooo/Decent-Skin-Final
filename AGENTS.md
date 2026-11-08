@@ -74,8 +74,8 @@ technical decisions, and the design history for previous iterations.
 - Scale connection warnings are dismissible by event identity, separate from
   machine command gates. Preserve Decaid's explicit blockOnNoScale policy for
   brewing; scale absence alone must not block recipe editing or utilities.
-  Home scale is read-only; Settings → Connections owns explicit device selection,
-  never the first remembered scale. No automatic discovery or connection retry.
+  Home scale weight is read-only; Disconnected opens Settings → Connections
+  for explicit device selection. Never silently choose the first remembered scale. No automatic discovery or connection retry.
 - Home fits its content without panel scrolling in landscape CSS viewports down
   to 800 × 480. Compact spacing and chart geometry apply only
   below the desktop reference size; touch targets remain at least 44px. Do not
@@ -157,7 +157,8 @@ technical decisions, and the design history for previous iterations.
   independent of the rolling shot-stage title. Machine Setting opens one anchored
   popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep
   remain beside it. Steam enable reflects the acknowledged workflow setting;
-  tabs never send commands. Scale is read-only.
+  tabs never send commands. Disconnected scale text opens Connections without
+  selecting a device or sending a command. Header readout labels/values use Medium.
   Home's planned chart shows every meaningful configured target segment, with
   the same visible-series list driving its legend. Never fill inactive pump
   channels or bridge missing targets. Temperature sensor-basis changes split
@@ -171,7 +172,11 @@ technical decisions, and the design history for previous iterations.
   Live pressure/flow gradient areas and target pressure, group temperature and
   scale weight-flow lines retain exact received samples and missing-value gaps.
   The single App-owned live presentation holds confirmed completion for 3 seconds,
-  returns Home and emits one toast; interrupted/unclassified outcomes stay explicit.
+  returns Home and emits one toast. Non-abort apiStop/appStop uses “Shot stopped
+  manually”; machineEnded uses neutral “Shot ended” because the installed Decaid
+  cannot distinguish GHC from autonomous endings. Both share the completion
+  lifecycle. Bare idle, unknown reasons and faults stay explicit; a connection
+  loss/fault during a pending return cancels it.
   New shots supersede holds; replay does not navigate or manufacture elapsed time.
   Home and Brewing share one 500ms panel/chart transition, with separate target
   and measured layers. Live time-domain expansion uses a 420ms coordinate

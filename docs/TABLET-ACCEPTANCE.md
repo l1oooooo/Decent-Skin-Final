@@ -1,5 +1,25 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.3 candidate recheck — pending
+
+- Confirm the embedded Decaid viewport; 1340 × 800 is the full screenshot
+  resolution, while 1007 × 601 was reported in the tablet browser.
+- Check the Medium header at Ready, Heating and scale Disconnected; preserve a
+  single row where contents fit, with no overlap or clipped text.
+- Tap scale Disconnected, choose the intended device in Connections and connect.
+  Confirm live weight after success and a truthful error after failure.
+- Stop from the physical GHC during preinfusion and pouring: hold the final
+  chart for ~3 seconds, then use the approved transition Home. `machineEnded`
+  must say “Shot ended”; explicit API/app intent says “Shot stopped manually”.
+- Check a normal target completion, a restart during hold/return, navigation away,
+  connection loss and one toast per confirmed return.
+- Record the exact text of the reported chart-area notice. Persistent warnings
+  remain intentionally visible while their conditions require attention.
+
+No hardware commands, tablet installation or deployment are authorized by the
+candidate request. Follow the existing supervised acceptance procedure below.
+
+
 Status: **local checks complete; tablet acceptance pending**. This is an
 execution and evidence checklist, not a record of completed device testing.
 Use [VERIFICATION.md](VERIFICATION.md) for actual local results and

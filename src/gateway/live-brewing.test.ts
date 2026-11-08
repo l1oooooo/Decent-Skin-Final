@@ -184,6 +184,64 @@ describe("production brewing presentation", () => {
     ui = liveReducer(ui, { type: "navigate", route: "home" })
     expect(ui.autoReturn).toBe(false)
   })
+  it.each(["manual", "ended"] as const)(
+    "returns %s shots through one hold, including a late reason before samples",
+    (outcome) => {
+      const snapshot = shot()
+      snapshot.samples = []
+      let ui = liveReducer(initialState, observe(snapshot))
+      snapshot.complete = true
+      ui = liveReducer(ui, observe(snapshot))
+      expect(ui.phase).toBe("interrupted")
+      snapshot.shotOutcome = outcome
+      ui = liveReducer(ui, observe(snapshot))
+      expect(ui.phase).toBe("complete")
+      const frozen = ui.samples
+      ui = liveReducer(ui, observe(snapshot))
+      expect(ui.samples).toBe(frozen)
+      ui = liveReducer(ui, { type: "holdElapsed", shotId: "live-1" })
+      expect(ui.phase).toBe("returning")
+      ui = liveReducer(ui, { type: "returned", shotId: "live-1" })
+      expect(ui.toast).toBe(
+        outcome === "manual" ? "Shot stopped manually" : "Shot ended"
+      )
+      ui = liveReducer(ui, { type: "clearToast", shotId: "live-1" })
+      ui = liveReducer(ui, observe(snapshot))
+      expect(ui.toast).toBe("")
+    }
+  )
+  it.each(["complete", "returning"])(
+    "cancels a pending return on disconnection during %s",
+    (phase) => {
+      const snapshot = shot()
+      let ui = liveReducer(initialState, observe(snapshot))
+      snapshot.complete = true
+      snapshot.shotOutcome = "manual"
+      ui = liveReducer(ui, observe(snapshot))
+      if (phase === "returning")
+        ui = liveReducer(ui, { type: "holdElapsed", shotId: "live-1" })
+      snapshot.connection = "offline"
+      ui = liveReducer(ui, observe(snapshot))
+      expect(ui.phase).toBe("interrupted")
+      expect(ui.outcome).toBe("disconnected")
+      ui = liveReducer(ui, { type: "returned", shotId: "live-1" })
+      expect(ui.toast).toBe("")
+    }
+  )
+  it("keeps navigation cancellation when a late manual reason arrives", () => {
+    const snapshot = shot()
+    let ui = liveReducer(initialState, observe(snapshot))
+    snapshot.complete = true
+    ui = liveReducer(ui, observe(snapshot))
+    ui = liveReducer(ui, { type: "navigate", route: "away" })
+    snapshot.shotOutcome = "manual"
+    ui = liveReducer(ui, observe(snapshot))
+    ui = liveReducer(ui, { type: "holdElapsed", shotId: "live-1" })
+    expect(ui.route).toBe("away")
+    expect(ui.phase).toBe("complete")
+    expect(ui.autoReturn).toBe(false)
+    expect(ui.toast).toBe("")
+  })
   it("does not open a terminal replay without an observed or attached active shot", () => {
     const s = shot()
     s.shotSequence = 0

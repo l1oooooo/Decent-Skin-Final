@@ -17,6 +17,7 @@ export function LiveBrewingScreen({
   home,
   tankCalibration,
   onSettings,
+  onConnections,
   onHistory,
   onBrowse,
   onEdit,
@@ -26,6 +27,7 @@ export function LiveBrewingScreen({
   dispatch: Dispatch<BrewEvent>
   home: SkinSession
   tankCalibration: TankCalibration
+  onConnections: () => void
   onSettings: () => void
   onHistory: () => void
   onBrowse: () => void
@@ -95,6 +97,7 @@ export function LiveBrewingScreen({
           tankCalibration={tankCalibration}
           s={displayHome}
           onSettings={onSettings}
+          onConnections={onConnections}
           onHistory={onHistory}
           onBrowse={onBrowse}
           onEdit={onEdit}
@@ -114,7 +117,7 @@ export function LiveBrewingScreen({
             running={isRunning(s)}
             tone={
               s.outcome
-                ? ["success", "manual"].includes(s.outcome)
+                ? ["success", "manual", "ended"].includes(s.outcome)
                   ? "complete"
                   : "error"
                 : !home.machineFresh

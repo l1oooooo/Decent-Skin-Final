@@ -259,7 +259,7 @@ describe("brewing presentation event ownership", () => {
       reduceExperience(manual, { type: "holdElapsed", shotId: "shot-1" }),
       { type: "returned", shotId: "shot-1" }
     )
-    expect(home.toast).toBe("Shot stopped")
+    expect(home.toast).toBe("Shot stopped manually")
     expect(
       reduceExperience(reduceExperience(initialState, start()), {
         type: "end",

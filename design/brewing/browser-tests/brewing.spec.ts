@@ -108,7 +108,7 @@ test("manual stops, duplicate ends, rapid restart and navigation stay distinct",
     "returning"
   )
   await page.clock.runFor(600)
-  await expect(page.locator(".brew-toast")).toHaveText("Shot stopped")
+  await expect(page.locator(".brew-toast")).toHaveText("Shot stopped manually")
   await page
     .getByRole("button", { name: "Test scenarios" })
     .click({ force: true })

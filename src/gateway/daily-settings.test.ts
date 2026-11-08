@@ -113,6 +113,98 @@ describe("daily settings contract", () => {
       },
     ])
   })
+  it("connects only the selected scale once while pending and waits for observed state", async () => {
+    let resolve!: (value: unknown) => void
+    const pending = new Promise((r) => {
+      resolve = r
+    })
+    const { gateway, state, calls } = setup(() => pending)
+    state.devices.push({
+      id: "chosen-scale",
+      name: "My scale",
+      type: "scale",
+      state: "disconnected",
+    })
+    vi.spyOn(gateway, "sync").mockResolvedValue()
+    const first = gateway.daily.device("connect", "chosen-scale")
+    await expect(
+      gateway.daily.device("connect", "chosen-scale")
+    ).rejects.toThrow()
+    expect(calls).toEqual([
+      {
+        path: "/api/v1/devices/connect",
+        method: "PUT",
+        body: { deviceId: "chosen-scale" },
+      },
+    ])
+    resolve({ outcome: "connected" })
+    await first
+    expect(gateway.getSnapshot().scaleConnected).toBe(false)
+    expect(gateway.getSnapshot().pending).toBe(false)
+  })
+  it("keeps a failed connection truthful without retrying", async () => {
+    const { gateway, state, calls } = setup(() => ({
+      outcome: "failed",
+      error: "Scale is unavailable",
+    }))
+    state.devices.push({
+      id: "chosen-scale",
+      name: "My scale",
+      type: "scale",
+      state: "disconnected",
+    })
+    await expect(
+      gateway.daily.device("connect", "chosen-scale")
+    ).rejects.toThrow("Scale is unavailable")
+    expect(gateway.getSnapshot().scaleConnected).toBe(false)
+    expect(gateway.getSnapshot().pending).toBe(false)
+    expect(calls).toHaveLength(1)
+  })
+  it("releases a timed-out connection without a retry or invented connected state", async () => {
+    vi.useFakeTimers()
+    try {
+      let calls = 0
+      const gateway = new DecaidGateway(
+        "http://fixture.invalid",
+        async (_url, init) => {
+          calls++
+          return new Promise<Response>((_resolve, reject) =>
+            init?.signal?.addEventListener("abort", () =>
+              reject(new Error("Connection timed out"))
+            )
+          )
+        }
+      )
+      gateway.receive("devices", {
+        devices: [
+          { id: "scale", name: "Scale", type: "scale", state: "disconnected" },
+        ],
+      })
+      const snapshot = gateway.getSnapshot
+      vi.spyOn(gateway, "getSnapshot").mockImplementation(() => ({
+        ...snapshot(),
+        connection: "online",
+        settings: { gatewayMode: "tracking" },
+      }))
+      const operation = gateway.daily.device("connect", "scale")
+      const failure = operation.then(
+        () => null,
+        (error: Error) => error
+      )
+      await vi.advanceTimersByTimeAsync(8001)
+      expect(await failure).toMatchObject({
+        message:
+          "Decaid did not respond. Check the gateway connection and try again.",
+      })
+      expect(gateway.getSnapshot()).toMatchObject({
+        pending: false,
+        scaleConnected: false,
+      })
+      expect(calls).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
   it("does not write brightness when unsupported or a shot starts during validation", async () => {
     const setupResult = setup(() => ({
       platformSupported: { brightness: false },

@@ -121,6 +121,7 @@ export interface GatewaySnapshot {
   shotOutcome:
     | "success"
     | "manual"
+    | "ended"
     | "blocked"
     | "disconnected"
     | "failed"

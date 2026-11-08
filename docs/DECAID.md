@@ -110,6 +110,14 @@ or utility import occurs. Saving is a separate explicit Focus KV write.
 | Completion / stop reason | `/ws/v1/machine/shotState`; terminal reasons preserve manual stop vs completed shot |
 | Compatibility | GET `/api/v1/info`, `/api/v1/settings` |
 
+Stop-reason review for v0.3.3: at the installed `14361a94` source, the shot
+sequencer uses `apiStop`/`appStop` only for recorded explicit stop intent. A
+machine-reported pouringDone/idle without that intent uses `machineEnded`, which
+does not distinguish physical GHC stops from autonomous endings. Focus returns
+these confirmed non-abort endings with neutral “Shot ended” copy. It never infers
+manual intent from idle alone. Preheat aborts, noScale, faults and disconnections
+retain interruption handling. See [the classification and lifecycle details](REFINEMENT-0.3.3.md).
+
 Workflow writes are partial patches, preserving unrelated context and operation settings. A successful response replaces the acknowledged workflow. Failed writes remain visible and do not pretend to apply. Writes are not retried. Start controls require a connected machine, fresh readings, a valid managed mode, idle state, no pending write or device error, and a profile; Decaid's no-scale policy is respected.
 
 ## Lifecycle and data accuracy

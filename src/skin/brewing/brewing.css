@@ -230,8 +230,11 @@
 .candidate-readouts span {
   color: var(--muted-foreground);
 }
+.candidate-readouts {
+  font-weight: 500;
+}
 .candidate-readouts strong {
-  font-weight: 400;
+  font-weight: inherit;
   font-variant-numeric: tabular-nums;
 }
 .candidate-status {
@@ -575,4 +578,26 @@
 }
 .brew-chart-preview .planned-chart {
   height: 100%;
+}
+
+.scale-connection-action {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.scale-connection-action::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.scale-connection-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 2px;
 }

@@ -543,7 +543,7 @@ describe("Phase 5 telemetry and shot identity", () => {
       timestamp: machine(2).timestamp,
       decision: { kind: "stop", reason: "machineEnded" },
     })
-    expect(gateway.getSnapshot().shotOutcome).toBe("unknown")
+    expect(gateway.getSnapshot().shotOutcome).toBe("ended")
   })
 })
 

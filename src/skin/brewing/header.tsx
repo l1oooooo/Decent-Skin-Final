@@ -74,10 +74,12 @@ export function CandidateHeader({
   s,
   tankCalibration,
   onSettings,
+  onConnections,
   onHistory,
 }: {
   s: SkinSession
   tankCalibration: TankCalibration
+  onConnections: () => void
   onSettings: () => void
   onHistory: () => void
 }) {
@@ -109,9 +111,18 @@ export function CandidateHeader({
           }
         >
           <span>Scale</span>
-          <strong>
-            {s.scaleConnected ? `${format(s.scaleWeight)} g` : "Disconnected"}
-          </strong>
+          {s.scaleConnected ? (
+            <strong>{`${format(s.scaleWeight)} g`}</strong>
+          ) : (
+            <button
+              type="button"
+              className="scale-connection-action"
+              aria-label="Scale disconnected. Open Connections to reconnect"
+              onClick={onConnections}
+            >
+              Disconnected
+            </button>
+          )}
         </div>
         <div aria-label="Group temperature">
           <span>Group</span>
