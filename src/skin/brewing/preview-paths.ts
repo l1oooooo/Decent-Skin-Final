@@ -11,7 +11,18 @@ export function previewPaths(
 ) {
   const segments: { x: number; y: number }[][] = []
   let segment: { x: number; y: number }[] = []
+  let previousReading: Reading | undefined
   for (const sample of samples) {
+    if (
+      sample.breakBefore ||
+      (key === "groupTemperature" &&
+        previousReading &&
+        sample.temperatureBasis !== previousReading.temperatureBasis)
+    ) {
+      if (segment.length) segments.push(segment)
+      segment = []
+    }
+    previousReading = sample
     const value = sample[key]
     if (value === null || !Number.isFinite(value)) {
       if (segment.length) segments.push(segment)
@@ -50,7 +61,8 @@ export function previewPaths(
       curve += ` C${middle},${previous.y} ${middle},${point.y} ${point.x},${point.y}`
     }
     line += `${curve} `
-    area += `${curve} L${points.at(-1)!.x},${baseline} L${points[0].x},${baseline} Z `
+    if (points.length > 1)
+      area += `${curve} L${points.at(-1)!.x},${baseline} L${points[0].x},${baseline} Z `
   }
   return { line, area }
 }

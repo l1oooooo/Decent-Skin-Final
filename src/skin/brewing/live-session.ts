@@ -1,3 +1,4 @@
+import { BREW_TRANSITION_MS } from "./use-brew-layout"
 import { useEffect, useMemo, useReducer } from "react"
 import type { GatewaySnapshot } from "@/gateway/types"
 import { connected } from "@/gateway/model"
@@ -142,7 +143,7 @@ export function useLiveBrewing(
     if (!type) return
     const timer = setTimeout(
       () => dispatch({ type, shotId: state.shotId! }),
-      state.phase === "complete" ? 3000 : 280
+      state.phase === "complete" ? 3000 : BREW_TRANSITION_MS
     )
     return () => clearTimeout(timer)
   }, [state.shotId, state.phase, state.autoReturn, home])

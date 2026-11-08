@@ -9,6 +9,7 @@ export interface Reading {
   frame: number
   stage: string
   targetStep?: boolean
+  temperatureBasis?: "coffee" | "water" | null
   breakBefore?: boolean
 }
 export type Outcome =

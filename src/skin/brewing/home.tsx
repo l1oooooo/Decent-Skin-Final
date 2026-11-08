@@ -15,7 +15,9 @@ export default function CandidateHome({
   onEdit,
   onAssign,
   tankCalibration,
+  sharedChart = false,
 }: {
+  sharedChart?: boolean
   s: SkinSession
   tankCalibration: TankCalibration
   onHistory: () => void
@@ -107,7 +109,11 @@ export default function CandidateHome({
             }
           </section>
           <section className="focus-chart mt-6 min-h-0 flex-1">
-            <ProfileChart profile={s.rawProfile} />
+            {sharedChart ? (
+              <div className="graph-color chart-anchor" data-chart-anchor="" />
+            ) : (
+              <ProfileChart profile={s.rawProfile} />
+            )}
           </section>
           <Notice s={s} />
         </main>

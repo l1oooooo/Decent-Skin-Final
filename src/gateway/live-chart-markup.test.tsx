@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { BrewingChart } from "../skin/brewing/chart"
 import type { Reading } from "../skin/brewing/model"
 
-it("preserves the approved live chart markup while refining Home", async () => {
+it("preserves live paths, styling, labels and gradients while adding motion", async () => {
   const samples: Reading[] = [0, 1, 2].map((elapsed) => ({
     elapsed,
     pressure: 3 + elapsed,
@@ -24,9 +24,19 @@ it("preserves the approved live chart markup while refining Home", async () => {
         temperatureUnit={temperatureUnit}
       />
     )
+    const normalized = markup.replace(
+      / data-time(?:-offset|-cap)?="[^"]*"/g,
+      ""
+    )
+    const graphics = JSON.stringify([
+      normalized.match(/<path[^>]*data-(?:area|series)[^>]*>/g),
+      normalized.match(/<defs>[\s\S]*?<\/defs>/)?.[0],
+      normalized.match(/<div class="brew-legend">[\s\S]*?<\/div>/)?.[0],
+      normalized.match(/<text[^>]*>[\s\S]*?<\/text>/g),
+    ])
     const digest = await crypto.subtle.digest(
       "SHA-256",
-      new TextEncoder().encode(markup)
+      new TextEncoder().encode(graphics)
     )
     const hash = Array.from(new Uint8Array(digest), (byte) =>
       byte.toString(16).padStart(2, "0")

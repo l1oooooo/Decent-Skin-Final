@@ -1,6 +1,7 @@
-import { memo, useId, useMemo } from "react"
+import { memo, useId, useMemo, useRef } from "react"
 import type { Reading } from "./model"
 import { previewPaths } from "./preview-paths"
+import { useChartTimeRange } from "./use-chart-time-range"
 
 export const series = [
   {
@@ -125,6 +126,8 @@ export const BrewingChart = memo(function BrewingChart({
   height,
   plannedDuration,
   plannedKeys,
+  animateTime = true,
+  shotKey,
   temperatureUnit = "C",
 }: {
   samples: Reading[]
@@ -132,6 +135,8 @@ export const BrewingChart = memo(function BrewingChart({
   height: number
   plannedDuration?: number
   plannedKeys?: readonly SeriesKey[]
+  animateTime?: boolean
+  shotKey?: string | null
   temperatureUnit?: "C" | "F"
 }) {
   const id = useId().replaceAll(":", "")
@@ -153,6 +158,16 @@ export const BrewingChart = memo(function BrewingChart({
     right = w - (planned ? 2 : 48),
     top = planned ? 16 : 38,
     bottom = h - (planned ? 2 : 34)
+  const svg = useRef<SVGSVGElement>(null)
+  useChartTimeRange({
+    svg,
+    duration: range.duration,
+    left,
+    right,
+    height: h,
+    enabled: !planned && animateTime,
+    resetKey: shotKey,
+  })
   const x = (v: number) => left + (v / range.duration) * (right - left)
   const y = (v: number) =>
     bottom - ((v - range.min) / (range.max - range.min)) * (bottom - top)
@@ -208,13 +223,14 @@ export const BrewingChart = memo(function BrewingChart({
         ))}
       </div>
       <svg
+        ref={svg}
         width="100%"
         height={h}
         viewBox={`0 0 ${w} ${h}`}
         role="img"
         aria-label={
           planned
-            ? "Complete configured targets only. Curves are visual interpolation, not exact machine transitions. Temperature is independently scaled. Incomplete series are omitted."
+            ? "Configured target segments. Curves are visual interpolation, not exact machine transitions. Temperature is independently scaled. Gaps have no defined target; different temperature sensor bases are not joined."
             : `Five extraction traces. Shared numerical left axis: pressure in bar, flow in millilitres per second, weight flow in grams per second. Independent right axis: group temperature in degrees ${temperatureUnit === "F" ? "Fahrenheit" : "Celsius"}.`
         }
       >
@@ -308,6 +324,7 @@ export const BrewingChart = memo(function BrewingChart({
             .map((n) => (
               <text
                 key={n}
+                data-time={n}
                 x={x(n)}
                 y={h - 7}
                 textAnchor={
@@ -320,89 +337,104 @@ export const BrewingChart = memo(function BrewingChart({
         {!planned &&
           markers.map((p) => (
             <g key={`${p.frame}-${p.elapsed}`}>
-              <line
-                x1={x(p.elapsed)}
-                x2={x(p.elapsed)}
-                y1={top}
-                y2={bottom}
-                stroke="oklch(0.45 0 0)"
-                strokeDasharray="2 6"
-                strokeOpacity=".65"
-              />
-              <text x={Math.min(x(p.elapsed) + 8, right - 130)} y="21">
+              <g data-time-geometry="">
+                <line
+                  x1={x(p.elapsed)}
+                  x2={x(p.elapsed)}
+                  y1={top}
+                  y2={bottom}
+                  stroke="oklch(0.45 0 0)"
+                  strokeDasharray="2 6"
+                  strokeOpacity=".65"
+                />
+              </g>
+              <text
+                data-time={p.elapsed}
+                data-time-offset={8}
+                data-time-cap={right - 130}
+                x={Math.min(x(p.elapsed) + 8, right - 130)}
+                y="21"
+              >
                 {p.stage}
               </text>
             </g>
           ))}
         <g clipPath={`url(#${id}-clip)`}>
-          {planned &&
-            samples
-              .filter((_, i) => i % 2 === 1)
-              .flatMap((point) =>
-                visibleSeries.map((spec) =>
-                  point[spec.key] === null ||
-                  samples.find((sample) => sample.frame === point.frame)?.[
-                    spec.key
-                  ] !== null ? null : (
-                    <circle
-                      key={`${point.frame}-${spec.key}`}
-                      cx={x(point.elapsed)}
-                      cy={(spec.key === "groupTemperature" ? tempY : y)(
-                        point[spec.key]!
-                      )}
-                      r={2.5}
-                      fill={spec.color}
-                    >
-                      <title>
-                        {point.stage}: {point[spec.key]} {spec.unit} configured
-                        target
-                      </title>
-                    </circle>
+          <g data-time-geometry="">
+            {planned &&
+              samples
+                .filter((_, i) => i % 2 === 1)
+                .flatMap((point) =>
+                  visibleSeries.map((spec) =>
+                    point[spec.key] === null ||
+                    samples.find((sample) => sample.frame === point.frame)?.[
+                      spec.key
+                    ] !== null ? null : (
+                      <circle
+                        key={`${point.frame}-${spec.key}`}
+                        cx={x(point.elapsed)}
+                        cy={(spec.key === "groupTemperature" ? tempY : y)(
+                          point[spec.key]!
+                        )}
+                        r={2.5}
+                        fill={spec.color}
+                      >
+                        <title>
+                          {point.stage}: {point[spec.key]} {spec.unit}{" "}
+                          configured target
+                        </title>
+                      </circle>
+                    )
                   )
-                )
-              )}
-          {(planned
-            ? (["groupTemperature", "pressure", "flow"] as const)
-            : (["pressure", "flow"] as const)
-          )
-            .filter(
-              (key) => !planned || visibleSeries.some((s) => s.key === key)
+                )}
+            {(planned
+              ? (["groupTemperature", "pressure", "flow"] as const)
+              : (["pressure", "flow"] as const)
             )
-            .map((key) => (
-              <path
-                key={`${key}-area`}
-                data-area={key}
-                d={drawing[key].area}
-                fill={`url(#${id}-${key})`}
-              />
-            ))}
-          {(
-            [
-              "groupTemperature",
-              "weightFlow",
-              "targetPressure",
-              "flow",
-              "pressure",
-            ] as const
-          )
-            .filter((key) => visibleSeries.some((s) => s.key === key))
-            .map((key) => {
-              const spec = series.find((s) => s.key === key)!
-              return (
-                <path
-                  key={key}
-                  data-series={key}
-                  d={drawing[key].line}
-                  fill="none"
-                  stroke={spec.color}
-                  strokeWidth={spec.width}
-                  strokeDasharray={key === "targetPressure" ? "1 5" : undefined}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                />
+              .filter(
+                (key) =>
+                  !planned ||
+                  (visibleSeries.some((s) => s.key === key) &&
+                    drawing[key].area.length > 0)
               )
-            })}
+              .map((key) => (
+                <path
+                  key={`${key}-area`}
+                  data-area={key}
+                  d={drawing[key].area}
+                  fill={`url(#${id}-${key})`}
+                />
+              ))}
+            {(
+              [
+                "groupTemperature",
+                "weightFlow",
+                "targetPressure",
+                "flow",
+                "pressure",
+              ] as const
+            )
+              .filter((key) => visibleSeries.some((s) => s.key === key))
+              .map((key) => {
+                const spec = series.find((s) => s.key === key)!
+                return (
+                  <path
+                    key={key}
+                    data-series={key}
+                    d={drawing[key].line}
+                    fill="none"
+                    stroke={spec.color}
+                    strokeWidth={spec.width}
+                    strokeDasharray={
+                      key === "targetPressure" ? "1 5" : undefined
+                    }
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                )
+              })}
+          </g>
         </g>
       </svg>
     </div>

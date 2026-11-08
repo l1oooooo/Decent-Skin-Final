@@ -1,6 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { Dispatch } from "react"
 import CandidateHome from "./home"
+import { ProfileChart } from "./profile-chart"
+import { useBrewLayout } from "./use-brew-layout"
 import { RollingStatus, machineStatusTone } from "./rolling-status"
 import type { TankCalibration } from "./tank"
 import type { SkinSession } from "@/skin/use-skin"
@@ -32,7 +34,6 @@ export function LiveBrewingScreen({
 }) {
   const root = useRef<HTMLDivElement>(null)
   const chart = useRef<HTMLDivElement>(null)
-  const animation = useRef<Animation | null>(null)
   const [size, setSize] = useState({ width: 1284, height: 484 })
   const expanded = s.phase !== "home" && s.phase !== "returning"
   const showingChart = s.phase !== "home"
@@ -47,78 +48,7 @@ export function LiveBrewingScreen({
           ? home.status
           : (last?.stage ?? "Brewing")
 
-  useLayoutEffect(() => {
-    const element = chart.current
-    const container = root.current
-    if (!element || !container) return
-    const layout = (animate: boolean) => {
-      const anchor = container
-        .querySelector(".focus-chart .graph-color")
-        ?.getBoundingClientRect()
-      if (!anchor) return
-      const parent = container.getBoundingClientRect()
-      const from = element.getBoundingClientRect()
-      animation.current?.cancel()
-      const compact = parent.height <= 650
-      const chartTop = parent.width <= 1050 ? 248 : compact ? 208 : 232
-      const next = expanded
-        ? {
-            left: 28,
-            top: chartTop,
-            width: parent.width - 56,
-            height: Math.max(150, parent.height - chartTop - 64),
-          }
-        : {
-            left: anchor.left - parent.left,
-            top: anchor.top - parent.top,
-            width: anchor.width,
-            height: anchor.height,
-          }
-      Object.assign(element.style, {
-        left: `${next.left}px`,
-        top: `${next.top}px`,
-        width: `${next.width}px`,
-        height: `${next.height}px`,
-      })
-      if (
-        animate &&
-        from.width &&
-        !matchMedia("(prefers-reduced-motion: reduce)").matches
-      ) {
-        animation.current = element.animate(
-          [
-            {
-              transform: `translate(${from.left - parent.left - next.left}px, ${from.top - parent.top - next.top}px) scale(${from.width / next.width}, ${from.height / next.height})`,
-            },
-            { transform: "none" },
-          ],
-          {
-            duration: expanded ? 280 : 220,
-            easing: "cubic-bezier(0.645, 0.045, 0.355, 1)",
-          }
-        )
-      }
-    }
-    for (const node of container.querySelectorAll<HTMLElement>(".focus-body")) {
-      node.inert = expanded
-      node.setAttribute("aria-hidden", String(expanded))
-    }
-    layout(showingChart)
-    let previousWidth = container.clientWidth
-    let previousHeight = container.clientHeight
-    const observer = new ResizeObserver(() => {
-      if (
-        container.clientWidth === previousWidth &&
-        container.clientHeight === previousHeight
-      )
-        return
-      previousWidth = container.clientWidth
-      previousHeight = container.clientHeight
-      layout(false)
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [expanded, showingChart])
+  useBrewLayout(root, expanded, s.phase === "returning")
   useEffect(() => {
     const node = chart.current
     if (!node) return
@@ -129,7 +59,6 @@ export function LiveBrewingScreen({
     observer.observe(node)
     return () => {
       observer.disconnect()
-      animation.current?.cancel()
     }
   }, [])
   const stale =
@@ -162,6 +91,7 @@ export function LiveBrewingScreen({
     >
       <div className="brew-home">
         <CandidateHome
+          sharedChart
           tankCalibration={tankCalibration}
           s={displayHome}
           onSettings={onSettings}
@@ -230,18 +160,24 @@ export function LiveBrewingScreen({
           ))}
         </div>
       </section>
-      <div
-        ref={chart}
-        className="brew-chart-surface"
-        data-visible={showingChart}
-        aria-hidden={!showingChart}
-      >
-        <BrewingChart
-          samples={s.samples}
-          width={size.width}
-          height={size.height}
-          temperatureUnit={home.temperatureUnit}
-        />
+      <div className="brew-chart-surface" data-visible="true">
+        <div className="brew-chart-preview" aria-hidden={showingChart}>
+          <ProfileChart profile={home.rawProfile} />
+        </div>
+        <div
+          ref={chart}
+          className="brew-chart-live"
+          aria-hidden={!showingChart}
+        >
+          <BrewingChart
+            animateTime={expanded}
+            shotKey={s.shotId}
+            samples={s.samples}
+            width={size.width}
+            height={size.height}
+            temperatureUnit={home.temperatureUnit}
+          />
+        </div>
       </div>
       {expanded &&
         (s.phase === "interrupted" ||

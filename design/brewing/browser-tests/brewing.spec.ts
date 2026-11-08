@@ -21,7 +21,7 @@ test("preserves Home, streams five traces, holds completion and returns once", a
       name: "Select Easy blooming — active pressure decline",
     })
     .click({ force: true })
-  const svg = page.locator(".brew-chart-surface .brew-chart svg")
+  const svg = page.locator(".brew-chart-live .brew-chart svg")
   const originalSvg = await svg.elementHandle()
   await page
     .getByRole("button", { name: "Simulate GHC brew", exact: true })
@@ -42,7 +42,7 @@ test("preserves Home, streams five traces, holds completion and returns once", a
   expect(
     Number(
       await page
-        .locator(".brew-chart-surface .brew-chart")
+        .locator(".brew-chart-live .brew-chart")
         .getAttribute("data-samples")
     )
   ).toBeGreaterThan(220)
@@ -72,7 +72,7 @@ test("preserves Home, streams five traces, holds completion and returns once", a
     "data-phase",
     "returning"
   )
-  await page.clock.runFor(300)
+  await page.clock.runFor(600)
   await expect(page.locator(".brew-preview")).toHaveAttribute(
     "data-phase",
     "home"
@@ -107,7 +107,7 @@ test("manual stops, duplicate ends, rapid restart and navigation stay distinct",
     "data-phase",
     "returning"
   )
-  await page.clock.runFor(300)
+  await page.clock.runFor(600)
   await expect(page.locator(".brew-toast")).toHaveText("Shot stopped")
   await page
     .getByRole("button", { name: "Test scenarios" })
@@ -213,9 +213,9 @@ test("missing scale breaks its trace, outliers expand axes, reduced motion disab
     .getByRole("button", { name: "Start new shot" })
     .click({ force: true })
   await page.clock.runFor(17000)
-  await expect(
-    page.locator(".brew-chart-surface .brew-chart svg")
-  ).toContainText("18")
+  await expect(page.locator(".brew-chart-live .brew-chart svg")).toContainText(
+    "18"
+  )
   expect(
     await page
       .locator(".brew-chart-surface")

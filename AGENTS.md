@@ -158,16 +158,25 @@ technical decisions, and the design history for previous iterations.
   popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep
   remain beside it. Steam enable reflects the acknowledged workflow setting;
   tabs never send commands. Scale is read-only.
-  Home's planned chart shows only targets defined across the complete configured
-  timeline, with the same visible-series list driving its legend. Never fill
-  inactive pump channels or bridge missing targets; mixed pump modes may show
-  temperature alone. Temperature targets must share one sensor basis. Only the
-  Home illustration is smoothed; live chart visibility is independent.
+  Home's planned chart shows every meaningful configured target segment, with
+  the same visible-series list driving its legend. Never fill inactive pump
+  channels or bridge missing targets. Temperature sensor-basis changes split
+  the curve. Unknown durations stop the placeable prefix; a smooth step with an
+  unknown starting target may show its configured endpoint only. Only the Home
+  illustration is smoothed; live chart visibility is independent.
+  Header groups wrap intrinsically when their widths plus minimum separation
+  no longer fit. Measure header height for live layout; do not infer it from a
+  fixed viewport breakpoint. The operator reports 1007 × 601 CSS pixels in the
+  tablet browser; Decaid's embedded WebView still needs direct measurement.
   Live pressure/flow gradient areas and target pressure, group temperature and
   scale weight-flow lines retain exact received samples and missing-value gaps.
   The single App-owned live presentation holds confirmed completion for 3 seconds,
   returns Home and emits one toast; interrupted/unclassified outcomes stay explicit.
   New shots supersede holds; replay does not navigate or manufacture elapsed time.
+  Home and Brewing share one 500ms panel/chart transition, with separate target
+  and measured layers. Live time-domain expansion uses a 420ms coordinate
+  animation while preserving raw samples and the 30s/10s range policy. Resize,
+  hidden views and reduced motion settle animation; new shots reset the domain.
   The user confirmed the standard removable DE1 tank for this deployment; show
   estimated mL only with fresh machine data and no refill kit.
 - `design/brewing` is a development-only event source and preview. It imports

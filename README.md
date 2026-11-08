@@ -19,7 +19,7 @@ npm run test:e2e
 npm run package:skin
 ```
 
-`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.3.1.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
+`npm run package:skin` builds and inspects `artifacts/decent-skin-codex-0.3.2.zip` with `index.html`, `manifest.json`, fonts and assets at the archive root. It rejects development API overrides and writes a checksum/inventory report to `artifacts/skin-release.json`. Use `npm run verify:skin` to inspect an existing archive again. Install that archive through Decaid's skin management during supervised tablet acceptance. No Node server is required on the tablet. `dist/` and generated archives are not committed.
 
 An installed skin connects to its serving hostname on API port **8080**, independent of its skin port. For desktop development, set `VITE_DECAID_URL` in `.env.local` (see `.env.example`) to the tablet's gateway origin, then restart Vite. This is a build-time setting: a release intended for installation on the tablet should normally be built without an override. Do not publish a build that points to the isolated test fixture.
 
@@ -35,7 +35,7 @@ then select **Decent Focus**. Future releases retain that asset name; use
 Decaid’s skin update function to install them. Source-code archives and Git
 pushes alone are not compiled skin updates.
 
-The 0.3.1 refinement candidate uses the physical group-head controller for all daily starts
+The 0.3.2 refinement candidate uses the physical group-head controller for all daily starts
 and stops. Home groups Steam, Hot Water and Flush in one **Machine Setting** popover
 with tabs and a persistent Steam enable switch. It has no footer or daily
 start/stop commands in the popover. There are
@@ -277,3 +277,14 @@ mixed pressure/flow profiles may display only temperature. Live brewing is
 unchanged. See [changes, validation and tablet recheck](docs/REFINEMENT-0.3.1.md).
 This is a local candidate; installing or replacing the working v0.3.0 skin
 requires approval.
+
+
+## 0.3.2 refinement candidate
+
+This pending-review candidate is on `codex/focus-0.3.2-refinements`. Header groups
+wrap only when their contents cannot fit. Home displays meaningful partial
+Pressure/Flow/Temperature targets without joining gaps. Brewing time-range
+expansions zoom smoothly, and one shared transition slides both panels while
+expanding or contracting the chart. Preview targets and live telemetry remain
+separate graphics. See [implementation and validation](docs/REFINEMENT-0.3.2.md).
+The installed v0.3.1 skin has not been replaced.

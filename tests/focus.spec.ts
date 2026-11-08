@@ -111,7 +111,7 @@ test("physical starts roll real stages, the footer stays quiet, completion has n
   await expect(page.locator(".rolling-window")).toContainText("Extraction")
   await expect(page.locator(".rolling-icon > span")).toHaveCount(9)
   await expect(
-    page.locator(".brew-chart-surface [data-series=pressure]")
+    page.locator(".brew-chart-live [data-series=pressure]")
   ).toHaveAttribute("d", /M.+L/)
   await page.screenshot({ path: "artifacts/fidelity/test-brewing.png" })
   await state(request, { state: "espresso", elapsed: 22 })

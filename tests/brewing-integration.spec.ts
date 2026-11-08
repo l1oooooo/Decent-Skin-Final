@@ -43,7 +43,7 @@ test("real fixture events drive five traces, a frozen completion and one automat
   await request.post(`${fixture}/__test/state`, {
     data: { elapsed: 12, substate: "pouring" },
   })
-  const chart = page.locator(".brew-chart-surface")
+  const chart = page.locator(".brew-chart-live")
   await expect(chart.locator("[data-series]")).toHaveCount(5)
   await expect(chart.locator("[data-area]")).toHaveCount(2)
   for (const key of [
@@ -64,7 +64,7 @@ test("real fixture events drive five traces, a frozen completion and one automat
   const completion = await page.evaluate(async (origin) => {
     const root = document.querySelector(".brew-preview")!
     const toast = document.querySelector(".brew-toast")!
-    const chart = document.querySelector(".brew-chart-surface")!
+    const chart = document.querySelector(".brew-chart-live")!
     const phases: { phase: string; time: number }[] = []
     const toasts: string[] = []
     const traces = new Set<string>()
@@ -156,29 +156,54 @@ test("rapid restart cancels the old hold; missing scale and disconnect never inv
   page,
   request,
 }) => {
+  page.on("requestfailed", (request) =>
+    console.log("Failed request", request.url(), request.failure())
+  )
+  page.on("response", (response) => {
+    if (response.status() >= 400)
+      console.log("HTTP error", response.status(), response.url())
+  })
+  page.on("websocket", (socket) =>
+    socket.on("close", () => console.log("Socket closed", socket.url()))
+  )
   await page.goto("/", { waitUntil: "networkidle" })
   await expect(page.locator(".candidate-status")).toHaveText("DE1Ready", {
     timeout: 90000,
   })
-  await request.post(`${fixture}/__test/state`, {
-    data: { state: "espresso", elapsed: 1, shotId: "first" },
-  })
-  await request.post(`${fixture}/__test/state`, { data: { elapsed: 2 } })
-  await expect(page.locator(".brew-preview")).toHaveAttribute(
-    "data-phase",
-    "active"
-  )
-  await request.post(`${fixture}/__test/state`, {
-    data: { state: "idle", elapsed: 3, reason: "apiStop" },
-  })
-  await expect(page.locator(".rolling-window")).toHaveText("Shot stopped")
-  await request.post(`${fixture}/__test/state`, {
-    data: { state: "espresso", elapsed: 4, shotId: "second" },
-  })
-  await expect(page.locator(".brew-preview")).toHaveAttribute(
-    "data-phase",
-    "active"
-  )
+  const restart = await page.evaluate(async (origin) => {
+    const root = document.querySelector(".brew-preview")!
+    const status = document.querySelector(".rolling-window")!
+    const update = async (data: Record<string, unknown>) => {
+      const response = await fetch(`${origin}/__test/state`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok) throw new Error("Fixture state update failed")
+    }
+    const until = async (predicate: () => boolean) => {
+      const deadline = performance.now() + 12000
+      while (!predicate()) {
+        if (performance.now() > deadline)
+          throw new Error(
+            `Fixture transition stalled: ${root.getAttribute("data-phase")} / ${status.textContent}`
+          )
+        await new Promise((resolve) => setTimeout(resolve, 30))
+      }
+    }
+    await update({ state: "espresso", elapsed: 1, shotId: "first" })
+    await update({ elapsed: 2 })
+    await until(() => root.getAttribute("data-phase") === "active")
+    await update({ state: "idle", elapsed: 3, reason: "apiStop" })
+    await until(() => status.textContent === "Shot stopped")
+    const stopped = status.textContent
+    const stopTime = performance.now()
+    await update({ state: "espresso", elapsed: 4, shotId: "second" })
+    await until(() => root.getAttribute("data-phase") === "active")
+    return { stopped, restartDelay: performance.now() - stopTime }
+  }, fixture)
+  expect(restart.stopped).toBe("Shot stopped")
+  expect(restart.restartDelay).toBeLessThan(3000)
   await request.post(`${fixture}/__test/state`, {
     data: { elapsed: 12, scale: false },
   })

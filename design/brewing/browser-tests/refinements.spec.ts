@@ -6,13 +6,27 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(new Date("2026-11-06T12:01:00Z"))
 })
 
-test("Home shows complete target curves and updates its legend with the selected profile", async ({
+test("Home shows configured target segments and updates its legend with the selected profile", async ({
   page,
 }) => {
   const chart = page.locator('[aria-label="Planned profile chart"]')
-  await expect(chart.locator("[data-series]")).toHaveCount(1)
-  await expect(chart.locator("[data-area]")).toHaveCount(1)
-  await expect(chart.locator(".brew-legend")).toHaveText("Temperature")
+  await expect(chart.locator("[data-series]")).toHaveCount(3)
+  await expect(chart.locator("[data-area]")).toHaveCount(2)
+  await expect(chart.locator(".brew-legend")).toHaveText(
+    "PressureFlowTemperature"
+  )
+  await page
+    .getByRole("button", {
+      name: "Select Easy blooming — active pressure decline",
+      exact: true,
+    })
+    .click({ force: true })
+  await page.setViewportSize({ width: 1007, height: 601 })
+  await page.clock.runFor(100)
+  await expect(chart.locator("[data-area]")).toHaveCount(3)
+  await page.screenshot({ path: "artifacts/v032/mixed-profile-1007.png" })
+  await page.setViewportSize({ width: 1340, height: 800 })
+  await page.clock.runFor(100)
   await page
     .getByRole("button", { name: "Select 80's Espresso", exact: true })
     .click({ force: true })

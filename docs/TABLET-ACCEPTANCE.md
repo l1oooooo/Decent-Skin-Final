@@ -21,12 +21,22 @@ before building. Do not remove someone else's development configuration;
 prepare the release in a clean checkout when necessary. The installed skin
 uses its serving hostname on API port 8080. It needs no Node process on Android.
 
-The current candidate archive is `artifacts/decent-skin-codex-0.3.0.zip`. Its inspection report is
+The current pending-review candidate archive is `artifacts/decent-skin-codex-0.3.2.zip`. Its inspection report is
 `artifacts/skin-release.json`: SHA-256, byte count, file inventory, manifest,
 source commit and tracked changes. Re-run verification after committing to
 associate the report with the committed source. Rebuilding may change ZIP
 timestamps and therefore its checksum; identify the exact file transferred.
 The report is generated locally and never marks a device accepted.
+
+### 0.3.2 review
+
+Keep v0.3.1 installed until the candidate is reviewed. The operator measured
+1007 × 601 CSS pixels in the tablet browser; record the embedded Decaid WebView
+viewport separately. Review intrinsic header wrapping, mixed-control preview
+gaps, a long extraction crossing several 10-second domain boundaries, both
+panel transitions, the three-second completion hold, rapid restart and reduced
+motion. Local fixture checks do not establish WebView frame rate or hardware
+acceptance. See [candidate evidence](REFINEMENT-0.3.2.md).
 
 ### Phase 5 / 0.3.0 acceptance
 

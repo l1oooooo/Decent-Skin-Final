@@ -1,5 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`preserves the approved live chart markup while refining Home 1`] = `"5ee7cca703c58b88fa0478d585a0f24dd315c5bdfa4aec5c9622b783cabd8653"`;
+exports[`preserves live paths, styling, labels and gradients while adding motion 1`] = `"1e13f8be777716c2c1a6bdabf3794deec88a8ce05233048de7e3fae8dd7425ff"`;
 
-exports[`preserves the approved live chart markup while refining Home 2`] = `"6bf98519ca12cc94d5ed4de945cf0d7c8fd9a84c3510d81fb9cf9defa43f8397"`;
+exports[`preserves live paths, styling, labels and gradients while adding motion 2`] = `"05b7386a61409e8947db8e75572b0e12aa80ce6486099cb25d984965626f17b2"`;

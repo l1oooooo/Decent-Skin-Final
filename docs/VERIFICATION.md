@@ -1,5 +1,26 @@
 # Focus release-candidate verification
 
+
+## 0.3.2 — responsive header, target segments and coordinated motion
+
+Local candidate on `codex/focus-0.3.2-refinements`; not published or installed.
+See [implementation, evidence and caveats](REFINEMENT-0.3.2.md).
+
+- TypeScript, ESLint, 151 gateway/unit tests and production build passed.
+- 18 development model tests and the production isolation audit passed.
+- 11 unique focused preview browser checks passed, including the operator's
+  reported 1007 × 601 browser viewport, intrinsic threshold neighbors,
+  mixed targets, utility gates, synchronized transitions, interrupted return,
+  live domain animation, completion, navigation and reduced motion.
+- Three unique isolated production checks passed for completion, rapid restart /
+  connection loss, and domain expansion. The restart fixture was intermittent
+  before an isolated diagnostic pass; its earlier failures remain documented.
+  This is focused validation, not a full end-to-end suite result.
+- Package/verification passed: 11 files, 614043 bytes; SHA-256
+  `4551798abdba966134cb61c32c5d159d558f36c0c1762ac02969cf0e8af10906`.
+- Real WebView dimensions, frame pacing and hardware acceptance remain pending.
+  No hardware commands were issued. The existing bundle-size advisory remains.
+
 ## 0.3.1 — Machine Setting and complete Home previews
 
 Local refinement candidate on `codex/focus-0.3.1-refinements`, based on the

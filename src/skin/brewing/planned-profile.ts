@@ -60,39 +60,23 @@ export function plannedProfile(profile: Profile | null) {
 export const previewKeys = ["pressure", "flow", "groupTemperature"] as const
 export type PreviewKey = (typeof previewKeys)[number]
 
-export function completeProfilePreview(profile: Profile | null) {
+export function profilePreview(profile: Profile | null) {
   const plan = plannedProfile(profile)
   const steps = profile?.steps ?? []
-  const fullTimeline =
-    steps.length > 0 && plan.samples.length === steps.length * 2
-  const sensor = steps[0]?.sensor
-  const sameTemperatureBasis =
-    (sensor === "coffee" || sensor === "water") &&
-    steps.every((step) => step.sensor === sensor)
-  const samples = plan.samples.map((sample) => ({
-    ...sample,
-    // Home shows the configured temperature target, not a measured group value.
-    groupTemperature: sameTemperatureBasis
-      ? finite(steps[sample.frame].temperature)
-      : null,
-  }))
-  const visibleKeys = previewKeys.filter(
-    (key) =>
-      fullTimeline &&
-      samples.every(
-        (sample) => sample[key] !== null && Number.isFinite(sample[key])
-      )
-  )
-  return {
-    ...plan,
-    visibleKeys,
-    samples: samples.map((sample) => ({
+  const samples = plan.samples.map((sample): Reading => {
+    const step = steps[sample.frame]
+    const temperatureBasis =
+      step.sensor === "coffee" || step.sensor === "water" ? step.sensor : null
+    return {
       ...sample,
-      pressure: visibleKeys.includes("pressure") ? sample.pressure : null,
-      flow: visibleKeys.includes("flow") ? sample.flow : null,
-      groupTemperature: visibleKeys.includes("groupTemperature")
-        ? sample.groupTemperature
-        : null,
-    })),
-  }
+      temperatureBasis,
+      groupTemperature: temperatureBasis ? finite(step.temperature) : null,
+    }
+  })
+  const visibleKeys = previewKeys.filter((key) =>
+    samples.some(
+      (sample) => sample[key] !== null && Number.isFinite(sample[key])
+    )
+  )
+  return { ...plan, samples, visibleKeys }
 }
