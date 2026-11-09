@@ -79,8 +79,8 @@ Nine focused production browser scenarios passed across targeted runs; two final
 preview transition scenarios passed. This is not a full application E2E run.
 See [the verification record](VERIFICATION.md#036--rendering-stability-and-coordinated-motion-candidate)
 for coverage, test-harness corrections and the archive checksum. The local ZIP
-contains 11 verified files (624,205 bytes). Publication and installation remain
-outside this candidate handoff.
+contains 11 verified files (624,205 bytes). GitHub publication was explicitly
+authorized on November 9, 2026 after candidate review. Tablet installation remains a separate user action.
 
 ## Navigation annotation follow-up
 

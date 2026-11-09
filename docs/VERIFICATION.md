@@ -2,8 +2,9 @@
 
 ## 0.3.6 — rendering stability and coordinated motion candidate
 
-Local candidate based on v0.3.5; no publication, deployment or tablet installation
-performed. See [root-cause investigation, implementation and motion review](REFINEMENTS-v0.3.6.md)
+Based on v0.3.5. GitHub publication was explicitly authorized on November 9,
+2026 after candidate review. No tablet deployment or installation was performed.
+See [root-cause investigation, implementation and motion review](REFINEMENTS-v0.3.6.md)
 and the [pending tablet recheck](TABLET-ACCEPTANCE.md#v036-candidate-review--pending).
 
 - Frame instrumentation identified shared pending-state disabled styling across
