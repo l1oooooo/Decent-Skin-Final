@@ -130,7 +130,7 @@ test("utility patches agree with Home and failed sections retain drafts", async 
     .getByRole("button", { name: "Return to Home", exact: true })
     .click()
   await page
-    .getByRole("button", { name: "Machine Setting", exact: true })
+    .getByRole("button", { name: "Hardware settings", exact: true })
     .click()
   await expect(
     page.getByRole("button", { name: "Increase steam time", exact: true })

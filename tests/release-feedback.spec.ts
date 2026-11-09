@@ -41,7 +41,7 @@ test("Home has quiet footer, text-only scale, live steam reading and profile edi
     .getByLabel("Steam temperature", { exact: true })
   await expect(steam).toHaveText(/Steam\s*50\s*°C/)
   await page
-    .getByRole("button", { name: "Machine Setting", exact: true })
+    .getByRole("button", { name: "Hardware settings", exact: true })
     .click()
   await page
     .getByRole("button", { name: "Edit steam temperature", exact: true })
@@ -295,7 +295,7 @@ test("keypad supports decimal correction and physical keys; integer utilities re
   await page.keyboard.press("Enter")
   await expect(dialog).toHaveCount(0)
   await page
-    .getByRole("button", { name: "Machine Setting", exact: true })
+    .getByRole("button", { name: "Hardware settings", exact: true })
     .click()
   await page
     .getByRole("button", { name: "Edit steam time", exact: true })

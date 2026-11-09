@@ -5,7 +5,7 @@ test.beforeEach(async ({ request }) => {
   await request.post(`${fixture}/__test/reset`)
 })
 
-test("Machine Setting tabs are read-only, anchored, touchable and keyboard accessible", async ({
+test("Hardware settings tabs are read-only, anchored, touchable and keyboard accessible", async ({
   page,
   request,
 }) => {
@@ -15,14 +15,14 @@ test("Machine Setting tabs are read-only, anchored, touchable and keyboard acces
   )
   const nav = page.getByRole("navigation", { name: "Machine navigation" })
   await expect(nav.getByRole("button")).toHaveCount(4)
-  await expect(nav).toHaveText("Machine SettingShot historySettingsSleep")
+  await expect(nav).toHaveText("Hardware settingsShot historySettingsSleep")
   const trigger = nav.getByRole("button", {
-    name: "Machine Setting",
+    name: "Hardware settings",
     exact: true,
   })
   await trigger.click()
   const dialog = page.getByRole("dialog", {
-    name: "Machine Setting",
+    name: "Hardware settings",
     exact: true,
   })
   await expect(dialog).toBeVisible()
@@ -104,7 +104,7 @@ test("Steam switch follows acknowledged settings, rejects failures and blocks du
     { timeout: 90000 }
   )
   const trigger = page.getByRole("button", {
-    name: "Machine Setting",
+    name: "Hardware settings",
     exact: true,
   })
   await trigger.click()
@@ -116,7 +116,7 @@ test("Steam switch follows acknowledged settings, rejects failures and blocks du
   await toggle.click()
   await expect(
     page
-      .getByRole("dialog", { name: "Machine Setting", exact: true })
+      .getByRole("dialog", { name: "Hardware settings", exact: true })
       .getByRole("alert")
   ).toContainText("Section write rejected")
   await expect(toggle).toBeChecked()

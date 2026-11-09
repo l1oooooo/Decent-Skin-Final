@@ -79,5 +79,12 @@ Nine focused production browser scenarios passed across targeted runs; two final
 preview transition scenarios passed. This is not a full application E2E run.
 See [the verification record](VERIFICATION.md#036--rendering-stability-and-coordinated-motion-candidate)
 for coverage, test-harness corrections and the archive checksum. The local ZIP
-contains 11 verified files (624,187 bytes). Publication and installation remain
+contains 11 verified files (624,204 bytes). Publication and installation remain
 outside this candidate handoff.
+
+## Navigation annotation follow-up
+
+The All profiles action is now text-only. The utility trigger and popover title
+read Hardware settings, with a Lucide wrench replacing the gauge icon. Tabs,
+settings behavior and touch targets are unchanged. Browser accessible-name
+selectors follow the new label; the updated main preview was visually checked.

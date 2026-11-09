@@ -46,7 +46,7 @@ test("header steam follows live readings even with heating off, with no header c
   await steam.click()
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await page
-    .getByRole("button", { name: "Machine Setting", exact: true })
+    .getByRole("button", { name: "Hardware settings", exact: true })
     .click()
   await page.getByRole("switch", { name: "Enable steam" }).click()
   await expect(

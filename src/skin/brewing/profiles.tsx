@@ -1,4 +1,4 @@
-import { Library, Search } from "lucide-react"
+import { Library } from "lucide-react"
 import type { SkinSession } from "@/skin/use-skin"
 import { Action } from "@/skin/primitives"
 import dFlow from "@/skin/assets/d-flow.jpg"
@@ -100,7 +100,6 @@ export function CandidateProfiles({
             onBrowse()
           }}
         >
-          <Search size={16} aria-hidden="true" />
           All profiles
         </Action>
       </div>
