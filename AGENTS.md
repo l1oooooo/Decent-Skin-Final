@@ -167,10 +167,10 @@ technical decisions, and the design history for previous iterations.
 - The approved Phase 4.1 Home/brewing presentation lives in `src/skin/brewing`.
   Five real favorites sit above artwork; the header shows machine readiness,
   independent of the rolling shot-stage title. Brewing displays the existing
-  shot-captured profileName as a stable primary heading above the secondary
+  shot-captured profileName as a stable primary heading below the secondary
   rolling status. Never substitute the mutable Home selection during a shot.
   Long names wrap to two lines. Brewing uses equal safe-area-aware block padding
-  and one shared gap between the heading, rolling status and metrics/chart group.
+  and one shared gap between the rolling status, heading and metrics/chart group.
   The animated chart follows a flex-layout anchor, not a fixed vertical offset.
   Machine Settings opens one anchored
   popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep

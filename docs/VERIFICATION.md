@@ -6,6 +6,28 @@ Local candidate pending user review. Phase 6 QA/release preparation, GitHub
 publication and tablet installation are deferred until approval. See the
 [implementation and review notes](REFINEMENTS-v0.3.7.md).
 
+### Component order refinement
+
+- Only the two JSX blocks were reordered: rolling status, then profile title,
+  followed by the existing metrics/chart group. No production CSS, measurement,
+  transition, telemetry, lifecycle or notification code changed.
+- `npm run check` passed TypeScript, ESLint, 182 unit tests and production build.
+  The first lint run raced Playwright's startup removal of `test-results` and
+  stopped with ENOENT; rerunning after startup passed without a source change.
+- Three focused browser scenarios passed across targeted runs: synchronized
+  transitions/hidden navigation, captured-title stability, and long/unbroken names
+  at 1340 × 800, 1007 × 601 and 800 × 480. Updated spacing assertions passed.
+  The long-name case first timed out loading the Home fixture profile at 30s,
+  before entering brewing; its rerun used the existing 90s fixture-load allowance
+  and passed. No app behavior or timing was changed for the rerun.
+- Before/after screenshot comparisons found zero changed pixels from the metrics
+  downward, for the short title at 1007 × 601 and long titles at all three sizes.
+  The reordered short and compact long-title screenshots were visually reviewed.
+- The refreshed ZIP passed packaging verification: 11 files, 624,404 bytes.
+  SHA-256: `89becbe33b41b43703d3be599284fd2b89aa4710f662e51702e32c79cf3f6bb7`.
+- This remains the local v0.3.7 review candidate; no publication, installation,
+  Phase 6 QA or actual Samsung WebView validation was performed.
+
 ### Spacing refinement
 
 - One flex parent now supplies equal top/bottom padding from eight spacing units

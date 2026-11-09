@@ -153,7 +153,9 @@ test("long and unbroken shot titles preserve metric and chart spacing at referen
     data: { profileTitle: name },
   })
   await page.goto("/")
-  await expect(page.locator(".focus-profile-heading h1")).toHaveText(name)
+  await expect(page.locator(".focus-profile-heading h1")).toHaveText(name, {
+    timeout: 90000,
+  })
   await request.post(`${fixture}/__test/state`, {
     data: {
       state: "espresso",
@@ -234,13 +236,13 @@ test("long and unbroken shot titles preserve metric and chart spacing at referen
     expect(bounds.fullTitle).toBe(name)
     expect(bounds.titleX).toBe(bounds.statusX)
     expect(bounds.height).toBe(bounds.lineHeight * 2)
-    expect(bounds.statusY - bounds.titleBottom).toBe(16)
-    expect(bounds.dataTop - bounds.statusBottom).toBe(
-      bounds.statusY - bounds.titleBottom
+    expect(bounds.titleTop - bounds.statusBottom).toBe(16)
+    expect(bounds.dataTop - bounds.titleBottom).toBe(
+      bounds.titleTop - bounds.statusBottom
     )
-    expect(bounds.titleTop).toBe(bounds.viewportHeight - bounds.chartBottom)
-    expect(bounds.titleTop).toBe(32)
-    expect(bounds.metricsY).toBeGreaterThanOrEqual(bounds.statusBottom)
+    expect(bounds.statusY).toBe(bounds.viewportHeight - bounds.chartBottom)
+    expect(bounds.statusY).toBe(32)
+    expect(bounds.metricsY).toBeGreaterThanOrEqual(bounds.titleBottom)
     expect(bounds.chartTop).toBe(bounds.expectedTop)
     expect(bounds.svgTop).toBeGreaterThanOrEqual(bounds.metricsBottom)
     expect(bounds.chartBottom).toBeLessThanOrEqual(bounds.viewportHeight)

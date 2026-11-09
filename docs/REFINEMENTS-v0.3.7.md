@@ -4,7 +4,7 @@ Local candidate based on the user-approved v0.3.6, pending review. Phase 6 QA,
 GitHub publication and tablet installation have not been started.
 
 The live screen displays the shot's existing captured `profileName` as its
-primary heading, above the rolling status. It does not read the mutable Home
+primary heading, below the rolling status. It does not read the mutable Home
 profile or add a new capture mechanism. The existing start event changes this
 name for a new shot; telemetry, stage changes and completion retain it. The
 heading DOM stays mounted and has no independent animation. A missing captured
@@ -21,7 +21,7 @@ State-specific icon colors and rolling animation remain unchanged.
 The follow-up spacing refinement uses a parent flex column with equal block
 padding (eight spacing units, 32px by default, increased equally for the larger
 of the top/bottom safe-area insets). A shared four-unit gap (16px) separates the
-heading, rolling status and metrics/chart group. Metrics remain above the chart
+rolling status, heading and metrics/chart group. Metrics remain above the chart
 with their existing type, order and column widths. The chart fills the remaining
 space through a measured flex anchor instead of fixed vertical offsets.
 A resize observer updates geometry for viewport/font changes; the name stays
@@ -54,3 +54,10 @@ Home expectation; the rerun used the repository's standard 30s expectation and
 passed. No production timing or state logic was changed to satisfy the test.
 See [the verification record](VERIFICATION.md#037--stable-brewing-profile-heading-candidate)
 for packaging evidence and the pending device check.
+
+## Component order follow-up
+
+The rolling status now precedes the profile heading in DOM order. This is the
+only production change for this follow-up: no CSS, chart geometry, metrics,
+animation or state logic changed. Existing heights and parent gaps preserve the
+metrics and chart bounds. The candidate remains local, pending review.
