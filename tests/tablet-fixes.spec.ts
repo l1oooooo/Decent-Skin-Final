@@ -139,7 +139,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
   ]) {
     await page.setViewportSize(viewport)
     for (const label of [
-      "Hardware settings",
+      "Machine Settings",
       "All profiles",
       "Increase temperature",
       "Decrease dose",
@@ -199,10 +199,10 @@ test("landscape Home fits every panel and touch target without scrolling", async
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
   await page
-    .getByRole("button", { name: "Hardware settings", exact: true })
+    .getByRole("button", { name: "Machine Settings", exact: true })
     .click()
   await expect(
-    page.getByRole("dialog", { name: "Hardware settings" })
+    page.getByRole("dialog", { name: "Machine Settings" })
   ).toBeInViewport({ ratio: 1 })
   await page
     .getByRole("button", {

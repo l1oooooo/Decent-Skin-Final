@@ -35,18 +35,20 @@ and the [pending tablet recheck](TABLET-ACCEPTANCE.md#v036-candidate-review--pen
   No production notification behavior was changed.
 - Final `npm run check` passed: TypeScript, ESLint, 182 gateway/unit tests and
   production build. `npm run package:skin` and `npm run verify:skin` passed:
-  11 files, 624,204 bytes, relative assets and bundled fonts/artwork, no fixture
+  11 files, 624,205 bytes, relative assets and bundled fonts/artwork, no fixture
   or development origin. SHA-256:
-  `4d672e2c5f9ff34d9fe2bfc1340aa84904a98c7d38e3b4f394ec5fbeefde6a07`.
+  `0bdb1ae9696d2e761583e928072038c859cc2da7b880a2df6022da4b2e7a4da1`.
 - Production isolation: 18 model tests passed; 2,458 modules checked with no
   development preview or simulator imports/content.
-- Navigation annotation follow-up: All profiles is text-only; Hardware settings
-  uses a wrench icon, with matching popover and accessible labels. Visual preview,
+- Navigation annotation follow-up: All profiles is text-only; Machine Settings
+  uses a sliders icon, with matching popover and accessible labels. Visual preview,
   `npm run check` and packaging passed again. The existing focused utility test
   passed keyboard navigation, anchoring, touch targets, dismissal and reduced
   motion with no fixture writes. Its initial 120s total timeout interrupted the
   final reduced-motion step; the rerun passed in 2.1 minutes with a CLI-only 240s
   timeout. Production timing and command gates were not changed.
+  The final Machine Settings/sliders revision passed the same focused check
+  again (1.6 minutes), plus all 182 unit tests, build and archive verification.
 - Samsung WebView smoothness, actual label disappearance and hardware behavior
   remain unverified. The existing Vite bundle-size advisory remains.
 

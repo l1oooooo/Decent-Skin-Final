@@ -146,13 +146,13 @@ test("one utility popover keeps tabs stable, preserves focus and enforces brewin
     if (r.method() !== "GET") writes.push(r.url())
   })
   const trigger = page.getByRole("button", {
-    name: "Hardware settings",
+    name: "Machine Settings",
     exact: true,
   })
   await trigger.click({ force: true })
   await page.clock.runFor(200)
   const popover = page.getByRole("dialog", {
-    name: "Hardware settings",
+    name: "Machine Settings",
     exact: true,
   })
   const before = await popover.boundingBox()

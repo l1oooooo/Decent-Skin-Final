@@ -166,7 +166,7 @@ technical decisions, and the design history for previous iterations.
   their history is in `docs/design/HISTORY.md` and Git.
 - The approved Phase 4.1 Home/brewing presentation lives in `src/skin/brewing`.
   Five real favorites sit above artwork; the header shows machine readiness,
-  independent of the rolling shot-stage title. Hardware settings opens one anchored
+  independent of the rolling shot-stage title. Machine Settings opens one anchored
   popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep
   remain beside it. Steam enable reflects the acknowledged workflow setting;
   tabs never send commands. Disconnected scale text opens Connections without

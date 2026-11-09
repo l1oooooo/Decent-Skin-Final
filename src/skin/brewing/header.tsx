@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/popover"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { History, Settings, Power, Wrench, X } from "lucide-react"
+import { History, Settings, Power, SlidersHorizontal, X } from "lucide-react"
 import type { SkinSession } from "@/skin/use-skin"
 import { format } from "@/skin/use-skin"
 import { Stepper } from "@/skin/controls"
@@ -157,8 +157,8 @@ export function CandidateHeader({
       <nav className="candidate-actions" aria-label="Machine navigation">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger className="candidate-action">
-            <Wrench size={16} aria-hidden="true" />
-            Hardware settings
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            Machine Settings
           </PopoverTrigger>
           <PopoverContent
             align="end"
@@ -166,8 +166,8 @@ export function CandidateHeader({
             className="candidate-popover focus-skin !gap-0 !shadow-none !ring-0"
           >
             <div className="candidate-popover-title">
-              <PopoverTitle>Hardware settings</PopoverTitle>
-              <PopoverClose aria-label="Close hardware settings">
+              <PopoverTitle>Machine Settings</PopoverTitle>
+              <PopoverClose aria-label="Close machine settings">
                 <X size={18} />
               </PopoverClose>
             </div>

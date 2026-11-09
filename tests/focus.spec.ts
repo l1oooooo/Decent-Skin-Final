@@ -152,7 +152,7 @@ test("utility settings persist; starting and stopping stay on the physical group
     ["Flush", "flush"],
   ]) {
     await page
-      .getByRole("button", { name: "Hardware settings", exact: true })
+      .getByRole("button", { name: "Machine Settings", exact: true })
       .click()
     await page
       .getByRole("tab", {
@@ -177,7 +177,7 @@ test("utility settings persist; starting and stopping stay on the physical group
     ).toHaveText(
       label === "Steam" ? "35s" : label === "Hot water" ? "16s" : "6s"
     )
-    const card = page.getByRole("dialog", { name: "Hardware settings" })
+    const card = page.getByRole("dialog", { name: "Machine Settings" })
     await expect(card).not.toContainText("Press")
     await expect(card.getByRole("button", { name: /^Start / })).toHaveCount(0)
     await state(request, { state: path })
@@ -244,10 +244,10 @@ test("empty workflows can choose their first profile and named grind settings re
   await state(request, { emptyProfile: true, grinderSetting: "Medium-fine" })
   await page.goto("/", { waitUntil: "networkidle" })
   await page
-    .getByRole("button", { name: "Hardware settings", exact: true })
+    .getByRole("button", { name: "Machine Settings", exact: true })
     .click()
   await expect(
-    page.getByRole("dialog", { name: "Hardware settings", exact: true })
+    page.getByRole("dialog", { name: "Machine Settings", exact: true })
   ).toBeVisible()
   await page.keyboard.press("Escape")
   await page
