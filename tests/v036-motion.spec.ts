@@ -77,7 +77,12 @@ test("four regions share a reversible clock, hidden navigation frees space and s
   ])
   const live = await page.locator(".brew-live").boundingBox()
   expect(live!.y).toBe(12)
-  expect((await page.locator(".brew-chart-surface").boundingBox())!.y).toBe(136)
+  const profileHeight = await page
+    .locator(".brew-profile-heading")
+    .evaluate((element) => (element as HTMLElement).offsetHeight)
+  expect((await page.locator(".brew-chart-surface").boundingBox())!.y).toBe(
+    136 + profileHeight
+  )
   await page.screenshot({ path: "artifacts/v036/brewing-1007.png" })
   await state({ state: "idle", reason: "apiStop", elapsed: 25 })
   await expect(page.locator(".brew-preview")).toHaveAttribute(

@@ -21,6 +21,9 @@ export function useBrewLayout(
       container.closest(".focus-app") ?? container
     ).querySelector<HTMLElement>(".candidate-header")!
     sharedHeader.current = header
+    const profileHeading = container.querySelector<HTMLElement>(
+      ".brew-profile-heading"
+    )!
     const body = container.querySelector<HTMLElement>(".focus-body")!
     const leftPanel = body.querySelector<HTMLElement>(
       ":scope > aside:first-child"
@@ -40,7 +43,8 @@ export function useBrewLayout(
       const headerHeight = header?.offsetHeight ?? 0
       container.style.setProperty("--brew-header-height", `${headerHeight}px`)
       const home = anchor.getBoundingClientRect()
-      const top = window.innerHeight <= 650 ? 136 : 160
+      const top =
+        (window.innerHeight <= 650 ? 136 : 160) + profileHeading.offsetHeight
       const full = {
         left: 28,
         top,
@@ -144,6 +148,7 @@ export function useBrewLayout(
         container.clientWidth,
         container.clientHeight,
         header?.offsetHeight ?? 0,
+        profileHeading.offsetHeight,
         anchor.offsetLeft,
         anchor.offsetTop,
         anchor.offsetWidth,
@@ -163,6 +168,7 @@ export function useBrewLayout(
     observer.observe(container)
     if (header) observer.observe(header)
     observer.observe(anchor)
+    observer.observe(profileHeading)
     const settle = () => layout(false)
     const hidden = () => {
       if (document.hidden) settle()

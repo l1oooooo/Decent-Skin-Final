@@ -1,5 +1,46 @@
 # Focus release-candidate verification
 
+## 0.3.7 — stable brewing profile heading candidate
+
+Local candidate pending user review. Phase 6 QA/release preparation, GitHub
+publication and tablet installation are deferred until approval. See the
+[implementation and review notes](REFINEMENTS-v0.3.7.md).
+
+- The heading reads the existing shot-captured profileName. No gateway,
+  live-session, reducer, sample or completion logic was changed. The same heading
+  node remains mounted through status changes and receives the next shot's name.
+- Existing Focus typography establishes a primary profile heading above the
+  secondary rolling status. Long/unbroken names wrap to two lines with ellipsis
+  for extreme lengths and the full accessible name retained.
+- Only the measured heading height offsets the existing live-chart geometry.
+  Metrics, traces, state icon colors, surface tone and animation timing remain.
+- `npm run check` passed TypeScript, ESLint, 182 unit tests and production build.
+  `npm run check:brewing` passed 18 model tests and the 2,458-module isolation audit.
+  The existing bundle-size advisory remains.
+- The four-region fixture regression passed synchronized 600ms timing, complete
+  header exit, new-shot interruption of the hold, exact Home return bounds and
+  shared-header restoration on other routes.
+- Long/unbroken-name checks passed at 1340 × 800, 1007 × 601 and 800 × 480:
+  two-line bounds, full accessible/title text, left alignment, an 8px status gap,
+  no horizontal/page overflow, no plot/metric overlap and a fully hidden header.
+  Reference and compact screenshots were reviewed.
+- Captured-title lifecycle checks passed: the correct starting name, unchanged
+  text/DOM/bounds through extraction and mutable workflow updates, no heading
+  animation, unchanged five metrics/traces, retention during manual-stop hold,
+  replacement for a new shot, normal Home return and no fixture writes.
+  Three focused browser scenarios passed across targeted runs; not a full suite.
+  The initial title test's custom 15s Home wait expired during returning. The
+  rerun passed with the repository's standard 30s expectation window; the
+  production 3-second hold and 600ms return timer were not modified.
+- `npm run package:skin` and `npm run verify:skin` passed: 11 files,
+  624,341 bytes, bundled assets/relative paths and no fixture or development
+  override. SHA-256:
+  `fec183c340171e87520628d7573236a471f9891a18479defa76b6218a9814fdc`.
+- The reported 1007 × 601 browser size is a desktop validation target, not proof
+  of embedded Samsung WebView or hardware acceptance. No real hardware commands
+  or tablet installation were performed.
+
+
 ## 0.3.6 — rendering stability and coordinated motion candidate
 
 Based on v0.3.5. GitHub publication was explicitly authorized on November 9,

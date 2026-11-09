@@ -141,6 +141,11 @@ export function LiveBrewingScreen({
         inert={!expanded}
         aria-label="Shot monitoring"
       >
+        <div className="brew-profile-heading">
+          <h1 className="brew-profile-name" title={s.profileName || undefined}>
+            {s.profileName || "Profile unavailable"}
+          </h1>
+        </div>
         <div className="brew-title" aria-label="Machine state" tabIndex={-1}>
           <RollingStatus
             label={status}

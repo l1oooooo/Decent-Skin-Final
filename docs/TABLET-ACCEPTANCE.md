@@ -1,5 +1,19 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.7 candidate review — pending
+
+See [the brewing heading notes](REFINEMENTS-v0.3.7.md). The user approved v0.3.6;
+this addition is pending review before Phase 6 QA and release preparation.
+
+- Confirm the heading matches the profile used to begin each shot, remains stable
+  across stage/profile-data updates, and updates for the next shot.
+- Test short, long and unbroken names at the actual Samsung WebView size. Confirm
+  title/status alignment and no overlap with metrics, legend or plot.
+- Recheck normal completion, manual stop, a new shot during the hold, hidden
+  navigation and the coordinated forward/reverse transition.
+- No installation or hardware testing was performed for the local candidate.
+
+
 ## v0.3.6 candidate review — pending
 
 See [rendering investigation and motion details](REFINEMENTS-v0.3.6.md).

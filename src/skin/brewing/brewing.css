@@ -30,6 +30,27 @@
   opacity: 1;
   transform: none;
 }
+.brew-profile-heading {
+  min-width: 0;
+  padding-bottom: 8px;
+}
+.brew-profile-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  color: var(--foreground);
+}
+.brew-title .rolling-status {
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
 .brew-title {
   display: flex;
   align-items: center;
@@ -137,6 +158,10 @@
   margin-bottom: 28px;
 }
 @media (max-height: 650px) {
+  .brew-profile-name {
+    font-size: 24px;
+    line-height: 30px;
+  }
   .brew-live {
     top: 12px;
   }
