@@ -18,7 +18,7 @@
 }
 .brew-live {
   position: absolute;
-  inset: calc(var(--brew-header-height, 72px) + 20px) 28px auto;
+  inset: 20px 28px auto;
   opacity: 0;
   transform: translateY(8px);
   transition:
@@ -138,7 +138,7 @@
 }
 @media (max-height: 650px) {
   .brew-live {
-    top: calc(var(--brew-header-height, 72px) + 12px);
+    top: 12px;
   }
   .brew-metrics {
     padding-block: 12px;
@@ -233,7 +233,7 @@
   background: var(--muted);
   color: var(--foreground);
 }
-.candidate-action:disabled {
+.candidate-action:disabled:not([data-pending="true"]) {
   opacity: 0.4;
 }
 .candidate-popover-position {
@@ -570,4 +570,26 @@
   .candidate-header {
     padding-right: 8px;
   }
+}
+
+.focus-app {
+  position: relative;
+}
+.focus-app > .candidate-header {
+  position: relative;
+  z-index: 1;
+  background: var(--background);
+}
+.focus-app-content[data-home="true"] {
+  position: absolute;
+  inset: 0;
+}
+.brew-home > .focus-skin {
+  padding-top: var(--brew-header-height, 72px);
+}
+.brew-home .candidate-header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  background: var(--background);
 }

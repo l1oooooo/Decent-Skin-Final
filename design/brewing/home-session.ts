@@ -286,6 +286,7 @@ export function homeSession(
     connected: true,
     machineFresh: true,
     locked: false,
+    pendingOnly: false,
     profileLocked: false,
     block: "",
     brewBlock: "",

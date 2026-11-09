@@ -310,9 +310,9 @@ test("brewing uses actual MM:SS and cup-second metrics; normal Sleep and Wake st
   await expect(page.locator(".brew-metrics > div > span")).toHaveText([
     "Time",
     "In the cup",
+    "Temperature",
     "Pressure",
     "Flow",
-    "Temperature",
   ])
   await expect(
     page.locator(".brew-metrics > div").first().locator("p")

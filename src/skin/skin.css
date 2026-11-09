@@ -57,13 +57,13 @@ select:focus-visible {
   outline: 2px solid oklch(0.8 0 0);
   outline-offset: 4px;
 }
-.focus-skin button:disabled,
-.focus-skin .focus-stepper button[data-disabled] {
+.focus-skin button:disabled:not([data-pending="true"]),
+.focus-skin .focus-stepper button[data-disabled]:not([data-pending="true"]) {
   opacity: 1;
   color: var(--muted-foreground);
 }
-.focus-skin button[data-slot="button"]:disabled,
-.focus-skin .focus-stepper button[data-slot="button"][data-disabled] {
+.focus-skin button[data-slot="button"]:disabled:not([data-pending="true"]),
+.focus-skin .focus-stepper button[data-slot="button"][data-disabled]:not([data-pending="true"]) {
   background: var(--card);
   border-color: var(--border);
 }
@@ -213,7 +213,7 @@ html {
   .focus-main > section[aria-label] p:last-child {
     font-size: 28px;
   }
-  .focus-main > section[aria-label] p:last-child span {
+  .focus-main > section[aria-label] p:last-child span:not(.profile-number) {
     margin-left: 3px;
     font-size: 12px;
   }
@@ -294,4 +294,9 @@ html {
   .focus-profile-heading h1 {
     -webkit-line-clamp: 1;
   }
+}
+
+.profile-number {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
 }

@@ -1,6 +1,7 @@
-import { format, type SkinSession } from "@/skin/use-skin"
+import { type SkinSession } from "@/skin/use-skin"
 import { SquarePen } from "lucide-react"
 import { Action } from "@/skin/primitives"
+import { ProfileNumber } from "@/skin/profile-number"
 import { RecipeControls } from "@/skin/controls"
 import { CandidateProfiles } from "./profiles"
 import { CandidateHeader } from "./header"
@@ -18,7 +19,9 @@ export default function CandidateHome({
   tankCalibration,
   sharedChart = false,
   showHeader = true,
+  animateNumbers = true,
 }: {
+  animateNumbers?: boolean
   sharedChart?: boolean
   showHeader?: boolean
   s: SkinSession
@@ -70,17 +73,21 @@ export default function CandidateHome({
             aria-label="Recipe summary"
             className="mt-5 border-y border-border py-6"
           >
-            {
-              <div className="grid grid-cols-3 gap-6">
-                {[
-                  [
-                    "Brew ratio",
+            <div className="grid grid-cols-3 gap-6">
+              {[
+                {
+                  key: "ratio",
+                  label: "Brew ratio",
+                  value:
                     s.dose > 0 && s.yieldTarget > 0
-                      ? `1:${format(s.yieldTarget / s.dose)}`
-                      : "—",
-                    "",
-                  ],
-                  [
+                      ? s.yieldTarget / s.dose
+                      : NaN,
+                  unit: "",
+                  prefix: "1:",
+                },
+                {
+                  key: "dose",
+                  label:
                     s.doseSource === "profile"
                       ? "Coffee · saved"
                       : s.doseSource === "default"
@@ -88,31 +95,40 @@ export default function CandidateHome({
                         : s.doseSource === "unset"
                           ? "No saved dose"
                           : "Coffee · current",
-                    format(s.dose),
-                    Number.isFinite(s.dose) ? "g" : "",
-                  ],
-                  [
-                    s.yieldTarget === 0 ? "Weight target off" : "Drink",
-                    s.yieldTarget === 0 ? "—" : format(s.yieldTarget),
-                    s.yieldTarget === 0 ? "" : "g",
-                  ],
-                ].map(([label, value, unit]) => (
-                  <div key={label}>
-                    <p className="mb-3 text-[13px] text-muted-foreground">
-                      {label}
-                    </p>
-                    <p className="text-[40px] leading-none font-medium tracking-[-.055em] tabular-nums">
-                      {value}
-                      {unit && (
-                        <span className="ml-2 text-[14px] font-normal tracking-normal text-muted-foreground">
-                          {unit}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            }
+                  value: s.dose,
+                  unit: Number.isFinite(s.dose) ? "g" : "",
+                  prefix: "",
+                },
+                {
+                  key: "yield",
+                  label: s.yieldTarget === 0 ? "Weight target off" : "Drink",
+                  value: s.yieldTarget === 0 ? NaN : s.yieldTarget,
+                  unit: s.yieldTarget === 0 ? "" : "g",
+                  prefix: "",
+                },
+              ].map(({ key, label, value, unit, prefix }) => (
+                <div key={key}>
+                  <p className="mb-3 text-[13px] text-muted-foreground">
+                    {label}
+                  </p>
+                  <p className="text-[40px] leading-none font-medium tracking-[-.055em] tabular-nums">
+                    {Number.isFinite(value) && prefix}
+                    <ProfileNumber
+                      value={value}
+                      profileId={s.selectedId}
+                      enabled={animateNumbers}
+                      unit={unit}
+                      digits={1}
+                    />
+                    {unit && (
+                      <span className="ml-2 text-[14px] font-normal tracking-normal text-muted-foreground">
+                        {unit}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
           </section>
           <section className="focus-chart mt-6 min-h-0 flex-1">
             {sharedChart ? (
@@ -123,7 +139,12 @@ export default function CandidateHome({
           </section>
         </main>
         <aside className="focus-controls-panel flex w-[328px] shrink-0 flex-col border-l border-border bg-card p-6">
-          <RecipeControls s={s} vertical grind />
+          <RecipeControls
+            s={s}
+            vertical
+            grind
+            animateNumbers={animateNumbers}
+          />
         </aside>
       </div>
     </div>

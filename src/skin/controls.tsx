@@ -1,5 +1,6 @@
 import { conciseNumber } from "./format"
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
+import { ProfileNumber } from "./profile-number"
 import { NumberEditor } from "./number-editor"
 import {
   Flame,
@@ -64,7 +65,13 @@ export function Stepper({
   onEdit,
   saveError,
   concise = false,
+  pending = false,
+  profileId,
+  display,
 }: {
+  pending?: boolean
+  profileId?: string
+  display?: ReactNode
   concise?: boolean
   label: string
   value: number
@@ -80,12 +87,19 @@ export function Stepper({
   saveError?: string
   onEdit?: () => void
 }) {
-  const [editing, setEditing] = useState(false)
+  const [editingProfile, setEditingProfile] = useState<string | null>(null)
+  const editing =
+    editingProfile !== null && editingProfile === (profileId ?? "")
+  if (editingProfile !== null && !editing) setEditingProfile(null)
+  const named = Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)
+  const decreaseUnavailable = named || value <= min
+  const increaseUnavailable = named || value >= max
   return (
     <div
       className={`focus-stepper ${
         horizontal ? "flex items-center justify-between gap-4" : "min-w-0"
       }`}
+      data-pending={pending}
       role="group"
       aria-label={label}
     >
@@ -97,11 +111,8 @@ export function Stepper({
           variant="outline"
           aria-label={`Decrease ${label.toLowerCase()}`}
           focusableWhenDisabled
-          disabled={
-            disabled ||
-            (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
-            value <= min
-          }
+          disabled={disabled || decreaseUnavailable}
+          data-pending={pending && !decreaseUnavailable}
           onClick={() =>
             onChange(
               Math.max(
@@ -126,13 +137,20 @@ export function Stepper({
               onEdit ? "Edit grinder setting" : `Edit ${label.toLowerCase()}`
             }
             className="min-h-12 max-w-full min-w-12 truncate"
-            disabled={disabled}
-            onClick={onEdit ?? (() => setEditing(true))}
+            disabled={disabled && !pending}
+            aria-disabled={disabled}
+            onClick={() => {
+              if (!disabled) {
+                if (onEdit) onEdit()
+                else setEditingProfile(profileId ?? "")
+              }
+            }}
           >
-            {text ||
-              (concise
-                ? conciseNumber(value)
-                : format(value, unit === "s" ? 0 : 1))}
+            {display ??
+              (text ||
+                (concise
+                  ? conciseNumber(value)
+                  : format(value, unit === "s" ? 0 : 1)))}
           </button>
           <span className="ml-1 text-[13px] font-normal tracking-normal text-muted-foreground">
             {text === "Off" || text === "Not set" ? "" : unit}
@@ -142,11 +160,8 @@ export function Stepper({
           variant="outline"
           aria-label={`Increase ${label.toLowerCase()}`}
           focusableWhenDisabled
-          disabled={
-            disabled ||
-            (Boolean(onEdit) && Boolean(text) && !Number.isFinite(value)) ||
-            value >= max
-          }
+          disabled={disabled || increaseUnavailable}
+          data-pending={pending && !increaseUnavailable}
           onClick={() =>
             onChange(
               Math.min(
@@ -166,7 +181,7 @@ export function Stepper({
         <NumberEditor
           {...{ label, value, unit, min, max, disabled, onChange, saveError }}
           integer={unit === "s"}
-          onClose={() => setEditing(false)}
+          onClose={() => setEditingProfile(null)}
         />
       )}
     </div>
@@ -178,12 +193,14 @@ export function RecipeControls({
   large = false,
   grind = false,
   divided = false,
+  animateNumbers = false,
 }: {
   s: SkinSession
   vertical?: boolean
   large?: boolean
   grind?: boolean
   divided?: boolean
+  animateNumbers?: boolean
 }) {
   return (
     <div
@@ -214,10 +231,31 @@ export function RecipeControls({
         ] as const
       ).map(([label, value, unit, step, min, max, key]) => (
         <Stepper
-          key={`${s.selectedId}-${key}`}
+          key={key}
+          profileId={s.selectedId}
+          pending={s.pendingOnly}
           {...{ label, value, unit, step, min, max, large }}
           concise={key !== "dose"}
           disabled={s.locked}
+          display={
+            <ProfileNumber
+              profileId={s.selectedId}
+              enabled={animateNumbers}
+              value={value}
+              unit={unit}
+              concise={key !== "dose"}
+              digits={key === "dose" ? 1 : undefined}
+              text={
+                key === "grind" && !Number.isFinite(value)
+                  ? s.grindText || "—"
+                  : key === "dose" && !Number.isFinite(value)
+                    ? "Not set"
+                    : key === "yield" && value === 0
+                      ? "Off"
+                      : undefined
+              }
+            />
+          }
           saveError={s.notice}
           text={
             key === "grind"

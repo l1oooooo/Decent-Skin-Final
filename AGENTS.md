@@ -72,8 +72,8 @@ technical decisions, and the design history for previous iterations.
   current section's changed fields; retain failed/newer edits and reject drafts
   for a replaced machine. No write is retried automatically.
 - All notifications use the shared Base UI Toast manager/Toaster. Keep field
-  validation, confirmation copy and permanent page guidance inline. Heating and
-  preparation announce once per state transition, not each telemetry frame.
+  validation, confirmation copy and permanent page guidance inline. Routine heating and
+  preparation stay quiet; telemetry frames never create repeated notices.
   Critical water/fault/connection warnings have no timeout or manual dismissal;
   clear them only from confirmed machine state, never missing/stale readings.
   Pending actions update one ID and have a UI-only unconfirmed-outcome watchdog;
@@ -156,7 +156,8 @@ technical decisions, and the design history for previous iterations.
   reviewed text with automatic attachments disabled; account credentials and
   consent remain in native Decaid.
 - The approved header is owned by the App shell across routed pages; Home Sleep
-  is intentionally full-screen. Keep one gateway/session and one visible header.
+  is intentionally full-screen. Brewing slides the same mounted header upward
+  and makes it inert; other routes retain it. Keep one gateway/session.
   Routine heating/preparation, successful quick edits and Sleep/Wake are quiet;
   retain errors, watchdogs, shot outcomes and confirmed-state safety warnings.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and
@@ -189,10 +190,15 @@ technical decisions, and the design history for previous iterations.
   lifecycle. Bare idle, unknown reasons and faults stay explicit; a connection
   loss/fault during a pending return cancels it.
   New shots supersede holds; replay does not navigate or manufacture elapsed time.
-  Home and Brewing share one 500ms panel/chart transition, with separate target
+  Home and Brewing share one 600ms header/panel/chart transition, with separate target
   and measured layers. Live time-domain expansion uses a 420ms coordinate
   animation while preserving raw samples and the 30s/10s range policy. Resize,
   hidden views and reduced motion settle animation; new shots reset the domain.
+  Recipe rows use stable field keys. Pending-only saves retain their normal paint
+  while command guards still block activation; genuine unavailability stays styled.
+  Home profile changes count numeric text for 350ms; manual edits, telemetry,
+  initial load and returning from brewing update directly. Only presentation
+  interpolates; stored values and calculations always use acknowledged targets.
   The user confirmed the standard removable DE1 tank for this deployment; show
   estimated mL only with fresh machine data and no refill kit.
 - `design/brewing` is a development-only event source and preview. It imports

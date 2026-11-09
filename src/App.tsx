@@ -307,7 +307,12 @@ export default function App() {
           onSettings={() => navigate({ page: "settings" })}
         />
       )}
-      <div className="focus-app-content">
+      <div
+        className="focus-app-content"
+        data-home={
+          page === "home" && s.snapshot.machine?.state.state !== "sleeping"
+        }
+      >
         {page === "home" && s.snapshot.machine?.state.state === "sleeping" ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 bg-background">
             <h1 className="text-[30px] font-medium tracking-[-.045em]">

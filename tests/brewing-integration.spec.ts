@@ -227,13 +227,14 @@ test("rapid restart cancels the old hold; missing scale and disconnect never inv
   ).toContainText("—")
   await expect(page.getByLabel("Tank volume")).toContainText("—")
   await expect(
-    page.getByRole("button", { name: "Sleep machine" })
+    page.getByRole("button", { name: "Sleep machine", includeHidden: true })
   ).toBeDisabled()
   await request.post(`${fixture}/__test/state`, {
     data: { connected: true, state: "idle", scale: true },
   })
   await expect(page.locator(".candidate-status")).toHaveText("DE1Ready")
   await expect(page.locator(".rolling-window")).toHaveText("Connection lost")
+  await page.keyboard.press("F6")
   await page.getByRole("button", { name: "Back to Home" }).click()
   await expect(
     page.getByRole("heading", { name: "D-Flow / default" })

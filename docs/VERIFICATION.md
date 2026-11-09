@@ -1,5 +1,49 @@
 # Focus release-candidate verification
 
+## 0.3.6 — rendering stability and coordinated motion candidate
+
+Local candidate based on v0.3.5; no publication, deployment or tablet installation
+performed. See [root-cause investigation, implementation and motion review](REFINEMENTS-v0.3.6.md)
+and the [pending tablet recheck](TABLET-ACCEPTANCE.md#v036-candidate-review--pending).
+
+- Frame instrumentation identified shared pending-state disabled styling across
+  the recipe controls and Sleep, plus profile-dependent row keys. The loaded
+  desktop fixture did not reproduce the Samsung label-disappearance symptom.
+  Pending-only paint and row identity are now stable, with command gates intact.
+- Metrics are Time, In the cup, Temperature, Pressure, Flow. The same mounted
+  header joins the two panels and chart on one 600ms ease-in-out clock. The
+  three-second completion hold and 420ms live-domain animation are unchanged.
+- Seven Home numeric readouts count for 350ms on profile changes only, using
+  ease-out cubic and ref-based text updates. Actual values/persistence remain
+  separate; manual edits, telemetry, initial load and returning Home settle directly.
+- Five focused production regressions passed sequentially: restart/disconnection,
+  live-domain retargeting, shared header across routes and three landscape sizes,
+  recipe persistence/focus/failure/pending guards, and MM:SS/Sleep/Wake behavior.
+  These are focused checks, not a full application E2E suite result.
+- Screenshots reviewed at 1340 × 800, 1007 × 601 and 800 × 480; compact numeric
+  type inherits the approved summary size instead of the unit-span override.
+- Across targeted runs, nine production browser scenarios passed: the five
+  regressions above, normal completion, four-region lifecycle/DOM identity,
+  all-setting paint/pending instrumentation, and seven numeric displays. The
+  final numeric rerun includes the compact typography assertion. Two final
+  preview transition scenarios passed (shared clock/reverse bounds/toast and
+  restart during return/navigation cleanup). Earlier preview checks also covered
+  intrinsic header wrapping and long-extraction domain expansion.
+- The initial final-preview assertion disconnected its observer at Home's DOM
+  commit before the toast effect ran. Waiting for both Home and notification
+  delivery fixed the assertion; all geometry/clock checks had already passed.
+  No production notification behavior was changed.
+- Final `npm run check` passed: TypeScript, ESLint, 182 gateway/unit tests and
+  production build. `npm run package:skin` and `npm run verify:skin` passed:
+  11 files, 624,187 bytes, relative assets and bundled fonts/artwork, no fixture
+  or development origin. SHA-256:
+  `af2425d5f031355793210d911a53603797331ce4d748b38d3b0b9a31610dcc9c`.
+- Production isolation: 18 model tests passed; 2,458 modules checked with no
+  development preview or simulator imports/content.
+- Samsung WebView smoothness, actual label disappearance and hardware behavior
+  remain unverified. The existing Vite bundle-size advisory remains.
+
+
 ## 0.3.4 — unified notifications
 
 Release authorized after local candidate review. This release also includes the

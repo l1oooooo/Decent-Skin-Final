@@ -1,5 +1,29 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.6 candidate review — pending
+
+See [rendering investigation and motion details](REFINEMENTS-v0.3.6.md).
+No tablet installation or hardware operation was performed during development.
+
+- At the actual embedded WebView size, tap each setting's + and − individually,
+  rapidly, alternately, immediately after profile selection and while a save is
+  pending. Labels, numbers, buttons and Sleep must not disappear. Confirm values
+  persist and the selected profile does not change. Report any remaining flash;
+  desktop instrumentation cannot establish that the Samsung symptom is resolved.
+- Verify Time → In the cup → Temperature → Pressure → Flow, with MM:SS elapsed
+  time and unchanged readings/graphs.
+- Observe the header moving upward with both side panels and the expanding chart.
+  No header strip should remain. After the three-second completion hold, all four
+  regions return together over 600ms to the original Home geometry.
+- Recheck manual stops, interruption, a new shot during the hold/return and leaving
+  the view. Hidden navigation must be inaccessible; shared-page navigation must
+  work when visible. No daily start/stop controls were added.
+- Switch profiles with different numbers in both directions. Only numeric text
+  should count for 350ms, with stationary labels/units/buttons. Try a second switch
+  before counting finishes, identical targets, a named grind and target yield off.
+  Manual edits and returning from brewing must not count. Recheck reduced motion.
+- Confirm the v0.3.5 quiet notification policy and meaningful warnings/errors remain.
+
 ## v0.3.5 candidate review — pending
 
 This local candidate is not automatically published or installed. See

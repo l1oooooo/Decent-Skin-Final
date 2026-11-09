@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from "react"
 import type { RefObject } from "react"
 
-export const BREW_TRANSITION_MS = 500
+export const BREW_TRANSITION_MS = 600
 const easing = "cubic-bezier(0.645, 0.045, 0.355, 1)"
 
 export function useBrewLayout(
@@ -10,13 +10,17 @@ export function useBrewLayout(
   transitioning: boolean
 ) {
   const animations = useRef<Animation[]>([])
+  const sharedHeader = useRef<HTMLElement | null>(null)
   const previousExpanded = useRef<boolean | null>(null)
   useLayoutEffect(() => {
     const container = root.current
     if (!container) return
     const surface = container.querySelector<HTMLElement>(".brew-chart-surface")!
     const anchor = container.querySelector<HTMLElement>("[data-chart-anchor]")!
-    const header = container.querySelector<HTMLElement>(".candidate-header")!
+    const header = (
+      container.closest(".focus-app") ?? container
+    ).querySelector<HTMLElement>(".candidate-header")!
+    sharedHeader.current = header
     const body = container.querySelector<HTMLElement>(".focus-body")!
     const leftPanel = body.querySelector<HTMLElement>(
       ":scope > aside:first-child"
@@ -33,9 +37,10 @@ export function useBrewLayout(
     }
     const layout = (animate: boolean) => {
       const parent = container.getBoundingClientRect()
+      const headerHeight = header?.offsetHeight ?? 0
+      container.style.setProperty("--brew-header-height", `${headerHeight}px`)
       const home = anchor.getBoundingClientRect()
-      const headerHeight = header?.getBoundingClientRect().height ?? 0
-      const top = headerHeight + (window.innerHeight <= 650 ? 136 : 160)
+      const top = window.innerHeight <= 650 ? 136 : 160
       const full = {
         left: 28,
         top,
@@ -50,13 +55,12 @@ export function useBrewLayout(
       }
       const next = expanded ? full : small
       const from = surface.getBoundingClientRect()
-      const elements = [leftPanel, rightPanel, heading, preview, live]
+      const elements = [leftPanel, rightPanel, header, heading, preview, live]
       const current = elements.map((element) => {
         const style = getComputedStyle(element)
         return { transform: style.transform, opacity: style.opacity }
       })
       cancel()
-      container.style.setProperty("--brew-header-height", `${headerHeight}px`)
       Object.assign(surface.style, {
         left: `${next.left}px`,
         top: `${next.top}px`,
@@ -84,6 +88,7 @@ export function useBrewLayout(
             ? `translateX(${rightPanel.offsetWidth}px)`
             : "none",
         },
+        { transform: expanded ? "translateY(-100%)" : "none" },
         { opacity: expanded ? "0" : "1" },
         { opacity: expanded ? "0" : "1" },
         { opacity: expanded ? "1" : "0" },
@@ -91,10 +96,16 @@ export function useBrewLayout(
       elements.forEach((element, index) =>
         Object.assign(element.style, targets[index])
       )
-      body.inert = expanded || transitioning
-      body.setAttribute("aria-hidden", String(expanded || transitioning))
-      if (!animate || preference.matches || document.hidden || !from.width)
-        return
+      const run =
+        animate && !preference.matches && !document.hidden && !!from.width
+      const lock = (hidden: boolean) => {
+        header.inert = hidden
+        header.setAttribute("aria-hidden", String(hidden))
+        body.inert = hidden
+        body.setAttribute("aria-hidden", String(hidden))
+      }
+      lock(expanded || run)
+      if (!run) return
       const startTime = document.timeline.currentTime
       const play = (
         element: HTMLElement,
@@ -104,8 +115,9 @@ export function useBrewLayout(
         const animation = element.animate(frames, { duration, easing })
         animation.startTime = startTime
         animations.current.push(animation)
+        return animation
       }
-      play(
+      const chartAnimation = play(
         surface,
         [
           {
@@ -115,12 +127,15 @@ export function useBrewLayout(
         ],
         BREW_TRANSITION_MS
       )
+      chartAnimation.onfinish = () => {
+        if (!expanded) lock(false)
+      }
       elements.forEach((element, index) => {
-        const key = index < 2 ? "transform" : "opacity"
+        const key = index < 3 ? "transform" : "opacity"
         play(
           element,
           [{ [key]: current[index][key] }, targets[index]],
-          index < 2 ? BREW_TRANSITION_MS : 200
+          index < 3 ? BREW_TRANSITION_MS : 200
         )
       })
     }
@@ -163,6 +178,12 @@ export function useBrewLayout(
   useLayoutEffect(
     () => () => {
       animations.current.forEach((animation) => animation.cancel())
+      const header = sharedHeader.current
+      if (header) {
+        header.style.transform = ""
+        header.inert = false
+        header.removeAttribute("aria-hidden")
+      }
     },
     []
   )

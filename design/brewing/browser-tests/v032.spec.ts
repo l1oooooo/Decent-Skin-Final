@@ -57,7 +57,7 @@ test("header wraps only at its intrinsic threshold, including the reported table
   console.log(JSON.stringify({ threshold, evidence }))
 })
 
-test("three regions share a timeline and reverse to the exact Home bounds", async ({
+test("four regions share a timeline and reverse to the exact Home bounds", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1007, height: 601 })
@@ -69,6 +69,7 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
       ".focus-body > aside:first-child"
     )!
     const right = document.querySelector<HTMLElement>(".focus-controls-panel")!
+    const header = document.querySelector<HTMLElement>(".candidate-header")!
     const root = document.querySelector(".brew-preview")!
     const bounds = () =>
       [left, surface, right].map((node) => ({
@@ -77,22 +78,30 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
       }))
     const initial = bounds()
     const phases: { phase: string | null; time: number }[] = []
+    const toasts = new Set<string>()
     const observe = () => {
+      const toast = document.querySelector(
+        '[data-notification-key^="shot-result-"] [data-slot="toast-title"]'
+      )?.textContent
+      if (toast) toasts.add(toast)
       const phase = root.getAttribute("data-phase")
       if (phases.at(-1)?.phase !== phase)
         phases.push({ phase, time: performance.now() })
     }
     const observer = new MutationObserver(observe)
-    observer.observe(root, {
+    observer.observe(document.body, {
       attributes: true,
       attributeFilter: ["data-phase"],
+      childList: true,
+      subtree: true,
+      characterData: true,
     })
     const frames: ReturnType<typeof bounds>[] = []
     let timing: { start: number | null; duration: number | string }[] = []
     const sample = () => {
       frames.push(bounds())
       if (!timing.length)
-        timing = [left, surface, right].flatMap((node) =>
+        timing = [left, surface, right, header].flatMap((node) =>
           node.getAnimations().map((a) => ({
             start: a.startTime as number | null,
             duration: Number(a.effect!.getTiming().duration),
@@ -113,13 +122,14 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
     const hold = root.getAttribute("data-phase")
     const deadline = performance.now() + 12000
     while (
-      root.getAttribute("data-phase") !== "home" &&
+      (root.getAttribute("data-phase") !== "home" || toasts.size === 0) &&
       performance.now() < deadline
     )
       await new Promise((r) => setTimeout(r, 50))
     observer.disconnect()
     return {
       phases,
+      toasts: [...toasts],
       hidden: document.hidden,
       initial,
       expanded,
@@ -141,9 +151,9 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
       phase: result.phase,
     })
   )
-  expect(result.timing).toHaveLength(3)
+  expect(result.timing).toHaveLength(4)
   expect(new Set(result.timing.map((a) => a.start)).size).toBe(1)
-  expect(result.timing.every((a) => a.duration === 500)).toBe(true)
+  expect(result.timing.every((a) => a.duration === 600)).toBe(true)
   expect(
     result.frames.some(
       (f) =>
@@ -160,7 +170,7 @@ test("three regions share a timeline and reverse to the exact Home bounds", asyn
   expect(returning.time - complete.time).toBeGreaterThanOrEqual(2900)
   expect(result.phase).toBe("home")
   expect(result.final).toEqual(result.initial)
-  expect(result.toast).toBe("Shot stopped manually")
+  expect(result.toasts).toEqual(["Shot stopped manually"])
   await page.screenshot({ path: "artifacts/v032/returned-1007.png" })
 })
 

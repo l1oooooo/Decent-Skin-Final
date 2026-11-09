@@ -299,6 +299,8 @@ export function useSkin(gateway: DecaidGateway) {
     connected: isConnected,
     machineFresh,
     locked: !!block || !rawProfile,
+    pendingOnly:
+      snapshot.pending && !commandBlock({ ...snapshot, pending: false }),
     profileLocked: !!block,
     block,
     brewBlock:

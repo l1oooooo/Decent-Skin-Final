@@ -217,6 +217,7 @@ export function CandidateHeader({
           aria-label="Sleep machine"
           title={s.block || "Sleep machine"}
           disabled={!!s.block}
+          data-pending={s.pendingOnly}
           onClick={() => void s.sleep()}
         >
           <Power size={16} aria-hidden="true" />

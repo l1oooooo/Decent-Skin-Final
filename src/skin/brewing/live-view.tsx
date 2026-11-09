@@ -122,6 +122,7 @@ export function LiveBrewingScreen({
       <div className="brew-home">
         <CandidateHome
           sharedChart
+          animateNumbers={s.phase === "home"}
           tankCalibration={tankCalibration}
           s={home}
           showHeader={!embedded}
@@ -172,8 +173,6 @@ export function LiveBrewingScreen({
                 : value(home.active ? home.scaleWeight : home.shot.weight),
               "g",
             ],
-            ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
-            ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
             [
               "Temperature",
               stale
@@ -184,6 +183,8 @@ export function LiveBrewingScreen({
                   ),
               `°${home.temperatureUnit}`,
             ],
+            ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
+            ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
           ].map(([label, reading, unit]) => (
             <div key={label}>
               <span>{label}</span>
