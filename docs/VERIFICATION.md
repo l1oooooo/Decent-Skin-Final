@@ -6,6 +6,32 @@ Local candidate pending user review. Phase 6 QA/release preparation, GitHub
 publication and tablet installation are deferred until approval. See the
 [implementation and review notes](REFINEMENTS-v0.3.7.md).
 
+### Spacing refinement
+
+- One flex parent now supplies equal top/bottom padding from eight spacing units
+  (32px), using the larger vertical safe-area inset when necessary. A shared
+  four-unit gap (16px) separates title, status and the metrics/chart group.
+- The chart animates to a measured flex anchor. Fixed live top/height offsets
+  were removed; metrics keep their typography, order and column widths. Chart
+  styling, rolling motion, navigation hiding, lifecycle, 600ms transitions and
+  surface tone 0.16 are unchanged.
+- `npm run check` passed TypeScript, ESLint, 182 unit tests and production build.
+  `npm run check:brewing` passed 18 model tests and the production-isolation audit.
+- Three focused fixture browser scenarios passed in one run: coordinated
+  forward/reverse transitions and hidden header; stable title/DOM through stage,
+  workflow and shot replacement; long/unbroken names at 1340 × 800, 1007 × 601
+  and 800 × 480. Assertions verify equal 32px outer margins, equal 16px gaps,
+  anchor/chart agreement, no overlap or overflow and visible metrics. Screenshots
+  at reference and compact sizes were inspected. This is not a full-suite run.
+- The refreshed local ZIP passed packaging verification: 11 files, 624,403 bytes.
+  SHA-256: `b2871440b628ddeab63ac03d33f790e1f4738d0c5af135e4537344905bff8f88`.
+  The package remains version 0.3.7 and is not published or installed.
+- Browser fixtures require localhost listening; the initial sandbox attempt
+  was blocked with EPERM before tests started, then rerun with that access.
+  Samsung WebView/device acceptance remains pending.
+
+### Initial heading implementation evidence
+
 - The heading reads the existing shot-captured profileName. No gateway,
   live-session, reducer, sample or completion logic was changed. The same heading
   node remains mounted through status changes and receives the next shot's name.

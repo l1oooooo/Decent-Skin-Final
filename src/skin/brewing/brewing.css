@@ -18,7 +18,18 @@
 }
 .brew-live {
   position: absolute;
-  inset: 20px 28px auto;
+  --brew-block-padding: max(
+    calc(var(--spacing) * 8),
+    env(safe-area-inset-top, 0px),
+    env(safe-area-inset-bottom, 0px)
+  );
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 4);
+  padding-block: var(--brew-block-padding);
+  padding-inline: max(calc(var(--spacing) * 7), env(safe-area-inset-left, 0px))
+    max(calc(var(--spacing) * 7), env(safe-area-inset-right, 0px));
   opacity: 0;
   transform: translateY(8px);
   transition:
@@ -32,7 +43,7 @@
 }
 .brew-profile-heading {
   min-width: 0;
-  padding-bottom: 8px;
+  flex-shrink: 0;
 }
 .brew-profile-name {
   display: -webkit-box;
@@ -56,13 +67,24 @@
   align-items: center;
   gap: 32px;
   height: 38px;
+  flex-shrink: 0;
+}
+.brew-data {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.brew-live-chart-anchor {
+  flex: 1;
+  min-height: 0;
 }
 .brew-metrics {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 24px;
-  padding: 20px 0 18px;
-  margin-top: 8px;
+  flex-shrink: 0;
+  padding-bottom: 18px;
   border-bottom: 1px solid var(--border);
 }
 .brew-metrics > div > span {
@@ -162,11 +184,8 @@
     font-size: 24px;
     line-height: 30px;
   }
-  .brew-live {
-    top: 12px;
-  }
   .brew-metrics {
-    padding-block: 12px;
+    padding-bottom: 12px;
   }
   .brew-metrics p {
     font-size: 28px;

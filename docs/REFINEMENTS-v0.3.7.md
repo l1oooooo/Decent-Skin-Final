@@ -15,14 +15,17 @@ The heading uses the existing foreground, medium weight and tight tracking:
 30px/36px at reference height, 24px/30px in compact landscape. It wraps up to two
 lines, including unbroken names. Exceptionally long names ellipsize after two
 lines; the complete name remains the heading's accessible text and title.
-An 8px gap separates it from the unchanged rolling indicator, whose text is
-18px to establish secondary hierarchy. State-specific icon colors and rolling
-animation remain unchanged.
+The rolling indicator uses 18px text to establish secondary hierarchy.
+State-specific icon colors and rolling animation remain unchanged.
 
-Only the new heading's measured height is added to the live chart's existing
-top offset. This keeps the status, metrics and chart in their established order
-without guessing the number of title lines. A resize observer updates that
-geometry for viewport/font changes; the name stays constant during extraction.
+The follow-up spacing refinement uses a parent flex column with equal block
+padding (eight spacing units, 32px by default, increased equally for the larger
+of the top/bottom safe-area insets). A shared four-unit gap (16px) separates the
+heading, rolling status and metrics/chart group. Metrics remain above the chart
+with their existing type, order and column widths. The chart fills the remaining
+space through a measured flex anchor instead of fixed vertical offsets.
+A resize observer updates geometry for viewport/font changes; the name stays
+constant during extraction.
 Metrics and graph styling, data sources, 600ms four-region transition, 3-second
 completion hold, hidden header behavior and surface tone 0.16 are unchanged.
 

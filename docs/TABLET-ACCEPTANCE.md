@@ -9,6 +9,8 @@ this addition is pending review before Phase 6 QA and release preparation.
   across stage/profile-data updates, and updates for the next shot.
 - Test short, long and unbroken names at the actual Samsung WebView size. Confirm
   title/status alignment and no overlap with metrics, legend or plot.
+- Confirm equal top/bottom content margins and matching gaps between the title,
+  rolling status and metrics/chart group. Recheck safe-area insets if present.
 - Recheck normal completion, manual stop, a new shot during the hold, hidden
   navigation and the coordinated forward/reverse transition.
 - No installation or hardware testing was performed for the local candidate.

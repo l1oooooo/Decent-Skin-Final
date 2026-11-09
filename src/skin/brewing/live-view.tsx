@@ -164,41 +164,44 @@ export function LiveBrewingScreen({
             }
           />
         </div>
-        <div className="brew-metrics">
-          {[
-            [
-              "Time",
-              home.snapshot.elapsedKnown ? elapsedTime(last?.elapsed) : "—",
-              "",
-            ],
-            [
-              "In the cup",
-              stale || !home.scaleConnected
-                ? "—"
-                : value(home.active ? home.scaleWeight : home.shot.weight),
-              "g",
-            ],
-            [
-              "Temperature",
-              stale
-                ? "—"
-                : conciseNumber(
-                    home.displayTemperature(last?.groupTemperature),
-                    1
-                  ),
-              `°${home.temperatureUnit}`,
-            ],
-            ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
-            ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
-          ].map(([label, reading, unit]) => (
-            <div key={label}>
-              <span>{label}</span>
-              <p>
-                {reading}
-                <small>{unit}</small>
-              </p>
-            </div>
-          ))}
+        <div className="brew-data">
+          <div className="brew-metrics">
+            {[
+              [
+                "Time",
+                home.snapshot.elapsedKnown ? elapsedTime(last?.elapsed) : "—",
+                "",
+              ],
+              [
+                "In the cup",
+                stale || !home.scaleConnected
+                  ? "—"
+                  : value(home.active ? home.scaleWeight : home.shot.weight),
+                "g",
+              ],
+              [
+                "Temperature",
+                stale
+                  ? "—"
+                  : conciseNumber(
+                      home.displayTemperature(last?.groupTemperature),
+                      1
+                    ),
+                `°${home.temperatureUnit}`,
+              ],
+              ["Pressure", stale ? "—" : value(last?.pressure), "bar"],
+              ["Flow", stale ? "—" : value(last?.flow), "mL/s"],
+            ].map(([label, reading, unit]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <p>
+                  {reading}
+                  <small>{unit}</small>
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="brew-live-chart-anchor" aria-hidden="true" />
         </div>
       </section>
       <div className="brew-chart-surface" data-visible="true">

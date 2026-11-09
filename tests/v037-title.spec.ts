@@ -185,9 +185,10 @@ test("long and unbroken shot titles preserve metric and chart spacing at referen
     )
     const bounds = await page.evaluate(() => {
       const title = document.querySelector<HTMLElement>(".brew-profile-name")!
-      const heading = document.querySelector<HTMLElement>(
-        ".brew-profile-heading"
-      )!
+      const anchor = document
+        .querySelector<HTMLElement>(".brew-live-chart-anchor")!
+        .getBoundingClientRect()
+      const data = document.querySelector(".brew-data")!.getBoundingClientRect()
       const status = document
         .querySelector(".brew-title")!
         .getBoundingClientRect()
@@ -213,7 +214,9 @@ test("long and unbroken shot titles preserve metric and chart spacing at referen
         height: rect.height,
         lineHeight: parseFloat(getComputedStyle(title).lineHeight),
         chartTop: chart.top,
-        expectedTop: (innerHeight <= 650 ? 136 : 160) + heading.offsetHeight,
+        expectedTop: anchor.top,
+        titleTop: rect.top,
+        dataTop: data.top,
         svgTop: svg.top,
         metricsBottom: metrics.bottom,
         overflow:
@@ -231,7 +234,12 @@ test("long and unbroken shot titles preserve metric and chart spacing at referen
     expect(bounds.fullTitle).toBe(name)
     expect(bounds.titleX).toBe(bounds.statusX)
     expect(bounds.height).toBe(bounds.lineHeight * 2)
-    expect(bounds.statusY - bounds.titleBottom).toBe(8)
+    expect(bounds.statusY - bounds.titleBottom).toBe(16)
+    expect(bounds.dataTop - bounds.statusBottom).toBe(
+      bounds.statusY - bounds.titleBottom
+    )
+    expect(bounds.titleTop).toBe(bounds.viewportHeight - bounds.chartBottom)
+    expect(bounds.titleTop).toBe(32)
     expect(bounds.metricsY).toBeGreaterThanOrEqual(bounds.statusBottom)
     expect(bounds.chartTop).toBe(bounds.expectedTop)
     expect(bounds.svgTop).toBeGreaterThanOrEqual(bounds.metricsBottom)

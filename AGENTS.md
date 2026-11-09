@@ -169,8 +169,10 @@ technical decisions, and the design history for previous iterations.
   independent of the rolling shot-stage title. Brewing displays the existing
   shot-captured profileName as a stable primary heading above the secondary
   rolling status. Never substitute the mutable Home selection during a shot.
-  Long names wrap to two lines; the measured heading height offsets the live
-  chart without changing its data or transition timing. Machine Settings opens one anchored
+  Long names wrap to two lines. Brewing uses equal safe-area-aware block padding
+  and one shared gap between the heading, rolling status and metrics/chart group.
+  The animated chart follows a flex-layout anchor, not a fixed vertical offset.
+  Machine Settings opens one anchored
   popover with Steam, Hot Water and Flush tabs; History, Settings and Sleep
   remain beside it. Steam enable reflects the acknowledged workflow setting;
   tabs never send commands. Disconnected scale text opens Connections without
