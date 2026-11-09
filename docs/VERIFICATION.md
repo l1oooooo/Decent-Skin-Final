@@ -2,8 +2,10 @@
 
 ## 0.3.7 — stable brewing profile heading candidate
 
-Local candidate pending user review. Phase 6 QA/release preparation, GitHub
-publication and tablet installation are deferred until approval. See the
+GitHub publication was explicitly authorized on November 9, 2026 after review
+of the heading, spacing and component order. Phase 6 full QA and Samsung WebView
+acceptance remain pending; no tablet installation is authorized by publication.
+The installable asset is `decent-focus.zip` on tag `v0.3.7`. See the
 [implementation and review notes](REFINEMENTS-v0.3.7.md).
 
 ### Component order refinement

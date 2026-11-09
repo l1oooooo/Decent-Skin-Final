@@ -1,7 +1,9 @@
 # Focus v0.3.7 — brewing profile heading
 
-Local candidate based on the user-approved v0.3.6, pending review. Phase 6 QA,
-GitHub publication and tablet installation have not been started.
+Based on the user-approved v0.3.6. GitHub publication of v0.3.7 was explicitly
+authorized on November 9, 2026 after the final component-order review. Phase 6
+full QA and actual Samsung WebView acceptance remain pending. No tablet
+installation or hardware operation is included in publication.
 
 The live screen displays the shot's existing captured `profileName` as its
 primary heading, below the rolling status. It does not read the mutable Home
@@ -60,4 +62,4 @@ for packaging evidence and the pending device check.
 The rolling status now precedes the profile heading in DOM order. This is the
 only production change for this follow-up: no CSS, chart geometry, metrics,
 animation or state logic changed. Existing heights and parent gaps preserve the
-metrics and chart bounds. The candidate remains local, pending review.
+metrics and chart bounds. Publication was subsequently authorized after review.

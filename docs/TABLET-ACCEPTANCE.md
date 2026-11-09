@@ -1,9 +1,10 @@
 # Phase 9 — tablet acceptance
 
-## v0.3.7 candidate review — pending
+## v0.3.7 tablet acceptance — pending
 
-See [the brewing heading notes](REFINEMENTS-v0.3.7.md). The user approved v0.3.6;
-this addition is pending review before Phase 6 QA and release preparation.
+See [the brewing heading notes](REFINEMENTS-v0.3.7.md). The user authorized GitHub
+publication after the heading, spacing and component-order review. Actual
+Samsung WebView acceptance and Phase 6 full QA remain pending.
 
 - Confirm the heading matches the profile used to begin each shot, remains stable
   across stage/profile-data updates, and updates for the next shot.
