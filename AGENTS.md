@@ -103,7 +103,7 @@ technical decisions, and the design history for previous iterations.
 - Profile selection applies that profile's temperature and weight target, then
   its explicit Focus recipe overrides. A missing/zero weight target clears the
   previous target to zero (off). Dose precedence is Focus preference, profile
-  metadata, then the user-approved 18g fallback (labeled default). Never infer
+  metadata, then the user-approved 18g fallback (source retained in workflow metadata). Never infer
   dose from a title or carry it from another profile. Home dose/yield/grind/
   temperature edits also patch the selected profile’s Focus KV preference;
   preserve other fields and profiles. Keep pending through both workflow and KV
@@ -200,8 +200,13 @@ technical decisions, and the design history for previous iterations.
   and measured layers. Live time-domain expansion uses a 420ms coordinate
   animation while preserving raw samples and the 30s/10s range policy. Resize,
   hidden views and reduced motion settle animation; new shots reset the domain.
-  Recipe rows use stable field keys. Pending-only saves retain their normal paint
-  while command guards still block activation; genuine unavailability stays styled.
+  Recipe rows use stable field keys. Pending-only saves retain normal paint for
+  recipe controls, Edit Profile and favorite names while command guards still
+  block activation; genuine unavailability stays styled. Home numeric grind uses
+  0–50 in 0.1 steps; explicit numeric recipe writes validate those bounds without
+  clamping historical reads or altering physical grinder descriptor limits.
+  Home's dose summary reads Dose and its target-yield control reads Drink;
+  internal data fields and source/default semantics stay unchanged.
   Home profile changes count numeric text for 350ms; manual edits, telemetry,
   initial load and returning from brewing update directly. Only presentation
   interpolates; stored values and calculations always use acknowledged targets.

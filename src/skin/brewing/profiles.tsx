@@ -53,6 +53,7 @@ export function CandidateProfiles({
               }
               aria-pressed={s.selectedId === profile?.id}
               disabled={profile ? s.profileLocked : !s.snapshot.favoritesLoaded}
+              data-pending={!!profile && s.pendingOnly}
               onClick={() =>
                 profile ? s.selectProfile(profile.id) : onAssign(index)
               }

@@ -33,6 +33,7 @@ export default function CandidateHome({
   onBrowse: () => void
   onAssign: (slot: number) => void
 }) {
+  const editable = s.allProfiles.some((p) => p.id === s.selectedId)
   return (
     <div className="focus-skin flex h-full flex-col bg-background">
       {showHeader && (
@@ -58,10 +59,9 @@ export default function CandidateHome({
               <Action
                 variant="ghost"
                 className="shrink-0 !px-2 text-[12px] text-muted-foreground"
-                disabled={
-                  s.profileLocked ||
-                  !s.allProfiles.some((p) => p.id === s.selectedId)
-                }
+                disabled={s.profileLocked || !editable}
+                focusableWhenDisabled={s.pendingOnly && editable}
+                data-pending={s.pendingOnly && editable}
                 onClick={onEdit}
               >
                 <SquarePen size={14} aria-hidden="true" />
@@ -87,14 +87,7 @@ export default function CandidateHome({
                 },
                 {
                   key: "dose",
-                  label:
-                    s.doseSource === "profile"
-                      ? "Coffee · saved"
-                      : s.doseSource === "default"
-                        ? "Coffee · default"
-                        : s.doseSource === "unset"
-                          ? "No saved dose"
-                          : "Coffee · current",
+                  label: "Dose",
                   value: s.dose,
                   unit: Number.isFinite(s.dose) ? "g" : "",
                   prefix: "",

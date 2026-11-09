@@ -249,6 +249,9 @@ test("profile counters animate only acknowledged profile changes and never write
             }
             if (
               performance.now() - start > 1200 &&
+              (!reverse || switchedAgain) &&
+              buttons[reverse ? 4 : index].getAttribute("aria-pressed") ===
+                "true" &&
               !nodes.some((n) => n.dataset.counting === "true") &&
               !buttons[index].disabled
             )

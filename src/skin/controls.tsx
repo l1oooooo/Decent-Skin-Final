@@ -1,3 +1,4 @@
+import { numericGrindRange } from "@/gateway/recipes"
 import { conciseNumber } from "./format"
 import { useState, type ReactNode } from "react"
 import { ProfileNumber } from "./profile-number"
@@ -215,10 +216,20 @@ export function RecipeControls({
       {(
         [
           ...(grind
-            ? [["Grind size", s.grind, "", 0.1, 0, 20, "grind"] as const]
+            ? [
+                [
+                  "Grind size",
+                  s.grind,
+                  "",
+                  numericGrindRange.step,
+                  numericGrindRange.min,
+                  numericGrindRange.max,
+                  "grind",
+                ] as const,
+              ]
             : []),
           ["Dose", s.dose, "g", 0.1, 8, 30, "dose"],
-          ["Target yield", s.yieldTarget, "g", 0.5, 0, 1000, "yield"],
+          ["Drink", s.yieldTarget, "g", 0.5, 0, 1000, "yield"],
           [
             "Temperature",
             s.displayTemperature(s.temperature),

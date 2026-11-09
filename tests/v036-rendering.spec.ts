@@ -75,8 +75,8 @@ test("setting updates retain rows and Sleep with stable paint and guarded pendin
     "Decrease grind size",
     "Increase dose",
     "Decrease dose",
-    "Increase target yield",
-    "Decrease target yield",
+    "Increase drink",
+    "Decrease drink",
     "Increase temperature",
     "Decrease temperature",
   ]) {

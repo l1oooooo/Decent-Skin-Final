@@ -1,5 +1,23 @@
 # Phase 9 — tablet acceptance
 
+## v0.3.8 candidate review — pending
+
+See [the targeted refinement notes](REFINEMENTS-v0.3.8.md). No release,
+installation or hardware operation is included in this review candidate.
+
+- At the actual Samsung WebView size, repeatedly and rapidly tap +/− for all four
+  Home settings. Confirm Edit Profile's border and the selected favorite name
+  retain their normal paint. Recheck the prior stable rows, chart and Sleep.
+- Repeat immediately after profile selection and during a pending save. Controls
+  must remain locked during writes; no queued adjustment should replay later.
+- Save grind 0, 20, 20.5, 35 and 50. Check 0.1 stepping, boundaries, profile
+  switching and reload persistence. Named settings remain supported.
+- Confirm Home summary Dose and right-side Drink retain their previous values
+  and units. Profile-switch counting and Home/Brewing motion should be unchanged.
+- Recheck disconnected/unavailable styling and write rejection. Desktop fixture
+  checks do not establish Samsung WebView acceptance.
+
+
 ## v0.3.7 tablet acceptance — pending
 
 See [the brewing heading notes](REFINEMENTS-v0.3.7.md). The user authorized GitHub

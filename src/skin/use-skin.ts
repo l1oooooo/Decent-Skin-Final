@@ -14,7 +14,7 @@ import {
   finite,
   previewSamples,
 } from "@/gateway/model"
-import { recipeDose } from "@/gateway/recipes"
+import { numericGrindRange, recipeDose } from "@/gateway/recipes"
 import type { MachineCommand, Profile } from "@/gateway/types"
 
 export const format = (value: number | null | undefined, digits = 1) =>
@@ -233,6 +233,11 @@ export function useSkin(gateway: DecaidGateway) {
               : operation || "Ready to brew"
   async function change(key: string, value: number) {
     if (!workflow || !finite(value)) return false
+    if (
+      key === "grind" &&
+      (value < numericGrindRange.min || value > numericGrindRange.max)
+    )
+      return false
     return perform(() =>
       gateway.recipes.adjust(
         matchedProfileId,

@@ -1,5 +1,64 @@
 # Focus release-candidate verification
 
+## 0.3.8 — targeted rendering and Home recipe refinement
+
+Local candidate pending tablet review. No merge, push, GitHub publication,
+installation or hardware operation is included. See
+[the cause analysis and scope](REFINEMENTS-v0.3.8.md).
+
+- Baseline frame instrumentation reproduced both remaining flashes in 88 frames:
+  Edit Profile gained a border/card background and a background transition;
+  selected favorite text changed from white to muted. Node identity, bounds,
+  visibility and theme variables stayed stable. Neighboring grind output and
+  DE1 status retained paint. Evidence is in ignored `artifacts/v038`.
+- Existing pending-only treatment now covers those two controls. They remain
+  blocked during workflow and preference saves; genuine unavailability remains
+  visually distinct. No CSS, animation, delay or unrelated rendering refactor
+  was introduced.
+- Home numeric grind uses shared 0–50 bounds and 0.1 stepping. Numeric state
+  changes and explicit recipe writes reject out-of-range input; serialization
+  stays text and named settings remain supported. Installed Decaid context and
+  handler source were checked at commit `14361a94`; there is no 20-point cap on
+  this recipe field. Physical grinder descriptor limits remain unchanged.
+- Home summary Coffee/source text becomes Dose; Home Target yield controls read
+  Drink. Internal fields, source/default selection, units and calculations stay.
+- `npm run check` passed TypeScript, ESLint, 190 unit tests and production build.
+  New unit cases cover 0, 20, 20.5, 35 and 50 through workflow/KV/load, preservation
+  of other fields, no motor writes, and rejection of -0.1, 50.1 and Infinity.
+- `npm run check:brewing` passed 18 model tests and the 2,458-module production
+  isolation audit. The existing bundle-size advisory remains.
+- Targeted rendering checks passed on D-Flow and immediately after selecting
+  80's Espresso: 271 + 219 frames retained one paint state per monitored element,
+  unchanged bounds/DOM/theme variables and zero restarted animations. All four
+  settings were adjusted both ways; held workflow and KV saves blocked duplicate
+  taps and navigation. Profile-load gating and real disconnected styling passed.
+  Workflow and per-profile KV both retained the acknowledged grind value.
+- Prior recipe-tap and rendering regressions passed: chart/focus/DOM retention,
+  no pending replay and 217 frames with no row/Sleep replacement. The four-region
+  Home/Brewing transition and completion/hold regression also passed.
+- Seven focused browser scenarios passed across targeted runs at the reported
+  1007 × 601 viewport. The grind keypad saved 0, 20, 20.5, 35 and 50 to both
+  workflow/KV, rejected 50.1 without a write, retained 50 after profile switching
+  and reload, and stepped 50 → 49.9 → 50. Boundary controls and new labels passed.
+  All observed writes were workflow/KV paths. Home and held-save screenshots
+  were visually inspected; this is not a full application E2E run.
+- A final range rerun and separate capture diagnostic passed. Direct PNG pixel
+  comparison found the chart, profile heading and summary unchanged after a
+  grind adjustment; consecutive captures were identical. The saved chart also
+  matched the final grind-50 capture. An apparent omission in the image viewer
+  was not present in the PNG pixels; no production chart change was needed.
+- Profile-counter regression passed numeric bounds, stable widths, identical
+  values, manual-edit non-animation, rapid retargeting, named settings and reduced
+  motion. Its first sampler ended before the requested second profile was
+  acknowledged; the test now checks selected identity before settling. The range
+  test's return selector was corrected to the fixture's full D-Flow / default
+  name. Both reruns passed; no production timing or command guard was relaxed.
+- The local package passed verification: 11 files, 624,520 bytes, bundled
+  relative assets and no fixture/development override. SHA-256:
+  `5c06efcda457319df925753633cde89bca58a1f20e520e91292b7b8c436d8113`.
+- The reported browser viewport is 1007 × 601. Desktop checks at that size do not
+  establish the actual Samsung WebView result; tablet rendering review remains.
+
 ## 0.3.7 — stable brewing profile heading candidate
 
 GitHub publication was explicitly authorized on November 9, 2026 after review

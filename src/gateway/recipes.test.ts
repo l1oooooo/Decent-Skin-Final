@@ -115,6 +115,42 @@ function setup() {
 }
 
 describe("profile and inventory ownership", () => {
+  it.each([0, 20, 20.5, 35, 50])(
+    "persists and reloads numeric grind %s without clamping or a motor write",
+    async (value) => {
+      const s = setup()
+      const text = value.toFixed(1)
+      await s.gateway.recipes.adjust("old", "grinderSetting", text)
+      expect(s.state.workflow?.context?.grinderSetting).toBe(text)
+      expect((await s.gateway.recipes.preferences()).old.grinderSetting).toBe(
+        text
+      )
+      const update = vi.spyOn(s.gateway, "updateWorkflow").mockResolvedValue()
+      await s.gateway.recipes.load("old")
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({ grinderSetting: text }),
+        })
+      )
+      expect(
+        s.calls.filter((c) => c.method !== "GET").map((c) => c.path)
+      ).toEqual(["/api/v1/workflow", "/api/v1/store/decent-skin-codex/recipes"])
+      expect(s.kv.recipes).toMatchObject({
+        old: { extension: "keep", grinderSetting: text },
+      })
+    }
+  )
+  it.each(["-0.1", "50.1", "Infinity"])(
+    "rejects out-of-range grind %s before writes",
+    async (value) => {
+      const s = setup()
+      await expect(
+        s.gateway.recipes.adjust("old", "grinderSetting", value)
+      ).rejects.toThrow("0 to 50")
+      expect(s.calls).toEqual([])
+    }
+  )
+
   for (const operation of ["load", "assign"] as const)
     it.each([false, true])(
       `${operation} compares workflow contents across reads (changed=%s)`,

@@ -93,6 +93,8 @@ export function validatePreference(value: unknown): RecipePreference {
     throw new Error("Grind setting must be text.")
   return p
 }
+export const numericGrindRange = { min: 0, max: 50, step: 0.1 } as const
+
 export class RecipeGateway {
   private gateway: DecaidGateway
   constructor(gateway: DecaidGateway) {
@@ -196,6 +198,16 @@ export class RecipeGateway {
       throw new Error(
         "Load a profile from the library before saving profile adjustments."
       )
+    if (key === "grinderSetting" && typeof value === "string" && value.trim()) {
+      const numeric = Number(value)
+      if (
+        !Number.isNaN(numeric) &&
+        (!Number.isFinite(numeric) ||
+          numeric < numericGrindRange.min ||
+          numeric > numericGrindRange.max)
+      )
+        throw new Error("Grind size must be from 0 to 50.")
+    }
     const patch = validatePreference({ [key]: value })
     const recordKey = profileFingerprint(record)
     await this.gateway.workflowOperation(async (verify, update) => {

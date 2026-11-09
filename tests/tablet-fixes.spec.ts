@@ -16,7 +16,7 @@ test("first install reads defaults without writes and preserves intentionally em
     "18.0g"
   )
   await expect(
-    page.getByText("Coffee · default", { exact: true })
+    page.getByLabel("Recipe summary").getByText("Dose", { exact: true })
   ).toBeVisible()
   await expect(
     page
@@ -307,9 +307,9 @@ test("profile selection uses its own temperature and yield; missing dose uses th
     await expect(page.getByLabel("Dose value", { exact: true })).toHaveText(
       dose
     )
-    await expect(
-      page.getByLabel("Target yield value", { exact: true })
-    ).toHaveText(yieldValue)
+    await expect(page.getByLabel("Drink value", { exact: true })).toHaveText(
+      yieldValue
+    )
     await expect(
       page.getByLabel("Temperature value", { exact: true })
     ).toHaveText(temp)
@@ -318,7 +318,7 @@ test("profile selection uses its own temperature and yield; missing dose uses th
     ).toHaveText(ratio)
   }
   await expect(
-    page.getByText("Coffee · default", { exact: true })
+    page.getByLabel("Recipe summary").getByText("Dose", { exact: true })
   ).toBeVisible()
   const workflow = await (
     await request.get(`${fixture}/api/v1/workflow`)

@@ -200,7 +200,7 @@ test("Home adjustments survive profile switches and a reload, with partial saves
     "18.1g"
   )
   for (const [label, value] of [
-    ["Target yield", "42.5"],
+    ["Drink", "42.5"],
     ["Temperature", "91"],
     ["Grind size", "2.4"],
   ]) {
@@ -217,16 +217,16 @@ test("Home adjustments survive profile switches and a reload, with partial saves
     "18.0g"
   )
   await expect(
-    page.getByText("Coffee · default", { exact: true })
+    page.getByLabel("Recipe summary").getByText("Dose", { exact: true })
   ).toBeVisible()
   await rail.getByRole("button").nth(0).click()
   await page.reload({ waitUntil: "networkidle" })
   await expect(page.getByLabel("Dose value", { exact: true })).toHaveText(
     "18.1g"
   )
-  await expect(
-    page.getByLabel("Target yield value", { exact: true })
-  ).toHaveText("42.5g")
+  await expect(page.getByLabel("Drink value", { exact: true })).toHaveText(
+    "42.5g"
+  )
   await expect(
     page.getByLabel("Temperature value", { exact: true })
   ).toHaveText("91.0°C")

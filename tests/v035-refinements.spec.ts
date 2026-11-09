@@ -207,8 +207,8 @@ test("recipe taps preserve DOM, chart, focus and persistence; rapid pending taps
   for (const name of [
     "Increase grind size",
     "Decrease grind size",
-    "Increase target yield",
-    "Decrease target yield",
+    "Increase drink",
+    "Decrease drink",
     "Increase dose",
   ]) {
     const button = page.getByRole("button", { name, exact: true })
@@ -251,9 +251,9 @@ test("recipe taps preserve DOM, chart, focus and persistence; rapid pending taps
   await expect(page.getByLabel("Grind size value", { exact: true })).toHaveText(
     "1.9"
   )
-  await expect(
-    page.getByLabel("Target yield value", { exact: true })
-  ).toHaveText("50g")
+  await expect(page.getByLabel("Drink value", { exact: true })).toHaveText(
+    "50g"
+  )
   await expect(
     page.getByLabel("Temperature value", { exact: true })
   ).toHaveText("88°C")
@@ -275,14 +275,14 @@ test("recipe taps preserve DOM, chart, focus and persistence; rapid pending taps
     data: { failPath: "/api/v1/workflow" },
   })
   await page
-    .getByRole("button", { name: "Increase target yield", exact: true })
+    .getByRole("button", { name: "Increase drink", exact: true })
     .click()
   await expect(
     page.locator('[data-slot="toast"][data-type="error"]')
   ).toContainText("Section write rejected")
-  await expect(
-    page.getByLabel("Target yield value", { exact: true })
-  ).toHaveText("50g")
+  await expect(page.getByLabel("Drink value", { exact: true })).toHaveText(
+    "50g"
+  )
 })
 
 test("brewing uses actual MM:SS and cup-second metrics; normal Sleep and Wake stay quiet", async ({
