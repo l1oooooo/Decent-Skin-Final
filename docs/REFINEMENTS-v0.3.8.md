@@ -1,7 +1,9 @@
 # Focus v0.3.8 — pending-save paint and Home recipe labels
 
-Local candidate for tablet review. No merge, push, release, installation or
-hardware commands are included in this refinement.
+GitHub publication was explicitly authorized on November 9, 2026 after local
+candidate review. Release v0.3.8 uses the stable `decent-focus.zip` asset name.
+Samsung WebView acceptance and Phase 6 QA remain pending. Publication does not
+install the skin or authorize hardware operations; no merge is included.
 
 ## Confirmed rendering cause
 

@@ -2,8 +2,10 @@
 
 ## 0.3.8 — targeted rendering and Home recipe refinement
 
-Local candidate pending tablet review. No merge, push, GitHub publication,
-installation or hardware operation is included. See
+GitHub publication was explicitly authorized on November 9, 2026. The release
+uses tag `v0.3.8` and the stable `decent-focus.zip` asset name. Tablet review and
+Phase 6 QA remain pending; publication includes no merge, installation or
+hardware operation. See
 [the cause analysis and scope](REFINEMENTS-v0.3.8.md).
 
 - Baseline frame instrumentation reproduced both remaining flashes in 88 frames:
