@@ -1,5 +1,40 @@
 # Focus release-candidate verification
 
+## 0.3.9 — forty-second live timeline candidate
+
+Prepared locally for tablet review before Phase 6. See
+[the exact scope and boundary table](REFINEMENTS-v0.3.9.md).
+
+- Two production lines change the live minimum to 40s and select the next 10s
+  boundary. No expansion occurs through 39s; 40s targets 50s, 60s targets 70s,
+  and 120s targets 130s. Home retains its profile-derived preview duration.
+- The 420ms ease-out, raw samples/gaps, Y domains, chart layout/style, metrics,
+  600ms Home/Brewing transition and completion lifecycle are unchanged.
+- `npm run check` passed TypeScript, ESLint, 202 unit tests and production build.
+  The original chart-markup snapshots included the previous 30s X coordinates
+  and ticks; both C/F snapshots were updated for the intended 40s coordinates.
+  The initial check stopped at that expected mismatch; the complete rerun passed.
+- `npm run check:brewing` passed 18 model tests and the 2,458-module simulator
+  isolation audit. The existing bundle-size advisory remains.
+- Five focused production-fixture browser tests passed: live range retargeting,
+  the existing four-region Home/Brewing transition and completion regression,
+  and duration matrices at 1007 × 601, 1340 × 800 and 800 × 480. Each matrix
+  checked 25, 35, 39, 40, 45, 50, 60, 70, 80, 90, 100, 110 and 120 seconds,
+  fixed bounds/node identity, five nonempty curves, latest-point coordinates
+  and right-edge headroom, unchanged pressure metrics, identical Home preview
+  paths/bounds on return, new-shot reset, and zero hardware-command requests.
+- The retargeting audit observed 35 monotonic frames with aligned ticks while
+  samples arrived. The separate continuous simulator regression passed with
+  403 → 409 samples during the 40 → 50 expansion, plus new-shot reset and
+  reduced-motion checks. Both production and simulator browser runs passed on
+  their first run. This is focused coverage, not a full E2E suite.
+- Long-shot captures at the tablet-reported and compact sizes were visually
+  inspected. Curves and metrics remain visible, with the 120s sample inside
+  the expanded 130s plot. No chart styling or motion implementation was changed.
+- The package passed static verification: 11 files, 624,522 bytes. SHA-256:
+  `b9fc4ada338308ba79b28a5d2fa5ce1b0d453bb83bfdde1b8e9ad8d0d52af996`.
+- Actual embedded Samsung WebView and hardware acceptance remain pending.
+
 ## 0.3.8 — targeted rendering and Home recipe refinement
 
 GitHub publication was explicitly authorized on November 9, 2026. The release

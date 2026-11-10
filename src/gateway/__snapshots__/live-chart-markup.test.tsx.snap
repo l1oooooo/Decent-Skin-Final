@@ -1,5 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`preserves live paths, styling, labels and gradients while adding motion 1`] = `"1e13f8be777716c2c1a6bdabf3794deec88a8ce05233048de7e3fae8dd7425ff"`;
+exports[`preserves live paths, styling, labels and gradients while adding motion 1`] = `"ca737400c85da53b580a1e486beaf269f63a2d926b383c8005e45fcc8e9f1edf"`;
 
-exports[`preserves live paths, styling, labels and gradients while adding motion 2`] = `"05b7386a61409e8947db8e75572b0e12aa80ce6486099cb25d984965626f17b2"`;
+exports[`preserves live paths, styling, labels and gradients while adding motion 2`] = `"57142df44f7f233f15b937b8f866f1a94150a313209ca75c1f2649da590f6745"`;

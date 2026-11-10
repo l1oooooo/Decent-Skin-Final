@@ -189,7 +189,7 @@ test("long extraction zooms continuously while samples arrive and resets for a n
   await page
     .getByRole("button", { name: "Start new shot" })
     .click({ force: true })
-  await page.clock.runFor(31250)
+  await page.clock.runFor(41250)
   const chart = page.locator(".brew-chart-live .brew-chart")
   const measure = () =>
     chart.evaluate((node) => ({
@@ -203,18 +203,18 @@ test("long extraction zooms continuously while samples arrive and resets for a n
   await page.clock.runFor(500)
   const end = await measure()
   console.log(JSON.stringify({ first, middle, end }))
-  expect(middle.display).toBeGreaterThan(30)
-  expect(middle.display).toBeLessThan(40)
+  expect(middle.display).toBeGreaterThan(40)
+  expect(middle.display).toBeLessThan(50)
   expect(middle.samples).toBeGreaterThan(first.samples)
-  expect(end.display).toBe(40)
+  expect(end.display).toBe(50)
   await expect(chart.locator("[data-series]")).toHaveCount(5)
   await page.screenshot({ path: "artifacts/v032/long-extraction.png" })
   await page
     .getByRole("button", { name: "Start new shot" })
     .click({ force: true })
-  expect((await measure()).display).toBe(30)
+  expect((await measure()).display).toBe(40)
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.clock.runFor(31350)
+  await page.clock.runFor(41350)
   const reduced = await measure()
   expect(reduced.display).toBe(reduced.target)
   expect(
