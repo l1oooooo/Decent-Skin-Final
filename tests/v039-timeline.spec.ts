@@ -6,7 +6,7 @@ for (const [width, height] of [
   [1340, 800],
   [800, 480],
 ]) {
-  test(`forty-second live timeline preserves geometry and telemetry at ${width}x${height}`, async ({
+  test(`thirty-five-second live timeline preserves geometry and telemetry at ${width}x${height}`, async ({
     page,
     request,
   }) => {
@@ -31,7 +31,7 @@ for (const [width, height] of [
     const root = page.locator(".brew-preview")
     const chart = page.locator(".brew-chart-live .brew-chart")
     await expect(root).toHaveAttribute("data-phase", "active")
-    await expect(chart).toHaveAttribute("data-displayed-duration", "40")
+    await expect(chart).toHaveAttribute("data-displayed-duration", "35")
     await expect
       .poll(() =>
         page
@@ -41,7 +41,9 @@ for (const [width, height] of [
       .toBe(0)
     const bounds = await chart.boundingBox()
     const svg = await chart.elementHandle()
-    const checkpoints = [25, 35, 39, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120]
+    const checkpoints = [
+      25, 30, 34, 35, 39, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120,
+    ]
     let previousSamples = 0
     for (const elapsed of checkpoints) {
       await state({ elapsed })
@@ -50,7 +52,7 @@ for (const [width, height] of [
       ).toHaveText(
         `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`
       )
-      const target = Math.max(40, (Math.floor(elapsed / 10) + 1) * 10)
+      const target = elapsed < 35 ? 35 : (Math.floor(elapsed / 10) + 1) * 10
       await expect(chart).toHaveAttribute("data-duration", String(target))
       await expect(chart).toHaveAttribute(
         "data-displayed-duration",
@@ -114,7 +116,7 @@ for (const [width, height] of [
     expect(returned).toEqual(home)
     await state({ state: "espresso", shotId: "timeline-next", elapsed: 121 })
     await expect(root).toHaveAttribute("data-phase", "active")
-    await expect(chart).toHaveAttribute("data-displayed-duration", "40")
+    await expect(chart).toHaveAttribute("data-displayed-duration", "35")
     expect(
       await (await request.get(`${fixture}/__test/requests`)).json()
     ).toEqual([])

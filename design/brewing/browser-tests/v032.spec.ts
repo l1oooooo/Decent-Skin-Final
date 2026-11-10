@@ -212,7 +212,7 @@ test("long extraction zooms continuously while samples arrive and resets for a n
   await page
     .getByRole("button", { name: "Start new shot" })
     .click({ force: true })
-  expect((await measure()).display).toBe(40)
+  expect((await measure()).display).toBe(35)
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.clock.runFor(41350)
   const reduced = await measure()

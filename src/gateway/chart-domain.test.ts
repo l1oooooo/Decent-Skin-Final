@@ -15,8 +15,11 @@ const reading: Reading = {
 }
 
 it.each([
-  [0, 40],
-  [25, 40],
+  [0, 35],
+  [25, 35],
+  [30, 35],
+  [34, 35],
+  [34.999, 35],
   [35, 40],
   [39, 40],
   [39.999, 40],
@@ -40,8 +43,8 @@ it.each([
   expect(samples).toEqual(original)
 })
 
-it("starts empty shots at forty seconds without changing sample gaps or units", () => {
-  expect(domains([]).duration).toBe(40)
+it("starts empty shots at thirty-five seconds without changing sample gaps or units", () => {
+  expect(domains([]).duration).toBe(35)
   const samples = [
     reading,
     { ...reading, elapsed: 39, pressure: null },

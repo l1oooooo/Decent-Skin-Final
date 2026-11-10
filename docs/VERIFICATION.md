@@ -1,6 +1,28 @@
 # Focus release-candidate verification
 
-## 0.3.9 — forty-second live timeline candidate
+## 0.3.9 — thirty-five-second live timeline candidate
+
+The user revised the initial range from 40s to 35s. The range remains at 35s
+through 34.999s, expands to 40s at 35s, then follows the existing 50s, 60s and
+subsequent ten-second boundaries. Only the domain calculation changed.
+The open port-5174 simulator was refreshed and directly confirmed with a 35s
+displayed domain and 0s–35s ticks.
+
+- The complete check passed TypeScript, lint, 205 unit tests and production build.
+- The model/isolation audit passed 18 tests and 2,458 production modules.
+- The revised duration matrix passed at 1007 × 601: no expansion at 25, 30 or
+  34s; 35s targets 40s, followed by the unchanged longer ranges through 120s.
+  It retained chart identity/bounds, sample geometry, metrics, the Home preview
+  on return and the 35s new-shot reset, with no hardware-command requests.
+- The retargeting/reduced-motion check passed on rerun with 33 aligned,
+  monotonic frames through 35 → 40 → 50. Its initial run missed the first
+  intermediate range; the test could sample while Home/Brewing was still
+  resizing. It now waits for the layout animation to finish and for the 34s
+  reading before starting the zoom audit. No production timing was changed.
+- The refreshed package contains 11 files, 624,524 bytes. SHA-256:
+  `b4774c2e58517a4c4a99c7ebac8f4be4e584a113963add3ed3f6d242b4986a62`.
+
+### Initial 40s candidate validation (superseded range)
 
 Prepared locally for tablet review before Phase 6. See
 [the exact scope and boundary table](REFINEMENTS-v0.3.9.md).

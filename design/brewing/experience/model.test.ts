@@ -296,7 +296,7 @@ describe("honest chart geometry", () => {
     })
     expect(
       domains([{ ...sample, weightFlow: -2, groupTemperature: 102 }])
-    ).toEqual({ min: -3, max: 12, tempMin: 60, tempMax: 110, duration: 40 })
+    ).toEqual({ min: -3, max: 12, tempMin: 60, tempMax: 110, duration: 35 })
   })
   it("leaves missing readings as gaps and steps only explicit target discontinuities", () => {
     const samples = [

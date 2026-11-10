@@ -46,9 +46,10 @@ export function domains(samples: Reading[]) {
     max = 12,
     tempMin = 60,
     tempMax = 100,
-    duration = 40
+    duration = 35
   for (const point of samples) {
-    duration = Math.max(duration, (Math.floor(point.elapsed / 10) + 1) * 10)
+    if (point.elapsed >= duration)
+      duration = (Math.floor(point.elapsed / 10) + 1) * 10
     for (const key of [
       "pressure",
       "targetPressure",

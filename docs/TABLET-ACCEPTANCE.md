@@ -3,10 +3,10 @@
 ## v0.3.9 timeline recheck — pending
 
 - Confirm version 0.3.9 and record the embedded WebView dimensions.
-- Confirm an initial 0–40s live range; 25s, 35s and 39s shots do not zoom out.
-- At 40s, confirm a smooth expansion to 50s; check 45s, 60s and 120s traces.
+- Confirm an initial 0–35s live range; shots through 34s do not zoom out.
+- At 35s, confirm a smooth expansion to 40s, then 50s at 40s; check 45s, 60s and 120s traces.
 - Confirm visible curves, unchanged metrics and Home preview, and a reset to
-  40s for the next shot. Preserve the approved Home/Brewing transitions.
+  35s for the next shot. Preserve the approved Home/Brewing transitions.
 - See [the scope and exact boundaries](REFINEMENTS-v0.3.9.md).
 
 ## v0.3.8 candidate review — pending

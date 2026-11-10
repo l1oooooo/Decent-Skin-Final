@@ -16,7 +16,17 @@ test("live domain retargeting keeps telemetry, ticks and stage positions coheren
     "data-phase",
     "active"
   )
-  await request.post(`${fixture}/__test/state`, { data: { elapsed: 39 } })
+  await expect
+    .poll(() =>
+      page
+        .locator(".brew-chart-surface")
+        .evaluate((el) => el.getAnimations().length)
+    )
+    .toBe(0)
+  await request.post(`${fixture}/__test/state`, { data: { elapsed: 34 } })
+  await expect(
+    page.locator(".brew-metrics > div").first().locator("p")
+  ).toHaveText("00:34")
   const evidence = await page.evaluate(async (origin) => {
     const chart = document.querySelector(".brew-chart-live .brew-chart")!
     const frames: {
@@ -51,15 +61,15 @@ test("live domain retargeting keeps telemetry, ticks and stage positions coheren
       if (running) requestAnimationFrame(sample)
     }
     requestAnimationFrame(sample)
-    await update({ elapsed: 40.1 })
+    await update({ elapsed: 35.1 })
     await new Promise((r) => setTimeout(r, 140))
-    await update({ elapsed: 40.2 })
+    await update({ elapsed: 35.2 })
     await new Promise((r) => setTimeout(r, 90))
-    await update({ elapsed: 50.1 })
+    await update({ elapsed: 40.1 })
     const deadline = performance.now() + 15000
     while (
-      (chart.getAttribute("data-duration") !== "60" ||
-        chart.getAttribute("data-displayed-duration") !== "60") &&
+      (chart.getAttribute("data-duration") !== "50" ||
+        chart.getAttribute("data-displayed-duration") !== "50") &&
       performance.now() < deadline
     )
       await new Promise((r) => setTimeout(r, 50))
@@ -85,15 +95,15 @@ test("live domain retargeting keeps telemetry, ticks and stage positions coheren
       last: evidence.frames.at(-1),
     })
   )
-  expect(evidence.frames.some((f) => f.display > 40 && f.display < 50)).toBe(
+  expect(evidence.frames.some((f) => f.display > 35 && f.display < 40)).toBe(
     true
   )
-  expect(evidence.frames.some((f) => f.target === 60 && f.display < 60)).toBe(
+  expect(evidence.frames.some((f) => f.target === 50 && f.display < 50)).toBe(
     true
   )
   expect(evidence.frames.every((f) => f.aligned)).toBe(true)
   const end = evidence.frames.at(-1)!
-  expect(end.display).toBe(60)
+  expect(end.display).toBe(50)
   expect(end.samples).toBeGreaterThan(evidence.frames[0].samples)
   expect(evidence.pressure).toMatch(/M.+L/)
   for (let i = 1; i < evidence.frames.length; i++)
@@ -101,10 +111,10 @@ test("live domain retargeting keeps telemetry, ticks and stage positions coheren
       evidence.frames[i - 1].display
     )
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await request.post(`${fixture}/__test/state`, { data: { elapsed: 60.1 } })
+  await request.post(`${fixture}/__test/state`, { data: { elapsed: 50.1 } })
   await expect(page.locator(".brew-chart-live .brew-chart")).toHaveAttribute(
     "data-displayed-duration",
-    "70"
+    "60"
   )
   await page.screenshot({ path: "artifacts/v032/production-long-1007.png" })
   expect(

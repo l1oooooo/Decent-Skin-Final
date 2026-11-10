@@ -198,7 +198,7 @@ technical decisions, and the design history for previous iterations.
   New shots supersede holds; replay does not navigate or manufacture elapsed time.
   Home and Brewing share one 600ms header/panel/chart transition, with separate target
   and measured layers. Live time-domain expansion uses a 420ms coordinate
-  animation while preserving raw samples. The live timeline starts at 40s and
+  animation while preserving raw samples. The live timeline starts at 35s, expands to 40s at that boundary, then
   expands in 10s steps at each boundary, leaving space for incoming samples. Resize,
   hidden views and reduced motion settle animation; new shots reset the domain.
   Recipe rows use stable field keys. Pending-only saves retain normal paint for
