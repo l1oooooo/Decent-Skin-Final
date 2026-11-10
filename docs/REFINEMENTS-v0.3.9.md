@@ -1,7 +1,9 @@
 # Focus v0.3.9 — thirty-five-second brewing timeline
 
-Local build prepared for tablet testing before Phase 6. No installation or
-hardware operation is included.
+GitHub publication was explicitly authorized on November 10, 2026. Release
+v0.3.9 includes the final 35-second range and uses the stable `decent-focus.zip`
+asset in `l1oooooo/Decent-Skin-Focus`. Tablet acceptance and Phase 6 remain
+pending; publication includes no installation, merge or hardware operation.
 
 ## Scope and boundary behavior
 

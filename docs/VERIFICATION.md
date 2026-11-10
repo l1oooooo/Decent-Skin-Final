@@ -2,6 +2,10 @@
 
 ## 0.3.9 — thirty-five-second live timeline candidate
 
+Publication of the final 35s build was explicitly authorized on November 10,
+2026. Tag `v0.3.9` uses `decent-focus.zip` in `l1oooooo/Decent-Skin-Focus`.
+Samsung WebView acceptance and Phase 6 QA remain pending.
+
 The user revised the initial range from 40s to 35s. The range remains at 35s
 through 34.999s, expands to 40s at 35s, then follows the existing 50s, 60s and
 subsequent ten-second boundaries. Only the domain calculation changed.
