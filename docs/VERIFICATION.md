@@ -3,8 +3,11 @@
 ## 0.3.10-rc.1 — local Phase 6 review candidate
 
 Prepared on November 13, 2026, from approved v0.3.9 on the dedicated
-`codex/focus-phase-6-hardening` branch. No publication, merge, installation or
-physical machine operation was performed. The latest approved 35-second
+`codex/focus-phase-6-hardening` branch. The user subsequently authorized GitHub
+publication as a release candidate with the documented findings unresolved.
+Publish `v0.3.10-rc.1` as a prerelease with `decent-focus.zip`; keep v0.3.9 as
+the latest stable release. No main merge, installation or physical machine
+operation is included. The latest approved 35-second
 initial timeline is preserved despite the older 40-second wording in the brief.
 
 - Corrected delayed profile-route initialization and shot-entry keyboard focus.

@@ -1,7 +1,9 @@
 # Decent Focus 0.3.10-rc.1
 
-Local Phase 6 review candidate based on v0.3.9. **Not published, merged or
-installed.** The current design, live telemetry, command gates, notifications
+Phase 6 release candidate based on v0.3.9. The user explicitly authorized
+GitHub publication after reviewing the QA findings. It is published as a
+**prerelease**, not a stable promotion; main is not merged and no tablet
+installation is performed. The current design, live telemetry, command gates, notifications
 and motion remain the approved baseline, including the **35-second** initial
 brewing timeline.
 
@@ -29,7 +31,7 @@ archive inventory, size and SHA-256. Device acceptance remains false.
 
 Verified archive: **624,366 bytes, 11 files**. SHA-256:
 `9d6459820794b04524b216517b6ce90f34db209134b7a39afe70cc8bc91fe9fc`.
-Review status: **release gate not met; review only, not approved for installation**.
+Review status: **stable-release gate not met; prerelease publication authorized for review/testing**.
 Latest per-case browser coverage is 85/86 passing across full and targeted runs,
 with an unresolved inventory notification check. Cold-read reliability and
 measured desktop frame stalls also remain open. All static/package checks passed;
