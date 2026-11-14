@@ -158,6 +158,8 @@ technical decisions, and the design history for previous iterations.
 - The approved header is owned by the App shell across routed pages; Home Sleep
   is intentionally full-screen. Brewing slides the same mounted header upward
   and makes it inert; other routes retain it. Keep one gateway/session.
+  New-shot keyboard focus targets the visible brewing status once that shot
+  view is interactive, never the inert header or a replayed shot.
   Routine heating/preparation, successful quick edits and Sleep/Wake are quiet;
   retain errors, watchdogs, shot outcomes and confirmed-state safety warnings.
 - Focus is the sole production design. Surface tone 0.16, radius 8px and

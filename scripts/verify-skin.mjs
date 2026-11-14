@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { execFileSync } from "node:child_process"
 import { lstatSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import { posix, resolve } from "node:path"
+import { validSkinVersion } from "./skin-version.mjs"
 
 const fail = (message) => {
   throw new Error(message)
@@ -10,10 +11,7 @@ const manifest = JSON.parse(readFileSync("dist/manifest.json", "utf8"))
 const expected = JSON.parse(readFileSync("public/manifest.json", "utf8"))
 if (JSON.stringify(manifest) !== JSON.stringify(expected))
   fail("Stale manifest in dist")
-if (
-  !/^[a-z0-9-]+$/.test(manifest.id) ||
-  !/^\d+\.\d+\.\d+$/.test(manifest.version)
-)
+if (!/^[a-z0-9-]+$/.test(manifest.id) || !validSkinVersion(manifest.version))
   fail("Invalid skin identity")
 const archive = resolve(
   process.argv[2] ?? `artifacts/${manifest.id}-${manifest.version}.zip`

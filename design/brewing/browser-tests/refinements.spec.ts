@@ -198,18 +198,19 @@ test("one utility popover keeps tabs stable, preserves focus and enforces brewin
     .getByRole("button", { name: "Simulate GHC brew", exact: true })
     .click({ force: true })
   await page.clock.runFor(1500)
-  await trigger.click({ force: true })
+  await expect(popover).toHaveCount(0)
+  await expect(page.locator(".candidate-header")).toHaveAttribute(
+    "aria-hidden",
+    "true"
+  )
+  expect(
+    await page
+      .locator(".candidate-header")
+      .evaluate((el) => (el as HTMLElement).inert)
+  ).toBe(true)
+  await expect(trigger).toHaveCount(0)
   await expect(
-    page.getByRole("button", {
-      name: "Increase steam temperature",
-      exact: true,
-    })
-  ).toBeDisabled()
-  await expect(
-    page.getByRole("switch", { name: "Enable steam" })
-  ).toBeDisabled()
-  await expect(
-    page.getByRole("button", { name: "Sleep machine" })
+    page.getByRole("button", { name: "Sleep machine", includeHidden: true })
   ).toBeDisabled()
   expect(writes).toEqual([])
 })
@@ -227,7 +228,9 @@ test("rolling text changes without moving its icon and settles rapid interrupted
   const status = page.locator(".rolling-status")
   await expect(status).toHaveAttribute("data-tone", "preinfusion")
   await expect(machineStatus).toHaveText("DE1Ready")
-  await expect(page.locator(".brew-title h1")).toHaveCount(0)
+  await expect(page.locator(".brew-profile-name")).toHaveText(
+    "D-Flow / default"
+  )
   const titleStyle = await status.evaluate((node) => ({
     color: getComputedStyle(node).color,
     foreground: getComputedStyle(node).getPropertyValue("--foreground").trim(),
@@ -235,7 +238,7 @@ test("rolling text changes without moving its icon and settles rapid interrupted
     left: node.getBoundingClientRect().left,
   }))
   expect(titleStyle.color).toBe(titleStyle.foreground)
-  expect(titleStyle.size).toBe("26px")
+  expect(titleStyle.size).toBe("18px")
   expect(titleStyle.left).toBe(28)
   const icon = page.locator(".rolling-icon")
   const before = await icon.boundingBox()

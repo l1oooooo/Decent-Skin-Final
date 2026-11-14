@@ -11,7 +11,11 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
   await page.goto("/?page=settings&category=extensions&plugin=fixture.tools", {
     waitUntil: "networkidle",
   })
-  await expect(page.getByText("Ready to brew", { exact: true })).toBeVisible({
+  await expect(
+    page
+      .getByRole("status", { name: "Machine state", exact: true })
+      .getByText("Ready", { exact: true })
+  ).toBeVisible({
     timeout: 90000,
   })
   await page
@@ -46,7 +50,11 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
     .getByRole("button", { name: "Save plugin settings", exact: true })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/Section write rejected/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/Section write rejected/)
+  ).toBeVisible()
   await expect(page.getByLabel("Display name", { exact: true })).toHaveValue(
     "My plugin"
   )
@@ -55,7 +63,11 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
     .getByRole("button", { name: "Save plugin settings", exact: true })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/Plugin settings acknowledged/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/Plugin settings acknowledged/)
+  ).toBeVisible()
   const writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(writes.at(-1).body).toEqual({ nickname: "My plugin", threshold: 7.5 })
   const settings = await (
@@ -70,7 +82,11 @@ test("extensions preserve hidden credentials and failed drafts, and build a safe
     data: { state: "espresso", elapsed: 12 },
   })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", elapsed: 30, reason: "targetWeight" },
@@ -123,7 +139,11 @@ test("plugin management requires explicit permission approval and reports partia
     })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/Fixture update partially failed/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/Fixture update partially failed/)
+  ).toBeVisible()
   await expect(page.getByText(/Pending version 2.0.*network.tcp/)).toBeVisible()
   let writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(
@@ -164,7 +184,11 @@ test("help reads stay local and feedback requires review with retained failures"
   request,
 }) => {
   await page.goto("/?page=settings&category=help", { waitUntil: "networkidle" })
-  await expect(page.getByText("Ready to brew", { exact: true })).toBeVisible({
+  await expect(
+    page
+      .getByRole("status", { name: "Machine state", exact: true })
+      .getByText("Ready", { exact: true })
+  ).toBeVisible({
     timeout: 90000,
   })
   await page
@@ -191,7 +215,11 @@ test("help reads stay local and feedback requires review with retained failures"
     .getByRole("button", { name: "Save system preferences", exact: true })
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/System preferences acknowledged/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/System preferences acknowledged/)
+  ).toBeVisible()
   await page
     .getByLabel("Feedback description", { exact: true })
     .fill("Fixture review only. No external submission.")
@@ -201,13 +229,19 @@ test("help reads stay local and feedback requires review with retained failures"
   await page
     .getByRole("button", { name: "Review and submit feedback", exact: true })
     .click()
-  await expect(page.getByRole("dialog")).toBeVisible()
+  await expect(
+    page.getByRole("dialog", { name: "Submit this feedback?", exact: true })
+  ).toBeVisible()
   let writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(
     writes.some((w: { path: string }) => w.path.endsWith("/feedback"))
   ).toBe(false)
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
-  await expect(page.getByText(/Feedback was not confirmed/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/Feedback was not confirmed/)
+  ).toBeVisible()
   await expect(
     page.getByLabel("Feedback description", { exact: true })
   ).toHaveValue("Fixture review only. No external submission.")
@@ -217,7 +251,9 @@ test("help reads stay local and feedback requires review with retained failures"
     .click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
   await expect(
-    page.getByText("Feedback acknowledged as issue #123.", { exact: true })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("Feedback acknowledged as issue #123.", { exact: true })
   ).toBeVisible()
   await expect(
     page.getByLabel("Feedback description", { exact: true })
@@ -248,13 +284,21 @@ test("unavailable plugins and logs stay explicit; credentials clear only on Save
   await page.goto("/?page=settings&category=extensions", {
     waitUntil: "networkidle",
   })
-  await expect(page.getByText("Ready to brew", { exact: true })).toBeVisible({
+  await expect(
+    page
+      .getByRole("status", { name: "Machine state", exact: true })
+      .getByText("Ready", { exact: true })
+  ).toBeVisible({
     timeout: 90000,
   })
   await page
     .getByRole("button", { name: "Refresh extensions", exact: true })
     .click()
-  await expect(page.getByText(/plugins: 503:/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/plugins\s*:\s*503:/)
+  ).toBeVisible()
   await expect(
     page.getByRole("button", {
       name: "Check and install plugin updates",
@@ -313,7 +357,11 @@ test("unavailable plugins and logs stay explicit; credentials clear only on Save
   await page
     .getByRole("button", { name: "Read WebView log", exact: true })
     .click()
-  await expect(page.getByText(/503: Log unavailable/)).toBeVisible()
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(/503: Log unavailable/)
+  ).toBeVisible()
   const writes = await (await request.get(`${fixture}/__test/requests`)).json()
   expect(writes.map((w: { path: string }) => w.path)).toEqual([
     "/api/v1/plugins/fixture.tools/settings",

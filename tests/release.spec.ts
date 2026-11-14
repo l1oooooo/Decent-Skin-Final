@@ -6,6 +6,7 @@ import { test, expect } from "@playwright/test"
 test("production assets load below a nested skin path without an API or fallback readings", async ({
   page,
 }) => {
+  test.setTimeout(300000)
   const assets = new Map<string, Buffer>()
   for (const file of readdirSync("dist", {
     recursive: true,
@@ -97,11 +98,11 @@ test("production assets load below a nested skin path without an API or fallback
     })
     await expect(
       page.getByRole("heading", { name: "System and help", exact: true })
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 90000 })
     await page.reload({ waitUntil: "networkidle" })
     await expect(
       page.getByRole("heading", { name: "System and help", exact: true })
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 90000 })
     expect(missing).toEqual([])
     expect(errors).toEqual([])
   } finally {

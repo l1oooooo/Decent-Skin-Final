@@ -116,8 +116,8 @@ test("Steam switch follows acknowledged settings, rejects failures and blocks du
   await toggle.click()
   await expect(
     page
-      .getByRole("dialog", { name: "Machine Settings", exact: true })
-      .getByRole("alert")
+      .locator('[data-slot="toast"]')
+      .filter({ hasText: "Section write rejected" })
   ).toContainText("Section write rejected")
   await expect(toggle).toBeChecked()
   await expect(toggle).toBeEnabled()

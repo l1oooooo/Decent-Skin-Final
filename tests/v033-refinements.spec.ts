@@ -103,7 +103,9 @@ test("a rejected scale connection remains disconnected and is never retried", as
     .click()
   await page.getByRole("button", { name: "Connect", exact: true }).click()
   await expect(
-    page.getByText("Section write rejected", { exact: false })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("Section write rejected", { exact: false })
   ).toBeVisible()
   await page.getByRole("button", { name: "Home", exact: true }).click()
   await expect(page.locator(".scale-connection-action")).toHaveText(

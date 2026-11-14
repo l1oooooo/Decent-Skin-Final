@@ -132,17 +132,33 @@ export default function App() {
   const initializedPage = useRef("")
   useEffect(() => {
     const key = `${nav.route.page}:${nav.route.id ?? "new"}`
-    if (initializedPage.current === key) return
+    if (
+      initializedPage.current === key &&
+      !(
+        nav.route.page === "edit" &&
+        !recipes.draft &&
+        !recipes.busy &&
+        s.snapshot.profiles.some((p) => p.id === nav.route.id)
+      )
+    )
+      return
     if (
       ["edit", "recipe"].includes(nav.route.page) &&
       nav.route.id &&
       !s.snapshot.profiles.some((p) => p.id === nav.route.id) &&
-      s.libraryLoading
+      (s.libraryLoading || nav.route.page === "recipe")
     )
       return
     initializedPage.current = key
     openPage()
-  }, [nav.route.page, nav.route.id, s.snapshot.profiles, s.libraryLoading])
+  }, [
+    nav.route.page,
+    nav.route.id,
+    s.snapshot.profiles,
+    s.libraryLoading,
+    recipes.draft,
+    recipes.busy,
+  ])
   const syncEditorRoute = useEffectEvent(() => {
     if (
       nav.route.page === "edit" &&
@@ -158,15 +174,12 @@ export default function App() {
   const assignment =
     nav.route.page === "library" ? (nav.route.slot ?? null) : null
   const observedShot = useRef(0)
+  const focusShot = useRef<number | null>(null)
   const onShot = useEffectEvent(() => {
+    focusShot.current = gateway.getSnapshot().shotSequence
     nav.interrupt()
     s.setModal(null)
     s.setSettings(null)
-    requestAnimationFrame(() =>
-      document
-        .querySelector<HTMLElement>('[aria-label="Machine state"]')
-        ?.focus()
-    )
   })
   useEffect(
     () =>
@@ -178,6 +191,24 @@ export default function App() {
       }),
     [gateway]
   )
+  useEffect(() => {
+    if (
+      focusShot.current !== brewing.state.sequence ||
+      nav.route.page !== "home" ||
+      brewing.state.route !== "home" ||
+      ["home", "returning"].includes(brewing.state.phase)
+    )
+      return
+    document
+      .querySelector<HTMLElement>(".brew-title")
+      ?.focus({ preventScroll: true })
+    focusShot.current = null
+  }, [
+    nav.route.page,
+    brewing.state.sequence,
+    brewing.state.route,
+    brewing.state.phase,
+  ])
   const previousPage = useRef(nav.route.page)
   useEffect(() => {
     if (nav.route.page === "home" && previousPage.current !== "home") {

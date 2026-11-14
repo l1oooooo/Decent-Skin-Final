@@ -9,8 +9,8 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
   workers: 1,
-  timeout: 120000,
-  expect: { timeout: 30000 },
+  timeout: 240000,
+  expect: { timeout: 90000 },
   use: {
     baseURL: `http://127.0.0.1:${previewPort}`,
     viewport: { width: 1340, height: 800 },

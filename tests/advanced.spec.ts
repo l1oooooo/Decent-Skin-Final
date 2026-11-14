@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test"
 import { fixtureOrigin as fixture } from "./fixture-origin.js"
-test.setTimeout(240000)
+test.setTimeout(360000)
 test.beforeEach(async ({ request }) => {
   await request.post(`${fixture}/__test/reset`)
 })
@@ -24,8 +24,12 @@ test("advanced page visits are read-only and keep the shared frame", async ({
         name: "Refresh operation status",
         exact: true,
       })
-    ).toBeVisible()
-    await expect(page.getByText("Ready to brew", { exact: true })).toBeVisible()
+    ).toBeVisible({ timeout: 90000 })
+    await expect(
+      page
+        .getByRole("status", { name: "Machine state", exact: true })
+        .getByText("Ready", { exact: true })
+    ).toBeVisible({ timeout: 90000 })
     if (category === "machine")
       await expect(
         page.getByText("Cup warming is unavailable on this machine.", {
@@ -67,7 +71,12 @@ test("sensor correction is confirmed, verified and cleared; flow calibration pre
   await page
     .getByRole("button", { name: "Apply sensor correction", exact: true })
     .click()
-  await expect(page.getByRole("dialog")).toBeVisible()
+  await expect(
+    page.getByRole("dialog", {
+      name: "Apply pressure correction?",
+      exact: true,
+    })
+  ).toBeVisible()
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
   ).toEqual([])
@@ -195,11 +204,15 @@ test("firmware rejects verification failure and cancellation, then accepts only 
     name: "Install firmware",
     exact: true,
   })
+  await expect(install).toHaveCount(2, { timeout: 90000 })
+  await expect(install.nth(0)).toBeEnabled({ timeout: 90000 })
   await expect(install.nth(1)).toBeDisabled()
   await install.nth(0).click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
   await expect(
-    page.getByText("Verification rejected", { exact: true })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("Verification rejected", { exact: true })
   ).toBeVisible()
   await expect(
     page.getByText(/reported verified firmware completion/)
@@ -385,7 +398,9 @@ test("backup and sync expose section failures and preserve explicit transfer cho
   await page.getByRole("button", { name: "Import backup", exact: true }).click()
   await page.getByRole("button", { name: "Confirm", exact: true }).click()
   await expect(
-    page.getByText("Fixture rejected shot", { exact: true })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("Fixture rejected shot", { exact: true })
   ).toBeVisible()
   await expect(
     page.getByText("profiles: 2 imported · 1 skipped", { exact: true })

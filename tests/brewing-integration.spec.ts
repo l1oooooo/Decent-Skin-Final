@@ -119,7 +119,9 @@ test("real fixture events drive five traces, a frozen completion and one automat
         }, 50)
       })
       await update({ elapsed: 31, reason: "targetWeight" })
-      await new Promise((resolve) => setTimeout(resolve, 2700))
+      const expiryDeadline = performance.now() + 6000
+      while (toast() && performance.now() < expiryDeadline)
+        await new Promise((resolve) => setTimeout(resolve, 50))
       observe()
       return {
         phases,

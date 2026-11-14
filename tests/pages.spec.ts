@@ -210,7 +210,9 @@ test("failed saves retain draft and acknowledged rail; edits made during Save su
   await state(request, { error: "Favorites write rejected" })
   await page.getByRole("button", { name: "Save favorites" }).click()
   await expect(
-    page.locator('[data-slot="toast"][data-type="error"]')
+    page
+      .locator('[data-slot="toast"][data-type="error"]')
+      .filter({ hasText: "Favorites write rejected" })
   ).toContainText("Favorites write rejected")
   await page.getByRole("button", { name: "Return to Home" }).click()
   await page.getByRole("button", { name: "Discard and leave" }).click()
@@ -272,7 +274,11 @@ test("a physical start dismisses navigation prompts, updates machine status and 
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await expect(
     page.getByRole("region", { name: "Shot monitoring" })
@@ -281,9 +287,7 @@ test("a physical start dismisses navigation prompts, updates machine status and 
     "aria-hidden",
     "true"
   )
-  await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
-  ).toBeFocused()
+  await expect(page.locator(".brew-title")).toBeFocused()
   await state(request, { state: "idle", reason: "machineEnded" })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page
@@ -311,7 +315,9 @@ test("unavailable, duplicate and malformed assignments remain explicit and recov
   await page.getByRole("button", { name: "Unavailable favorite 1" }).click()
   await page.getByRole("button", { name: "Cancel assignment" }).click()
   await expect(
-    page.locator('[data-slot="toast"][data-type="error"]')
+    page
+      .locator('[data-slot="toast"][data-type="error"]')
+      .filter({ hasText: "Duplicate assignments" })
   ).toContainText("Duplicate assignments")
   await expect(page.getByRole("listitem").nth(0)).toContainText("missing-id")
   await expect(page.getByRole("listitem").nth(2)).toContainText(
@@ -324,7 +330,9 @@ test("unavailable, duplicate and malformed assignments remain explicit and recov
   await state(request, { favorites: { broken: true } })
   await page.reload()
   await expect(
-    page.locator('[data-slot="toast"][data-type="error"]')
+    page
+      .locator('[data-slot="toast"][data-type="error"]')
+      .filter({ hasText: "malformed" })
   ).toContainText("malformed")
   expect(await saved(request)).toEqual({ broken: true })
   await page.getByRole("button", { name: "Save favorites" }).click()
@@ -386,7 +394,11 @@ test("details, preview, hide/restore and import/export use profile APIs without 
   ).toBeVisible()
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
   await page
@@ -396,9 +408,9 @@ test("details, preview, hide/restore and import/export use profile APIs without 
     page.getByRole("region", { name: "Review import" })
   ).toContainText("profiles.json")
   await page.getByRole("button", { name: "Confirm import" }).click()
-  await expect(page.getByRole("main")).toContainText(
-    "1 imported · 1 skipped · 1 failed"
-  )
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).toContainText("1 imported · 1 skipped · 1 failed")
   expect(
     (await requests(request)).every((r: { path: string }) =>
       r.path.startsWith("/api/v1/profiles/")
@@ -433,12 +445,20 @@ test("Back cancellation keeps history usable and active-shot replay does not int
   ).toBeVisible()
   await state(request, { state: "espresso", elapsed: 12 })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await page.goto("/?page=settings")
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings")
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
 })
 
@@ -449,20 +469,23 @@ test("library errors retry, empty states stay honest, and duplicate titles load 
   const original = await (
     await request.get(`${fixture}/api/v1/profiles`)
   ).json()
-  await page.route(
-    "**/api/v1/profiles?includeHidden=true",
-    (route) =>
-      route.fulfill({
-        status: 503,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "Library temporarily unavailable" }),
-      }),
-    { times: 1 }
+  let failLibrary = true
+  await page.route("**/api/v1/profiles?includeHidden=true", (route) =>
+    failLibrary
+      ? route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Library temporarily unavailable" }),
+        })
+      : route.continue()
   )
   await page.goto("/?page=library")
   await expect(
-    page.locator('[data-slot="toast"][data-type="error"]')
+    page
+      .locator('[data-slot="toast"][data-type="error"]')
+      .filter({ hasText: "Library temporarily unavailable" })
   ).toContainText("Library temporarily unavailable", { timeout: 90000 })
+  failLibrary = false
   await page.getByRole("button", { name: "Retry", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Details D-Flow / default", exact: true })

@@ -214,8 +214,16 @@ test("disconnect retains trace, blanks current readings and never auto-returns",
   await expect(page.locator('[aria-label="Tank volume"]')).toContainText("—")
   await expect(page.locator('[aria-label="Scale disconnected"]')).toBeVisible()
   await expect(
-    page.getByRole("button", { name: "Sleep machine", exact: true })
+    page.getByRole("button", {
+      name: "Sleep machine",
+      exact: true,
+      includeHidden: true,
+    })
   ).toBeDisabled()
+  await expect(page.locator(".candidate-header")).toHaveAttribute(
+    "aria-hidden",
+    "true"
+  )
 })
 test("missing scale breaks its trace, outliers expand axes, reduced motion disables animation", async ({
   page,

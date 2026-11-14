@@ -257,7 +257,11 @@ test("inventory drafts survive shot interruption and explicit create/edit/archiv
     data: { state: "espresso", elapsed: 3 },
   })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },
@@ -325,13 +329,20 @@ test("profile drafts guard navigation, validate exits and retain edits after a p
     data: { state: "espresso", elapsed: 4 },
   })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },
   })
   await page
-    .getByRole("button", { name: /^(All profiles|Browse profiles)$/, exact: true })
+    .getByRole("button", {
+      name: /^(All profiles|Browse profiles)$/,
+      exact: true,
+    })
     .click()
   await page
     .getByRole("button", { name: "Details 80's Espresso", exact: true })

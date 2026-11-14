@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import { expect, test } from "@playwright/test"
 import { fixtureOrigin as fixture } from "./fixture-origin.js"
 test.setTimeout(240000)
@@ -47,7 +48,7 @@ test("first install reads defaults without writes and preserves intentionally em
   ).toHaveCount(0)
 })
 
-test("scale notices dismiss across replay; optional scale does not lock recipe or brewing", async ({
+test("scale absence stays header-only across replay; optional scale does not lock recipe or brewing", async ({
   page,
   request,
 }) => {
@@ -75,10 +76,13 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
   ).toBeEnabled()
   await expect(
     page.getByText(connectionError.message, { exact: true })
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("button", {
+      name: "Scale disconnected. Open Connections to reconnect",
+      exact: true,
+    })
   ).toBeVisible()
-  await page
-    .getByRole("button", { name: "Dismiss notice", exact: true })
-    .click()
   await request.post(`${fixture}/__test/state`, { data: { connectionError } })
   await expect(
     page.getByText(connectionError.message, { exact: true })
@@ -117,7 +121,11 @@ test("scale notices dismiss across replay; optional scale does not lock recipe o
     data: { state: "espresso", elapsed: 0 },
   })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
 })
 
@@ -217,9 +225,10 @@ test("landscape Home fits every panel and touch target without scrolling", async
         "A very long imported profile title with roast details and LongUnbrokenProfileIdentifierThatMustFit",
     },
   })
-  await expect(page.getByRole("main")).toContainText(
-    "Heating to your brew temperature"
-  )
+  await expect(page.locator(".candidate-status")).toHaveText("DE1Heating")
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).not.toContainText("Heating to your brew temperature")
   expect(
     await page
       .locator(".focus-main, .focus-body > aside")
@@ -235,9 +244,7 @@ test("landscape Home fits every panel and touch target without scrolling", async
   await request.post(`${fixture}/__test/state`, {
     data: { state: "espresso", elapsed: 12 },
   })
-  await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
-  ).toBeInViewport({ ratio: 1 })
+  await expect(page.locator(".brew-title")).toBeInViewport({ ratio: 1 })
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(
     480
   )
@@ -261,8 +268,11 @@ test("landscape Home fits every panel and touch target without scrolling", async
     data: { state: "idle", reason: "machineEnded", elapsed: 30 },
   })
   await expect(
-    page.getByRole("button", { name: "Back to Home", exact: true })
+    page.getByRole("button", { name: "All profiles", exact: true })
   ).toBeInViewport({ ratio: 1 })
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).toContainText("Shot ended")
   await expect(
     page.getByRole("button", { name: /^(Brew|Start|Stop) / })
   ).toHaveCount(0)
@@ -298,9 +308,9 @@ test("profile selection uses its own temperature and yield; missing dose uses th
     timeout: 90000,
   })
   for (const [index, title, dose, yieldValue, temp, ratio] of [
-    [1, profiles[1].profile.title, "18.0g", "36.0g", "82.0°C", "1:2.0"],
-    [0, profiles[0].profile.title, "18.0g", "50.0g", "88.0°C", "1:2.8"],
-    [2, profiles[2].profile.title, "18.0g", "Off", "94.0°C", "—"],
+    [1, profiles[1].profile.title, "18.0g", "36g", "82°C", "1:2.0"],
+    [0, profiles[0].profile.title, "18.0g", "50g", "88°C", "1:2.8"],
+    [2, profiles[2].profile.title, "18.0g", "Off", "94°C", "—"],
   ] as const) {
     await rail.getByRole("button").nth(index).click()
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(title)
@@ -348,5 +358,10 @@ test("Help reports the current CSS viewport and updates after resize", async ({
   await expect(measurements).toContainText("893 × 533")
   await page.setViewportSize({ width: 1024, height: 600 })
   await expect(measurements).toContainText("1024 × 600")
-  await expect(page.getByText("0.3.1", { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(
+      JSON.parse(readFileSync("public/manifest.json", "utf8")).version,
+      { exact: true }
+    )
+  ).toBeVisible()
 })

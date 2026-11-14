@@ -100,9 +100,13 @@ test("physical starts roll real stages, the footer stays quiet, completion has n
   ).toEqual([])
   await state(request, { state: "espresso", elapsed: 0 })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
-  await page.getByRole("status", { name: "Machine state", exact: true }).click()
+  await page.locator(".brew-title").focus()
   await page.keyboard.press("Escape")
   expect(
     await (await request.get(`${fixture}/__test/requests`)).json()
@@ -120,7 +124,7 @@ test("physical starts roll real stages, the footer stays quiet, completion has n
   )
   await state(request, { state: "idle", elapsed: 30, reason: "targetWeight" })
   await expect(
-    page.getByRole("status", { name: "Machine state" })
+    page.getByRole("status", { name: "Machine state", includeHidden: true })
   ).toHaveAttribute("data-ready", "true")
   await expect(page.locator(".rolling-window")).toHaveText("Shot complete")
   await expect(page.locator(".rolling-status")).toHaveAttribute(
@@ -217,9 +221,13 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
   await expect(
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "false")
-  await expect(page.getByRole("main")).toContainText("Machine disconnected")
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).toContainText("Machine disconnected")
   await state(request, { connected: true, mode: "full" })
-  await expect(page.getByRole("main")).toContainText("tracking mode")
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).toContainText("tracking mode")
   await state(request, { mode: "tracking", error: "Profile write rejected" })
   await expect(
     page.getByRole("status", { name: "Machine state", exact: true })
@@ -230,7 +238,9 @@ test("disconnects, errors and unsupported sequencing mode block starts without m
   await page
     .getByRole("button", { name: "Load 80's Espresso", exact: true })
     .click()
-  await expect(page.getByRole("main")).toContainText("Profile write rejected")
+  await expect(
+    page.getByRole("region", { name: "Notifications" })
+  ).toContainText("Profile write rejected")
   const workflow = await (
     await request.get(`${fixture}/api/v1/workflow`)
   ).json()
@@ -313,7 +323,7 @@ test("mid-shot attachment uses live stages, reduced motion works, long labels ca
       "none"
     )
     await expect(page.locator(".brew-metrics > div").first()).toContainText(
-      "—s"
+      "Time—"
     )
     await page.evaluate(async (origin) => {
       const toast = () =>

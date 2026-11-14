@@ -303,7 +303,14 @@ test("profile counters animate only acknowledged profile changes and never write
         text: [...new Set(animated.map((s) => s.text[i]))],
       })
     ).toBe(1)
-    expect(new Set(animated.map((s) => s.text[i])).size).toBeGreaterThan(1)
+    expect(
+      new Set(animated.map((s) => s.text[i])).size,
+      JSON.stringify({
+        i,
+        frames: animated.length,
+        text: animated.map((s) => s.text[i]),
+      })
+    ).toBeGreaterThan(1)
   }
   expect(writes).toHaveLength(1)
   expect(writes[0]).toMatchObject({

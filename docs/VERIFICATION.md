@@ -1,5 +1,32 @@
 # Focus release-candidate verification
 
+## 0.3.10-rc.1 — local Phase 6 review candidate
+
+Prepared on November 13, 2026, from approved v0.3.9 on the dedicated
+`codex/focus-phase-6-hardening` branch. No publication, merge, installation or
+physical machine operation was performed. The latest approved 35-second
+initial timeline is preserved despite the older 40-second wording in the brief.
+
+- Corrected delayed profile-route initialization and shot-entry keyboard focus.
+  Removed confirmed unused legacy presentation code; no dependency changes.
+- TypeScript, ESLint, 205 gateway/domain tests, two package-version tests,
+  production build, 18 preview-model tests and the 2,458-module isolation audit
+  passed. The archive contains 11 production files with relative assets.
+- The full main regression run had 57 passes and 27 failures across 84 cases.
+  Many failures were stale test expectations; latest results across reruns are
+  85/86 passing, with the inventory notification case unresolved. Exact results
+  and additional checks are recorded in the linked QA report. This
+  is not represented as a green full-suite run.
+- Twenty repeated shot/navigation cycles passed bounded resource checks.
+  Cold browser startup remains slow, and cold-read/notification observations
+  require follow-up. No tablet performance or physical-device acceptance is
+  claimed.
+
+See [architecture and measured performance](PHASE-6-AUDIT.md),
+[exact regression results and hardware checklist](PHASE-6-QA.md), and
+[candidate artifact, checksum and rollback](RELEASE-0.3.10-rc.1.md).
+Final production approval remains pending.
+
 ## 0.3.9 — thirty-five-second live timeline candidate
 
 Publication of the final 35s build was explicitly authorized on November 10,

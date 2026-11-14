@@ -42,7 +42,7 @@ for (const [width, height] of [
     const bounds = await chart.boundingBox()
     const svg = await chart.elementHandle()
     const checkpoints = [
-      25, 30, 34, 35, 39, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120,
+      20, 25, 30, 34, 35, 39, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120,
     ]
     let previousSamples = 0
     for (const elapsed of checkpoints) {

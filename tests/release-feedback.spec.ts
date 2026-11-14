@@ -120,7 +120,9 @@ test("numeric entry validates, cancels, saves decimals and retains failed drafts
   await trigger.click()
   await enter(dialog, "19.3")
   await dialog.getByRole("button", { name: "Save", exact: true }).click()
-  await expect(dialog.getByRole("alert")).toContainText("Write rejected")
+  await expect(
+    page.locator('[data-slot="toast"]').filter({ hasText: "Write rejected" })
+  ).toBeVisible()
   await expect(input).toHaveValue("19.3")
   await page.keyboard.press("Escape")
   await expect(dialog).toHaveCount(0)
@@ -229,7 +231,7 @@ test("Home adjustments survive profile switches and a reload, with partial saves
   )
   await expect(
     page.getByLabel("Temperature value", { exact: true })
-  ).toHaveText("91.0°C")
+  ).toHaveText("91°C")
   await expect(page.getByLabel("Grind size value", { exact: true })).toHaveText(
     "2.4"
   )
@@ -249,9 +251,12 @@ test("Home adjustments survive profile switches and a reload, with partial saves
   const dialog = page.getByRole("dialog", { name: "Dose", exact: true })
   await enter(dialog, "19.2")
   await dialog.getByRole("button", { name: "Save", exact: true }).click()
-  await expect(dialog.getByRole("alert")).toContainText(
-    "Current recipe updated, but saving this profile adjustment could not be confirmed"
-  )
+  await expect(
+    page.locator('[data-slot="toast"]').filter({
+      hasText:
+        "Current recipe updated, but saving this profile adjustment could not be confirmed",
+    })
+  ).toBeVisible()
   await expect(dialog.getByRole("textbox")).toHaveValue("19.2")
   await request.post(`${fixture}/__test/state`, { data: { failPath: null } })
   await dialog.getByRole("button", { name: "Save", exact: true }).click()

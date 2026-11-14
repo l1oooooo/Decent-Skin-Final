@@ -107,9 +107,17 @@ test("utility patches agree with Home and failed sections retain drafts", async 
   await page.getByRole("button", { name: "Keep editing", exact: true }).click()
   await state(request, { state: "espresso" })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
-  await state(request, { state: "idle", failPath: null })
+  await state(request, {
+    state: "idle",
+    reason: "targetWeight",
+    failPath: null,
+  })
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page.getByRole("button", { name: /Brew and utilities/ }).click()
   await expect(

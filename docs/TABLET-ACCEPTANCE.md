@@ -1,5 +1,13 @@
 # Phase 9 — tablet acceptance
 
+## Phase 6 / 0.3.10-rc.1 review — pending
+
+The local RC does not authorize installation or physical operations. Use the
+[Phase 6 supervised checklist](PHASE-6-QA.md#remaining-supervised-tablet-checklist)
+for the full current device acceptance matrix and the
+[release notes](RELEASE-0.3.10-rc.1.md) for the verified rollback archive.
+
+
 ## v0.3.9 timeline recheck — pending
 
 - Confirm version 0.3.9 and record the embedded WebView dimensions.

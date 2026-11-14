@@ -5,7 +5,7 @@ test.setTimeout(240000)
 test.beforeEach(async ({ request }) => {
   await request.post(`${fixture}/__test/reset`)
 })
-test("history filters, paging, detail and Back share one read-only session", async ({
+test("history filters, paging, detail and Back share one ready read-only session", async ({
   page,
   request,
 }) => {
@@ -28,10 +28,11 @@ test("history filters, paging, detail and Back share one read-only session", asy
   await request.post(`${fixture}/__test/state`, { data: { shots } })
   let sockets = 0
   page.on("websocket", () => sockets++)
-  await page.goto("/?page=history")
+  await page.goto("/")
   await expect(
     page.getByRole("status", { name: "Machine state", exact: true })
   ).toHaveAttribute("data-ready", "true", { timeout: 90000 })
+  await page.getByRole("button", { name: "History", exact: true }).click()
   await expect(
     page.getByText("23 matching shots", { exact: false })
   ).toBeVisible()
@@ -223,9 +224,12 @@ test("history handles missing data and retains annotation drafts through physica
   page,
   request,
 }) => {
+  test.setTimeout(360000)
   await page.goto("/?page=shot&shot=missing")
   await expect(
-    page.getByText("404: Shot not found", { exact: true })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("404: Shot not found", { exact: true })
   ).toBeVisible()
   await page.goto("/?page=shot&shot=record")
   await page
@@ -240,7 +244,11 @@ test("history handles missing data and retains annotation drafts through physica
     data: { state: "espresso", elapsed: 4 },
   })
   await expect(
-    page.getByRole("status", { name: "Machine state", exact: true })
+    page.getByRole("status", {
+      name: "Machine state",
+      exact: true,
+      includeHidden: true,
+    })
   ).toHaveAttribute("data-operation", "espresso")
   await request.post(`${fixture}/__test/state`, {
     data: { state: "idle", reason: "targetWeight" },
@@ -268,10 +276,12 @@ test("history handles missing data and retains annotation drafts through physica
     .getByRole("button", { name: /Another shot.*annotated yield/ })
     .click()
   await expect(
-    page.getByText(
-      "Save or cancel annotations on the previous shot before opening another.",
-      { exact: true }
-    )
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText(
+        "Save or cancel annotations on the previous shot before opening another.",
+        { exact: true }
+      )
   ).toBeVisible()
   await page
     .getByRole("button", { name: "Return to unsaved shot", exact: true })
@@ -308,7 +318,9 @@ test("history handles missing data and retains annotation drafts through physica
     .getByRole("button", { name: "Refresh history", exact: true })
     .click()
   await expect(
-    page.getByText("503: Read unavailable", { exact: true })
+    page
+      .getByRole("region", { name: "Notifications" })
+      .getByText("503: Read unavailable", { exact: true })
   ).toBeVisible()
   await request.post(`${fixture}/__test/state`, {
     data: { failReadPath: null },

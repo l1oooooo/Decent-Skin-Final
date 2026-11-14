@@ -135,10 +135,15 @@ test("header Sleep reports failed writes on shared pages and stays blocked durin
     data: { failPath: "/api/v1/machine/state/sleeping" },
   })
   await page.goto("/?page=library", { waitUntil: "networkidle" })
-  const sleep = page.getByRole("button", { name: "Sleep machine" })
+  const sleep = page.getByRole("button", {
+    name: "Sleep machine",
+    includeHidden: true,
+  })
   await sleep.click()
   await expect(
-    page.locator('[data-slot="toast"][data-type="error"]')
+    page
+      .locator('[data-slot="toast"][data-type="error"]')
+      .filter({ hasText: "Section write rejected" })
   ).toContainText("Section write rejected")
   await expect(sleep).toBeEnabled()
   await request.post(`${fixture}/__test/state`, {
